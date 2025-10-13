@@ -47,13 +47,13 @@ src/
 ## Implementation Plan
 
 ### Phase 1: Project Setup
-- [ ] Install CodeMirror dependencies
-  - [ ] `@codemirror/state`
-  - [ ] `@codemirror/view`
-  - [ ] `@codemirror/language`
-  - [ ] `@codemirror/commands`
-- [ ] Create directory structure (`components/`, `services/`, `utils/`, `types/`)
-- [ ] Set up TypeScript interfaces in `types/index.ts`
+- [x] Install CodeMirror dependencies
+  - [x] `@codemirror/state`
+  - [x] `@codemirror/view`
+  - [x] `@codemirror/language`
+  - [x] `@codemirror/commands`
+- [x] Create directory structure (`components/`, `services/`, `utils/`, `types/`)
+- [x] Set up TypeScript interfaces in `types/index.ts`
 
 ### Phase 2: Type Definitions
 - [ ] Define `HarperIssue` interface
