@@ -138,15 +138,31 @@ export const issueDecorationsField = StateField.define<DecorationSet>({
 		return Decoration.none;
 	},
 	update(decorations, tr) {
-		// Map decorations through document changes
+		// Map decorations through document changes - this keeps positions in sync
 		decorations = decorations.map(tr.changes);
 
-		// Rebuild decorations when issues or selection changes
+		// Check for effects
+		let hasNewIssues = false;
+		let hasSelectionChange = false;
+
 		for (const effect of tr.effects) {
-			if (effect.is(updateIssuesEffect) || effect.is(setSelectedIssueEffect)) {
-				const issueState = tr.state.field(issueField);
-				decorations = buildDecorations(issueState.issues, issueState.selectedId);
+			if (effect.is(updateIssuesEffect)) {
+				hasNewIssues = true;
 			}
+			if (effect.is(setSelectedIssueEffect)) {
+				hasSelectionChange = true;
+			}
+		}
+
+		const issueState = tr.state.field(issueField);
+
+		// If we have new issues, rebuild decorations from scratch
+		if (hasNewIssues) {
+			decorations = buildDecorations(issueState.issues, issueState.selectedId);
+		}
+		// If only selection changed, update classes on existing (mapped) decorations
+		else if (hasSelectionChange) {
+			decorations = updateDecorationsForSelection(decorations, issueState.selectedId);
 		}
 
 		return decorations;
@@ -179,6 +195,37 @@ function buildDecorations(issues: HarperIssue[], selectedId: string | null): Dec
 	return Decoration.set(decorations.map(d => d.decoration.range(d.from, d.to)));
 }
 
+function updateDecorationsForSelection(decorations: DecorationSet, selectedId: string | null): DecorationSet {
+	const updated: Array<{ from: number; to: number; decoration: Decoration }> = [];
+
+	// Iterate through existing decorations and rebuild them with updated selection class
+	decorations.between(0, Number.MAX_SAFE_INTEGER, (from, to, value) => {
+		if (value.spec.attributes && value.spec.attributes['data-issue-id']) {
+			const issueId = value.spec.attributes['data-issue-id'] as string;
+			const isSelected = issueId === selectedId;
+			
+			// Extract the base class (severity) from the current decoration
+			let baseClass = '';
+			if (value.spec.class) {
+				baseClass = value.spec.class.replace(' cm-issue-selected', '');
+			}
+			
+			const cssClass = baseClass + (isSelected ? ' cm-issue-selected' : '');
+			
+			updated.push({
+				from,
+				to,
+				decoration: Decoration.mark({
+					class: cssClass,
+					attributes: { 'data-issue-id': issueId },
+				}),
+			});
+		}
+	});
+
+	return Decoration.set(updated.map(d => d.decoration.range(d.from, d.to)));
+}
+
 function getSeverityCssClass(severity: IssueSeverity): string {
 	switch (severity) {
 		case IssueSeverity.Error:
@@ -208,7 +255,7 @@ const contextMenuField = StateField.define<{ issueId: string; pos: number } | nu
 		return {
 			pos: val.pos,
 			above: true,
-			strictSide: true,
+			strictSide: false,
 			arrow: false,
 			create: (view) => createContextMenuTooltip(view, val.issueId),
 		};

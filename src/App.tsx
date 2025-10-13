@@ -1,4 +1,4 @@
-import { Component, createSignal, onMount, createEffect, onCleanup } from 'solid-js';
+import { Component, createSignal, onMount, createEffect } from 'solid-js';
 import TopBar from './components/TopBar';
 import Editor from './components/Editor';
 import Sidebar from './components/Sidebar';
@@ -29,7 +29,6 @@ const App: Component = () => {
 
 		if (!isInitialized() || !text.trim()) {
 			setIssues([]);
-			setIsAnalyzing(false);
 			return;
 		}
 
@@ -44,12 +43,9 @@ const App: Component = () => {
 			} finally {
 				setIsAnalyzing(false);
 			}
-		}, 400);
+		}, 200);
 
-		return () => {
-			clearTimeout(timeoutId);
-			setIsAnalyzing(false);
-		};
+		return () => clearTimeout(timeoutId);
 	});
 
 	const handleCopy = async () => {
