@@ -1,7 +1,9 @@
 import { StateField, StateEffect } from '@codemirror/state';
 import { Decoration, DecorationSet, EditorView, showTooltip, type TooltipView } from '@codemirror/view';
 import type { HarperIssue, Suggestion } from '../types';
-import { IssueSeverity, SuggestionKind } from '../types';
+import { IssueSeverity } from '../types';
+import { render } from 'solid-js/web';
+import ContextMenu from '../components/ContextMenu';
 
 // Effect to update issues
 export const updateIssuesEffect = StateEffect.define<HarperIssue[]>();
@@ -204,41 +206,11 @@ export function setContextMenuActions(actions: ContextMenuActions) {
 	contextMenuActions = actions;
 }
 
-// Helper to create a button with common styling and click handling
-function createButton(
-	text: string,
-	className: string,
-	onClick: (e: MouseEvent) => void,
-	additionalClasses = '',
-	tabIndex?: number
-): HTMLButtonElement {
-	const btn = document.createElement('button');
-	btn.className = className + (additionalClasses ? ' ' + additionalClasses : '');
-	btn.textContent = text;
-	if (tabIndex !== undefined) {
-		btn.tabIndex = tabIndex;
-	}
-	btn.addEventListener('mousedown', (e) => {
-		e.preventDefault();
-		e.stopPropagation();
-		onClick(e);
-	});
-	btn.addEventListener('keydown', (e) => {
-		if (e.key === 'Enter' || e.key === ' ') {
-			e.preventDefault();
-			e.stopPropagation();
-			onClick(e as any);
-		}
-	});
-	return btn;
-}
-
 function createContextMenuTooltip(view: EditorView, issueId: string, pos: number): TooltipView {
 	const issueState = view.state.field(issueField);
 	const issue = issueState.issues.find(i => i.id === issueId);
 	
 	const dom = document.createElement('div');
-	dom.className = 'cm-context-menu';
 	
 	// Prevent clicks on the tooltip from propagating to the editor
 	dom.addEventListener('mousedown', (e) => {
@@ -249,9 +221,35 @@ function createContextMenuTooltip(view: EditorView, issueId: string, pos: number
 		dom.textContent = 'Issue not found';
 		return { dom };
 	}
-
-	const suggestions = issue.lint.suggestions();
-	const isSpelling = issue.lint.lint_kind().toLowerCase().includes('spelling');
+	
+	// Mount SolidJS component
+	const dispose = render(
+		() => ContextMenu({
+			issue,
+			onApplySuggestion: (suggestion: Suggestion) => {
+				if (contextMenuActions) {
+					contextMenuActions.onApplySuggestion(issueId, suggestion);
+				}
+				view.dispatch({ effects: showContextMenuEffect.of(null) });
+			},
+			onAddToDictionary: (word: string) => {
+				if (contextMenuActions) {
+					contextMenuActions.onAddToDictionary(word);
+				}
+				view.dispatch({ effects: showContextMenuEffect.of(null) });
+			},
+			onIgnore: () => {
+				if (contextMenuActions) {
+					contextMenuActions.onIgnore(issueId);
+				}
+				view.dispatch({ effects: showContextMenuEffect.of(null) });
+			},
+			onClose: () => {
+				view.dispatch({ effects: showContextMenuEffect.of(null) });
+			},
+		}),
+		dom
+	);
 	
 	// Adjust tooltip position horizontally if it overflows editor bounds
 	const mount = () => {
@@ -268,101 +266,16 @@ function createContextMenuTooltip(view: EditorView, issueId: string, pos: number
 			} else if (tooltipRect.left < editorRect.left) {
 				dom.style.transform = `translateX(${editorRect.left - tooltipRect.left + margin}px)`;
 			}
-			
-			// Auto-focus the first suggestion button
-			const firstButton = dom.querySelector('button[tabindex="0"]') as HTMLButtonElement;
-			if (firstButton) {
-				firstButton.focus();
-			}
 		});
 	};
 	
-	// Header container with title and close button
-	const header = document.createElement('div');
-	header.className = 'cm-context-menu-title';
-	
-	const titleText = document.createElement('span');
-	titleText.textContent = issue.lint.message();
-	header.appendChild(titleText);
-	
-	// Add info icon with rule name
-	const infoIcon = document.createElement('span');
-	infoIcon.className = 'cm-context-menu-info-icon';
-	infoIcon.textContent = 'ⓘ';
-	infoIcon.title = issue.lint.lint_kind();
-	header.appendChild(infoIcon);
-	
-	const closeBtn = document.createElement('button');
-	closeBtn.className = 'cm-context-menu-close';
-	closeBtn.textContent = '×';
-	closeBtn.tabIndex = -1; // Exclude from tab order completely
-	closeBtn.addEventListener('mousedown', (e) => {
-		e.preventDefault();
-		e.stopPropagation();
-		view.dispatch({ effects: showContextMenuEffect.of(null) });
-	});
-	header.appendChild(closeBtn);
-	
-	dom.appendChild(header);
-	
-	let tabIndexCounter = 0;
-	
-	// Suggestions
-	if (suggestions.length > 0) {
-		const suggestionsTitle = document.createElement('div');
-		suggestionsTitle.className = 'cm-context-menu-section-title';
-		suggestionsTitle.textContent = 'Suggestions:';
-		dom.appendChild(suggestionsTitle);
-		
-		// Use grid layout for more than 4 suggestions
-		const useGrid = suggestions.length > 4;
-		const container = useGrid ? document.createElement('div') : dom;
-		if (useGrid) {
-			container.className = 'cm-context-menu-suggestions-grid';
+	return { 
+		dom, 
+		mount,
+		destroy: () => {
+			dispose();
 		}
-		
-		suggestions.forEach(suggestion => {
-			const kind = suggestion.kind();
-			const isRemove = kind === SuggestionKind.Remove;
-			const text = isRemove ? '(Remove)' : suggestion.get_replacement_text();
-			const additionalClass = isRemove ? 'cm-context-menu-button-secondary' : '';
-			
-			const btn = createButton(text, 'cm-context-menu-button', () => {
-				if (contextMenuActions) {
-					contextMenuActions.onApplySuggestion(issueId, suggestion);
-				}
-				view.dispatch({ effects: showContextMenuEffect.of(null) });
-			}, additionalClass, tabIndexCounter++);
-			
-			container.appendChild(btn);
-		});
-		
-		if (useGrid) {
-			dom.appendChild(container);
-		}
-	}
-	
-	// Add to dictionary (for spelling errors)
-	if (isSpelling) {
-		const dictBtn = createButton('Add to Dictionary', 'cm-context-menu-button', () => {
-			if (contextMenuActions) {
-				contextMenuActions.onAddToDictionary(issue.lint.get_problem_text());
-			}
-			view.dispatch({ effects: showContextMenuEffect.of(null) });
-		}, 'cm-context-menu-button-success', tabIndexCounter++);
-		dom.appendChild(dictBtn);
-	}
-	
-	// Ignore button
-	const ignoreBtn = createButton('Ignore', 'cm-context-menu-button', () => {
-		if (contextMenuActions) {
-			contextMenuActions.onIgnore(issueId);
-		}
-		view.dispatch({ effects: showContextMenuEffect.of(null) });
-	}, 'cm-context-menu-button-secondary', tabIndexCounter++);
-	dom.appendChild(ignoreBtn);
-	
-	return { dom, mount };
+	};
 }
 
 // Click handler extension
@@ -439,20 +352,8 @@ export function issueClickHandler() {
 	});
 }
 
-// Extension to close menu on Escape and when scrolled off-screen
-const closeMenuOnEscape = EditorView.domEventHandlers({
-	keydown(event, view) {
-		if (event.key === 'Escape') {
-			const currentMenu = view.state.field(contextMenuField);
-			if (currentMenu) {
-				event.preventDefault();
-				// Keep lastClickedIssueId to prevent reopening until clicking elsewhere
-				view.dispatch({ effects: showContextMenuEffect.of(null) });
-				return true;
-			}
-		}
-		return false;
-	},
+// Extension to close menu on scroll
+const closeMenuOnScroll = EditorView.domEventHandlers({
 	scroll(event, view) {
 		const currentMenu = view.state.field(contextMenuField);
 		if (currentMenu) {
@@ -502,4 +403,4 @@ const darkEditorTheme = EditorView.theme({
 	},
 }, { dark: true });
 
-export { issueTheme, darkEditorTheme, contextMenuField, closeMenuOnEscape };
+export { issueTheme, darkEditorTheme, contextMenuField, closeMenuOnScroll };

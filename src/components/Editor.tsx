@@ -14,8 +14,8 @@ import {
 	setSelectedIssueEffect,
 	showContextMenuEffect,
 	contextMenuField,
-	closeMenuOnEscape,
-	setContextMenuActions
+	closeMenuOnScroll,
+	setContextMenuActions,
 } from '../utils/editor-extensions';
 
 const Editor: Component<EditorProps> = (props) => {
@@ -55,7 +55,7 @@ const Editor: Component<EditorProps> = (props) => {
 				issueTheme,
 				darkEditorTheme,
 				issueClickHandler(),
-				closeMenuOnEscape,
+				closeMenuOnScroll,
 				EditorView.updateListener.of((update: ViewUpdate) => {
 					if (update.docChanged) {
 						const newContent = update.state.doc.toString();
