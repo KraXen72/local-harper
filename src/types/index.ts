@@ -42,6 +42,9 @@ export interface EditorProps {
 	issues: HarperIssue[];
 	selectedIssueId: string | null;
 	onIssueSelect: (issueId: string | null) => void;
+	onApplySuggestion: (issueId: string, suggestion: Suggestion) => void;
+	onAddToDictionary: (word: string) => void;
+	scrollToIssue?: string | null; // Issue ID to scroll to and show context menu
 }
 
 export interface SidebarProps {
@@ -63,4 +66,5 @@ export interface IssueItemProps {
 export interface TopBarProps {
 	issueCount: number;
 	onCopy: () => void;
+	isAnalyzing: boolean;
 }

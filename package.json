@@ -21,7 +21,9 @@
   "dependencies": {
     "@codemirror/commands": "^6.9.0",
     "@codemirror/language": "^6.11.3",
+    "@codemirror/lint": "^6.9.0",
     "@codemirror/state": "^6.5.2",
+    "@codemirror/tooltip": "^0.19.16",
     "@codemirror/view": "^6.38.6",
     "harper.js": "^0.67.0",
     "solid-js": "^1.9.9"

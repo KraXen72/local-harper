@@ -1,10 +1,21 @@
 import { Component, onMount, onCleanup, createEffect } from 'solid-js';
-import { EditorView, keymap, lineNumbers, highlightActiveLineGutter, highlightSpecialChars, drawSelection, dropCursor, rectangularSelection, crosshairCursor, highlightActiveLine } from '@codemirror/view';
+import { EditorView, keymap, highlightSpecialChars, drawSelection, dropCursor, rectangularSelection, crosshairCursor } from '@codemirror/view';
 import { EditorState } from '@codemirror/state';
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
 import type { ViewUpdate } from '@codemirror/view';
 import type { EditorProps } from '../types';
-import { issueField, issueTheme, issueClickHandler, updateIssuesEffect } from '../utils/editor-extensions';
+import { 
+	issueField, 
+	issueDecorationsField,
+	issueTheme, 
+	issueClickHandler, 
+	updateIssuesEffect, 
+	setSelectedIssueEffect,
+	showContextMenuEffect,
+	contextMenuField,
+	closeMenuOnEscape,
+	setContextMenuActions
+} from '../utils/editor-extensions';
 
 const Editor: Component<EditorProps> = (props) => {
 	let editorRef!: HTMLDivElement;
@@ -13,23 +24,37 @@ const Editor: Component<EditorProps> = (props) => {
 	onMount(() => {
 		if (!editorRef) return;
 
+		// Set up context menu actions
+		setContextMenuActions({
+			onApplySuggestion: (issueId, suggestion) => {
+				props.onApplySuggestion(issueId, suggestion);
+			},
+			onAddToDictionary: (word) => {
+				props.onAddToDictionary(word);
+			},
+			onIgnore: () => {
+				// Just deselect for now
+				props.onIssueSelect(null);
+			},
+		});
+
 		const startState = EditorState.create({
 			doc: props.content,
 			extensions: [
-				lineNumbers(),
-				highlightActiveLineGutter(),
 				highlightSpecialChars(),
 				history(),
 				drawSelection(),
 				dropCursor(),
 				rectangularSelection(),
 				crosshairCursor(),
-				highlightActiveLine(),
 				EditorView.lineWrapping,
 				keymap.of([...defaultKeymap, ...historyKeymap]),
 				issueField,
+				issueDecorationsField,
+				contextMenuField,
 				issueTheme,
-				issueClickHandler((issueId) => props.onIssueSelect(issueId)),
+				issueClickHandler(),
+				closeMenuOnEscape,
 				EditorView.updateListener.of((update: ViewUpdate) => {
 					if (update.docChanged) {
 						const newContent = update.state.doc.toString();
@@ -73,24 +98,36 @@ const Editor: Component<EditorProps> = (props) => {
 		}
 	});
 
-	// Scroll to selected issue
+	// Update selected issue
 	createEffect(() => {
-		const issueId = props.selectedIssueId;
-		if (view && issueId) {
-			const issue = props.issues.find(i => i.id === issueId);
+		if (view) {
+			view.dispatch({
+				effects: setSelectedIssueEffect.of(props.selectedIssueId),
+			});
+		}
+	});
+
+	// Scroll to issue and show context menu when requested from sidebar
+	createEffect(() => {
+		const scrollTo = props.scrollToIssue;
+		if (view && scrollTo) {
+			const issue = props.issues.find(i => i.id === scrollTo);
 			if (issue) {
 				const span = issue.lint.span();
 				view.dispatch({
-					effects: EditorView.scrollIntoView(span.start, { y: 'center' }),
+					effects: [
+						EditorView.scrollIntoView(span.start, { y: 'center' }),
+						showContextMenuEffect.of({ issueId: scrollTo, pos: span.start }),
+					],
 				});
 			}
 		}
 	});
 
 	return (
-		<div class="h-full overflow-auto bg-white border-r border-gray-300">
-			<div class="mx-auto max-w-[65ch] py-4 px-3">
-				<div ref={editorRef} class="text-base" />
+		<div class="h-full overflow-auto bg-white">
+			<div class="h-full mx-auto max-w-[65ch] py-4 px-3">
+				<div ref={editorRef} class="h-full text-base" />
 			</div>
 		</div>
 	);

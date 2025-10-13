@@ -33,36 +33,46 @@ const IssueItem: Component<IssueItemProps> = (props) => {
 
 	return (
 		<div
-			class="p-2 rounded border cursor-pointer transition-colors"
+			class="p-3 rounded-md border cursor-pointer transition-all duration-150 ease-in-out focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-1"
 			classList={{
-				'bg-blue-50 border-blue-400': props.isSelected,
-				'bg-white border-gray-300 hover:border-gray-400': !props.isSelected,
+				'bg-blue-50 border-blue-400 shadow-sm': props.isSelected,
+				'bg-white border-gray-300 hover:border-gray-400 hover:shadow-sm': !props.isSelected,
 			}}
 			onClick={handleClick}
+			tabIndex={0}
+			onKeyDown={(e) => {
+				if (e.key === 'Enter' || e.key === ' ') {
+					e.preventDefault();
+					handleClick();
+				}
+			}}
 		>
 			<div class="flex items-start gap-2">
-				<span class={`inline-block w-2 h-2 rounded-full mt-1 flex-shrink-0 ${getSeverityColor()}`} />
+				<span 
+					class={`inline-block w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${getSeverityColor()} transition-all duration-200`}
+					classList={{ 'scale-125': props.isSelected }}
+				/>
 				<div class="flex-1 min-w-0">
-					<p class="text-sm text-gray-900">{props.issue.lint.message()}</p>
-					<p class="text-xs text-gray-500 mt-0.5">
+					<p class="text-sm text-gray-900 leading-relaxed">{props.issue.lint.message()}</p>
+					<p class="text-xs text-gray-600 mt-1 font-mono bg-gray-100 px-1.5 py-0.5 rounded inline-block">
 						"{props.issue.lint.get_problem_text()}"
 					</p>
 
 					<Show when={isExpanded()}>
-						<div class="mt-2 space-y-1" onClick={(e) => e.stopPropagation()}>
+						<div class="mt-3 space-y-1.5 animate-[fadeIn_150ms_ease-in]" onClick={(e) => e.stopPropagation()}>
 							<Show when={hasSuggestions()}>
-								<div class="text-xs text-gray-600 mb-1">Suggestions:</div>
+								<div class="text-xs font-medium text-gray-700 mb-2">Suggestions:</div>
 								<For each={suggestions()}>
 									{(suggestion) => (
 										<button
-											class="block w-full text-left px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 border border-gray-300 rounded transition-colors"
+											class="block w-full text-left px-2.5 py-1.5 text-xs bg-gray-100 hover:bg-gray-200 border border-gray-300 rounded transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
 											onClick={() => handleApplySuggestion(suggestion)}
 										>
 											<Show
 												when={suggestion.kind() === SuggestionKind.Replace}
-												fallback={<span class="text-gray-600">(Remove)</span>}
+												fallback={<span class="text-gray-600 italic">(Remove)</span>}
 											>
-												{suggestion.get_replacement_text()}
+												<span class="font-medium">{suggestion.get_replacement_text()}</span>
 											</Show>
 										</button>
 									)}
@@ -71,7 +81,7 @@ const IssueItem: Component<IssueItemProps> = (props) => {
 
 							<Show when={isSpellingError()}>
 								<button
-									class="block w-full text-left px-2 py-1 text-xs bg-green-100 hover:bg-green-200 border border-green-300 text-green-800 rounded transition-colors"
+									class="block w-full text-left px-2.5 py-1.5 text-xs bg-green-100 hover:bg-green-200 border border-green-300 text-green-800 font-medium rounded transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-1"
 									onClick={handleAddToDictionary}
 								>
 									Add to Dictionary
