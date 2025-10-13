@@ -48,6 +48,12 @@ export interface EditorProps {
 	scrollToIssue?: string | null; // Issue ID to scroll to and show context menu
 }
 
+export interface TopBarProps {
+	issueCount: number;
+	onCopy: () => void;
+	isAnalyzing: boolean;
+}
+
 export interface SidebarProps {
 	issues: HarperIssue[];
 	selectedIssueId: string | null;

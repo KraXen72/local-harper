@@ -48,7 +48,7 @@ body {
 .cm-context-menu-title {
 	display: flex;
 	align-items: center;
-	justify-content: space-between;
+	gap: 6px;
 	font-size: 14px;
 	font-weight: 600;
 	line-height: 20px;
@@ -57,6 +57,22 @@ body {
 	margin-bottom: 4px;
 	border-bottom: 2px solid var(--flexoki-green);
 	user-select: none;
+}
+
+.cm-context-menu-title > span:first-child {
+	flex: 1;
+}
+
+.cm-context-menu-info-icon {
+	font-size: 14px;
+	color: var(--flexoki-tx-2);
+	cursor: help;
+	transition: color 120ms ease;
+	flex-shrink: 0;
+}
+
+.cm-context-menu-info-icon:hover {
+	color: var(--flexoki-cyan);
 }
 
 .cm-context-menu-problem {
@@ -123,6 +139,11 @@ body {
 
 .cm-context-menu-button:hover {
 	filter: brightness(1.15);
+}
+
+.cm-context-menu-button:focus {
+	outline: 2px solid var(--flexoki-cyan);
+	outline-offset: 2px;
 }
 
 .cm-context-menu-button:active {

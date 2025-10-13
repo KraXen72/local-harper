@@ -39,6 +39,11 @@ export async function initHarper(): Promise<void> {
 			} catch (e) {
 				console.error('Failed to load lint config:', e);
 			}
+		} else {
+			// Apply default configuration with AvoidCurses disabled
+			const defaultConfig = await linter.getDefaultLintConfig();
+			defaultConfig.AvoidCurses = false;
+			await linter.setLintConfig(defaultConfig);
 		}
 	})();
 
@@ -121,7 +126,8 @@ export async function addWordToDictionary(word: string): Promise<void> {
 	if (!words.includes(word)) {
 		words.push(word);
 		saveCustomWords(words);
-		await getLinter().importWords([word]);
+		// Re-import all words to ensure the linter has the complete dictionary
+		await getLinter().importWords(words);
 	}
 }
 

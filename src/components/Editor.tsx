@@ -4,13 +4,13 @@ import { EditorState } from '@codemirror/state';
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
 import type { ViewUpdate } from '@codemirror/view';
 import type { EditorProps } from '../types';
-import { 
-	issueField, 
+import {
+	issueField,
 	issueDecorationsField,
-	issueTheme, 
+	issueTheme,
 	darkEditorTheme,
-	issueClickHandler, 
-	updateIssuesEffect, 
+	issueClickHandler,
+	updateIssuesEffect,
 	setSelectedIssueEffect,
 	showContextMenuEffect,
 	contextMenuField,
@@ -142,7 +142,7 @@ const Editor: Component<EditorProps> = (props) => {
 
 	return (
 		<div class="h-full overflow-auto bg-[#1a1a1a]" onClick={handleContainerClick}>
-			<div class="h-full mx-auto max-w-[65ch] py-4 px-3">
+			<div class="h-full mx-auto max-w-[90ch] py-4 px-3 rounded-sm">
 				<div ref={editorRef} class="h-full text-base" />
 			</div>
 		</div>

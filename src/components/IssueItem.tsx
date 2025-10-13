@@ -30,9 +30,9 @@ const IssueItem: Component<IssueItemProps> = (props) => {
 				}
 			}}
 		>
-			<div class="flex items-start gap-2">
-				<span 
-					class={`inline-block w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${getSeverityColor()} transition-all duration-200`}
+			<div class="flex items-center gap-2">
+				<span
+					class={`inline-block w-2 h-2 rounded-full flex-shrink-0 ${getSeverityColor()} transition-all duration-200`}
 					classList={{ 'scale-125': props.isSelected }}
 				/>
 				<div class="flex-1 min-w-0">

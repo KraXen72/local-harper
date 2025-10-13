@@ -5,6 +5,13 @@ const TopBar: Component<TopBarProps> = (props) => {
 	return (
 		<div class="flex items-center justify-between px-3 py-2 border-b border-[var(--flexoki-ui)] bg-[var(--flexoki-ui)]">
 			<div class="flex items-center gap-2">
+				<div
+					class="w-2 h-2 rounded-full border transition-all duration-500"
+					classList={{
+						'bg-[var(--flexoki-green)] border-[var(--flexoki-green)]': props.isAnalyzing,
+						'bg-transparent border-gray-400': !props.isAnalyzing
+					}}
+				/>
 				<span class="text-sm font-medium text-[var(--flexoki-tx)]">
 					Issues:
 				</span>

@@ -209,15 +209,26 @@ function createButton(
 	text: string,
 	className: string,
 	onClick: (e: MouseEvent) => void,
-	additionalClasses = ''
+	additionalClasses = '',
+	tabIndex?: number
 ): HTMLButtonElement {
 	const btn = document.createElement('button');
 	btn.className = className + (additionalClasses ? ' ' + additionalClasses : '');
 	btn.textContent = text;
+	if (tabIndex !== undefined) {
+		btn.tabIndex = tabIndex;
+	}
 	btn.addEventListener('mousedown', (e) => {
 		e.preventDefault();
 		e.stopPropagation();
 		onClick(e);
+	});
+	btn.addEventListener('keydown', (e) => {
+		if (e.key === 'Enter' || e.key === ' ') {
+			e.preventDefault();
+			e.stopPropagation();
+			onClick(e as any);
+		}
 	});
 	return btn;
 }
@@ -257,6 +268,12 @@ function createContextMenuTooltip(view: EditorView, issueId: string, pos: number
 			} else if (tooltipRect.left < editorRect.left) {
 				dom.style.transform = `translateX(${editorRect.left - tooltipRect.left + margin}px)`;
 			}
+			
+			// Auto-focus the first suggestion button
+			const firstButton = dom.querySelector('button[tabindex="0"]') as HTMLButtonElement;
+			if (firstButton) {
+				firstButton.focus();
+			}
 		});
 	};
 	
@@ -268,12 +285,27 @@ function createContextMenuTooltip(view: EditorView, issueId: string, pos: number
 	titleText.textContent = issue.lint.message();
 	header.appendChild(titleText);
 	
-	const closeBtn = createButton('×', 'cm-context-menu-close', () => {
+	// Add info icon with rule name
+	const infoIcon = document.createElement('span');
+	infoIcon.className = 'cm-context-menu-info-icon';
+	infoIcon.textContent = 'ⓘ';
+	infoIcon.title = issue.lint.lint_kind();
+	header.appendChild(infoIcon);
+	
+	const closeBtn = document.createElement('button');
+	closeBtn.className = 'cm-context-menu-close';
+	closeBtn.textContent = '×';
+	closeBtn.tabIndex = -1; // Exclude from tab order completely
+	closeBtn.addEventListener('mousedown', (e) => {
+		e.preventDefault();
+		e.stopPropagation();
 		view.dispatch({ effects: showContextMenuEffect.of(null) });
 	});
 	header.appendChild(closeBtn);
 	
 	dom.appendChild(header);
+	
+	let tabIndexCounter = 0;
 	
 	// Suggestions
 	if (suggestions.length > 0) {
@@ -290,7 +322,8 @@ function createContextMenuTooltip(view: EditorView, issueId: string, pos: number
 		}
 		
 		suggestions.forEach(suggestion => {
-			const isRemove = suggestion.kind() !== SuggestionKind.Replace;
+			const kind = suggestion.kind();
+			const isRemove = kind === SuggestionKind.Remove;
 			const text = isRemove ? '(Remove)' : suggestion.get_replacement_text();
 			const additionalClass = isRemove ? 'cm-context-menu-button-secondary' : '';
 			
@@ -299,7 +332,7 @@ function createContextMenuTooltip(view: EditorView, issueId: string, pos: number
 					contextMenuActions.onApplySuggestion(issueId, suggestion);
 				}
 				view.dispatch({ effects: showContextMenuEffect.of(null) });
-			}, additionalClass);
+			}, additionalClass, tabIndexCounter++);
 			
 			container.appendChild(btn);
 		});
@@ -316,7 +349,7 @@ function createContextMenuTooltip(view: EditorView, issueId: string, pos: number
 				contextMenuActions.onAddToDictionary(issue.lint.get_problem_text());
 			}
 			view.dispatch({ effects: showContextMenuEffect.of(null) });
-		}, 'cm-context-menu-button-success');
+		}, 'cm-context-menu-button-success', tabIndexCounter++);
 		dom.appendChild(dictBtn);
 	}
 	
@@ -326,7 +359,7 @@ function createContextMenuTooltip(view: EditorView, issueId: string, pos: number
 			contextMenuActions.onIgnore(issueId);
 		}
 		view.dispatch({ effects: showContextMenuEffect.of(null) });
-	}, 'cm-context-menu-button-secondary');
+	}, 'cm-context-menu-button-secondary', tabIndexCounter++);
 	dom.appendChild(ignoreBtn);
 	
 	return { dom, mount };
@@ -413,6 +446,7 @@ const closeMenuOnEscape = EditorView.domEventHandlers({
 			const currentMenu = view.state.field(contextMenuField);
 			if (currentMenu) {
 				event.preventDefault();
+				// Keep lastClickedIssueId to prevent reopening until clicking elsewhere
 				view.dispatch({ effects: showContextMenuEffect.of(null) });
 				return true;
 			}
@@ -428,6 +462,7 @@ const closeMenuOnEscape = EditorView.domEventHandlers({
 				const rect = view.dom.getBoundingClientRect();
 				// Close if the position is outside the visible editor area
 				if (coords.top < rect.top || coords.bottom > rect.bottom) {
+					lastClickedIssueId = null;
 					view.dispatch({ effects: showContextMenuEffect.of(null) });
 				}
 			}

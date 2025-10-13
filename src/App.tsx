@@ -11,11 +11,12 @@ const App: Component = () => {
 	const [selectedIssueId, setSelectedIssueId] = createSignal<string | null>(null);
 	const [isInitialized, setIsInitialized] = createSignal(false);
 	const [scrollToIssue, setScrollToIssue] = createSignal<string | null>(null);
+	const [isAnalyzing, setIsAnalyzing] = createSignal(false);
 
 	// Debounce state - not reactive, just regular variables
 	let debounceTimeout: number | undefined;
 	let analysisGeneration = 0;
-	
+
 	// Set to store ignored issue IDs (persists until page refresh)
 	const ignoredIssues = new Set<string>();
 
@@ -39,6 +40,7 @@ const App: Component = () => {
 		// Handle empty text
 		if (!text.trim()) {
 			setIssues([]);
+			setIsAnalyzing(false);
 			return;
 		}
 
@@ -47,9 +49,10 @@ const App: Component = () => {
 
 		// Schedule new analysis
 		debounceTimeout = window.setTimeout(async () => {
+			setIsAnalyzing(true);
 			try {
 				const lints = await analyzeText(text);
-				
+
 				// Only update if this is still the latest analysis
 				if (currentGeneration === analysisGeneration) {
 					const harperIssues = transformLints(lints);
@@ -60,6 +63,10 @@ const App: Component = () => {
 			} catch (error) {
 				if (currentGeneration === analysisGeneration) {
 					console.error('Failed to analyze text:', error);
+				}
+			} finally {
+				if (currentGeneration === analysisGeneration) {
+					setIsAnalyzing(false);
 				}
 			}
 		}, 200);
@@ -88,11 +95,11 @@ const App: Component = () => {
 		try {
 			const linter = getLinter();
 			const newText = await linter.applySuggestion(content(), issue.lint, suggestion);
-			
+
 			// Immediately analyze the new text
 			const lints = await analyzeText(newText);
 			const harperIssues = transformLints(lints);
-			
+
 			// Batch both updates together so they happen atomically
 			batch(() => {
 				setSelectedIssueId(null);
@@ -116,7 +123,7 @@ const App: Component = () => {
 			console.error('Failed to add word to dictionary:', error);
 		}
 	};
-	
+
 	const handleIgnore = (issueId: string) => {
 		// Add to ignored set
 		ignoredIssues.add(issueId);
@@ -127,7 +134,7 @@ const App: Component = () => {
 
 	return (
 		<div class="h-screen flex flex-col bg-[var(--flexoki-bg)]">
-			<TopBar issueCount={issues().length} onCopy={handleCopy} />
+			<TopBar issueCount={issues().length} onCopy={handleCopy} isAnalyzing={isAnalyzing()} />
 
 			{!isInitialized() ? (
 				<div class="flex-1 flex items-center justify-center bg-[var(--flexoki-bg)]">
@@ -138,6 +145,18 @@ const App: Component = () => {
 				</div>
 			) : (
 				<div class="flex-1 flex overflow-hidden">
+					<Sidebar
+						issues={issues()}
+						selectedIssueId={selectedIssueId()}
+						onIssueSelect={(issueId) => {
+							setSelectedIssueId(issueId);
+							setScrollToIssue(issueId);
+							// Reset scroll trigger after a short delay
+							setTimeout(() => setScrollToIssue(null), 100);
+						}}
+						onApplySuggestion={handleApplySuggestion}
+						onAddToDictionary={handleAddToDictionary}
+					/>
 					<div class="flex-1">
 						<Editor
 							content={content()}
@@ -152,18 +171,6 @@ const App: Component = () => {
 						/>
 					</div>
 
-					<Sidebar
-						issues={issues()}
-						selectedIssueId={selectedIssueId()}
-						onIssueSelect={(issueId) => {
-							setSelectedIssueId(issueId);
-							setScrollToIssue(issueId);
-							// Reset scroll trigger after a short delay
-							setTimeout(() => setScrollToIssue(null), 100);
-						}}
-						onApplySuggestion={handleApplySuggestion}
-						onAddToDictionary={handleAddToDictionary}
-					/>
 				</div>
 			)}
 		</div>
