@@ -15,22 +15,25 @@ export const showContextMenuEffect = StateEffect.define<{ issueId: string; pos: 
 // Custom theme for underlines, highlights, and context menu using CodeMirror's baseTheme
 const issueTheme = EditorView.baseTheme({
 	'.cm-issue-error': {
-		textDecoration: 'underline',
+		textDecoration: 'underline solid',
 		textDecorationColor: 'rgb(239 68 68)', // red-500
 		textDecorationThickness: '2px',
 		textUnderlineOffset: '2px',
+		textDecorationSkipInk: 'auto',
 	},
 	'.cm-issue-warning': {
-		textDecoration: 'underline',
+		textDecoration: 'underline solid',
 		textDecorationColor: 'rgb(234 179 8)', // yellow-500
 		textDecorationThickness: '2px',
 		textUnderlineOffset: '2px',
+		textDecorationSkipInk: 'auto',
 	},
 	'.cm-issue-info': {
-		textDecoration: 'underline',
+		textDecoration: 'underline solid',
 		textDecorationColor: 'rgb(59 130 246)', // blue-500
 		textDecorationThickness: '2px',
 		textUnderlineOffset: '2px',
+		textDecorationSkipInk: 'auto',
 	},
 	'.cm-issue-selected': {
 		backgroundColor: 'rgba(191 219 254 / 0.5)', // blue-200 with 50% opacity
@@ -232,6 +235,11 @@ function createContextMenuTooltip(view: EditorView, issueId: string): TooltipVie
 	const dom = document.createElement('div');
 	dom.className = 'cm-context-menu';
 	
+	// Prevent clicks on the tooltip from propagating to the editor
+	dom.addEventListener('mousedown', (e) => {
+		e.stopPropagation();
+	});
+	
 	if (!issue) {
 		dom.textContent = 'Issue not found';
 		return { dom };
@@ -346,13 +354,13 @@ export function issueClickHandler() {
 					],
 				});
 			} else {
-				// Close context menu if clicking elsewhere
-				const currentMenu = view.state.field(contextMenuField);
-				if (currentMenu) {
-					view.dispatch({
-						effects: showContextMenuEffect.of(null),
-					});
-				}
+				// Close context menu and deselect issue if clicking elsewhere
+				view.dispatch({
+					effects: [
+						setSelectedIssueEffect.of(null),
+						showContextMenuEffect.of(null),
+					],
+				});
 			}
 
 			// Always return false to allow default cursor placement
@@ -361,7 +369,7 @@ export function issueClickHandler() {
 	});
 }
 
-// Extension to close menu on Escape
+// Extension to close menu on Escape and when scrolled off-screen
 const closeMenuOnEscape = EditorView.domEventHandlers({
 	keydown(event, view) {
 		if (event.key === 'Escape') {
@@ -370,6 +378,21 @@ const closeMenuOnEscape = EditorView.domEventHandlers({
 				event.preventDefault();
 				view.dispatch({ effects: showContextMenuEffect.of(null) });
 				return true;
+			}
+		}
+		return false;
+	},
+	scroll(event, view) {
+		const currentMenu = view.state.field(contextMenuField);
+		if (currentMenu) {
+			// Check if the menu position is still visible
+			const coords = view.coordsAtPos(currentMenu.pos);
+			if (coords) {
+				const rect = view.dom.getBoundingClientRect();
+				// Close if the position is outside the visible editor area
+				if (coords.top < rect.top || coords.bottom > rect.bottom) {
+					view.dispatch({ effects: showContextMenuEffect.of(null) });
+				}
 			}
 		}
 		return false;
