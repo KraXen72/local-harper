@@ -10,6 +10,11 @@ applyTo: "**"
 - ALWAYS attempt to solve things without any dirty hacks, tricks, workarounds, patches or similar stuff. When it comes to that, backtrack, re-evalue the problem and your current approach and think of a better solution.
 - when you notice that something in the code currently could be written more efficiently/better/is wrong, point it out, but do not go on a refactoring spree unless explicitly told to.
 
+## solidjs
+- Use SolidJS control flow components (`<Show>`, `<For>`, `<Switch>`) instead of ternary operators for conditional rendering
+- Use `classList` prop for conditional CSS classes instead of template string ternaries
+- Extract helper functions for complex logic instead of inline ternaries in JSX
+
 ## programming style
 - do not overcomplicate stuff. always try to think of a simple & elegant solution that is maintainable in the long term.
 - the best solution is usually the shortest one (in terms of LOC). Do not add arbitrary complexity.

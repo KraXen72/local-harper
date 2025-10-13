@@ -150,49 +150,49 @@ All persistence done via localStorage:
 - [x] Define component prop types
 
 ### Phase 3: Basic Layout
-- [ ] Create main layout in `App.tsx`
-  - [ ] Grid/flex layout: TopBar, Editor, Sidebar
-  - [ ] Responsive container with max-width for readability
-- [ ] Implement `TopBar.tsx` component
-  - [ ] Issue count display (left)
-  - [ ] Copy button (right)
-  - [ ] Basic styling with Tailwind
+- [x] Create main layout in `App.tsx`
+  - [x] Grid/flex layout: TopBar, Editor, Sidebar
+  - [x] Responsive container with max-width for readability
+- [x] Implement `TopBar.tsx` component
+  - [x] Issue count display (left)
+  - [x] Copy button (right)
+  - [x] Basic styling with Tailwind
 
 ### Phase 4: CodeMirror Integration
-- [ ] Create `Editor.tsx` component
-  - [ ] Initialize CodeMirror instance
-  - [ ] Set up basic extensions (lineWrapping, etc.)
-  - [ ] Create ref for EditorView
-  - [ ] Handle content changes → update signal
-  - [ ] Limit line length with CSS (`max-width: 65ch`)
-- [ ] Configure editor styling
-  - [ ] Full-screen height
-  - [ ] Centered content area
-  - [ ] Custom theme/styling
+- [x] Create `Editor.tsx` component
+  - [x] Initialize CodeMirror instance
+  - [x] Set up basic extensions (lineWrapping, etc.)
+  - [x] Create ref for EditorView
+  - [x] Handle content changes → update signal
+  - [x] Limit line length with CSS (`max-width: 65ch`)
+- [x] Configure editor styling
+  - [x] Full-screen height
+  - [x] Centered content area
+  - [x] Custom theme/styling
 
 ### Phase 5: Harper.js Service
-- [ ] Implement `harper-service.ts`
-  - [ ] Import `WorkerLinter`, `binary`, `Dialect` from 'harper.js'
-  - [ ] Create `initHarper()` async function
-    - [ ] Initialize `WorkerLinter` with binary and dialect
-    - [ ] Call `await linter.setup()` 
-    - [ ] Load custom words from localStorage and import via `importWords()`
-    - [ ] Load lint config from localStorage and set via `setLintConfig()`
-  - [ ] Create `getLinter()` function to access singleton
-  - [ ] Create `analyzeText(text: string)` function → returns `Promise<Lint[]>`
-    - [ ] Call `linter.lint(text)` with appropriate options
-    - [ ] Add debouncing (300-500ms)
-  - [ ] Create `transformLints(lints: Lint[])` function → returns `HarperIssue[]`
-    - [ ] Generate unique IDs for each issue
-    - [ ] Map `lint.lint_kind()` to `IssueSeverity`
-    - [ ] Wrap Lint instances with metadata: `{ id, lint, severity }`
-  - [ ] Export helper functions for config and dictionary management
-- [ ] Implement `dictionary-store.ts`
-  - [ ] `loadWords()` - load from localStorage
-  - [ ] `saveWords(words)` - save to localStorage  
-  - [ ] `addWord(word)` - add to storage and call `linter.importWords([word])`
-  - [ ] `getWords()` - returns array of custom words
-- [ ] Test Harper.js integration with sample text
+- [x] Implement `harper-service.ts`
+  - [x] Import `WorkerLinter`, `binary`, `Dialect` from 'harper.js'
+  - [x] Create `initHarper()` async function
+    - [x] Initialize `WorkerLinter` with binary and dialect
+    - [x] Call `await linter.setup()` 
+    - [x] Load custom words from localStorage and import via `importWords()`
+    - [x] Load lint config from localStorage and set via `setLintConfig()`
+  - [x] Create `getLinter()` function to access singleton
+  - [x] Create `analyzeText(text: string)` function → returns `Promise<Lint[]>`
+    - [x] Call `linter.lint(text)` with appropriate options
+    - [x] Add debouncing (300-500ms) [Note: debouncing done in App.tsx]
+  - [x] Create `transformLints(lints: Lint[])` function → returns `HarperIssue[]`
+    - [x] Generate unique IDs for each issue
+    - [x] Map `lint.lint_kind()` to `IssueSeverity`
+    - [x] Wrap Lint instances with metadata: `{ id, lint, severity }`
+  - [x] Export helper functions for config and dictionary management
+- [x] Implement dictionary management functions in `harper-service.ts`
+  - [x] `loadWords()` - load from localStorage (internal function)
+  - [x] `saveCustomWords(words)` - save to localStorage  
+  - [x] `addWordToDictionary(word)` - add to storage and call `linter.importWords([word])`
+  - [x] `getCustomWords()` - returns array of custom words
+- [x] Test Harper.js integration with sample text
 
 ### Phase 6: Issue Underlining
 - [ ] Create `editor-extensions.ts`
