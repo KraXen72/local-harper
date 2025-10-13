@@ -45,36 +45,61 @@ const issueTheme = EditorView.baseTheme({
 		},
 	},
 	'.cm-context-menu': {
-		backgroundColor: 'white',
-		border: '1px solid rgb(209 213 219)', // gray-300
+		backgroundColor: 'rgb(38 38 38)', // dark gray
+		border: '1px solid rgb(64 64 64)',
 		borderRadius: '0.375rem',
-		boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+		boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.2)',
 		padding: '0.5rem',
 		minWidth: '200px',
 		maxWidth: '300px',
 		fontFamily: 'system-ui, -apple-system, sans-serif',
+		position: 'relative',
 	},
 	'.cm-context-menu-title': {
 		fontSize: '0.875rem',
 		fontWeight: '600',
-		color: 'rgb(17 24 39)', // gray-900
+		color: 'rgb(229 229 229)', // light gray
 		marginBottom: '0.25rem',
 		lineHeight: '1.25rem',
+		paddingRight: '1.5rem', // space for close button
 	},
 	'.cm-context-menu-problem': {
 		fontSize: '0.75rem',
-		color: 'rgb(75 85 99)', // gray-600
+		color: 'rgb(163 163 163)',
 		fontFamily: 'monospace',
-		backgroundColor: 'rgb(243 244 246)', // gray-100
+		backgroundColor: 'rgb(64 64 64)',
 		padding: '0.125rem 0.375rem',
 		borderRadius: '0.25rem',
 		marginBottom: '0.5rem',
 		display: 'inline-block',
 	},
+	'.cm-context-menu-close': {
+		position: 'absolute',
+		top: '0.5rem',
+		right: '0.5rem',
+		width: '1.25rem',
+		height: '1.25rem',
+		padding: '0',
+		border: 'none',
+		backgroundColor: 'transparent',
+		color: 'rgb(163 163 163)',
+		cursor: 'pointer',
+		borderRadius: '0.25rem',
+		display: 'flex',
+		alignItems: 'center',
+		justifyContent: 'center',
+		fontSize: '1rem',
+		lineHeight: '1',
+		transition: 'all 150ms',
+		'&:hover': {
+			backgroundColor: 'rgb(64 64 64)',
+			color: 'rgb(229 229 229)',
+		},
+	},
 	'.cm-context-menu-section-title': {
 		fontSize: '0.75rem',
 		fontWeight: '600',
-		color: 'rgb(55 65 81)', // gray-700
+		color: 'rgb(163 163 163)',
 		marginTop: '0.5rem',
 		marginBottom: '0.375rem',
 	},
@@ -84,29 +109,30 @@ const issueTheme = EditorView.baseTheme({
 		textAlign: 'left',
 		padding: '0.375rem 0.625rem',
 		fontSize: '0.75rem',
-		backgroundColor: 'rgb(243 244 246)', // gray-100
-		border: '1px solid rgb(209 213 219)', // gray-300
+		backgroundColor: 'rgb(64 64 64)',
+		border: '1px solid rgb(82 82 82)',
 		borderRadius: '0.25rem',
 		marginBottom: '0.25rem',
 		cursor: 'pointer',
 		transition: 'all 150ms',
+		color: 'rgb(229 229 229)',
 		'&:hover': {
-			backgroundColor: 'rgb(229 231 235)', // gray-200
+			backgroundColor: 'rgb(82 82 82)',
 		},
 		'&:last-child': {
 			marginBottom: '0',
 		},
 	},
 	'.cm-context-menu-button-secondary': {
-		color: 'rgb(75 85 99)', // gray-600
+		color: 'rgb(163 163 163)',
 		fontStyle: 'italic',
 	},
 	'.cm-context-menu-button-success': {
-		backgroundColor: 'rgb(220 252 231)', // green-100
-		borderColor: 'rgb(187 247 208)', // green-200
-		color: 'rgb(22 101 52)', // green-800
+		backgroundColor: 'rgb(34 197 94)', // green-500
+		borderColor: 'rgb(34 197 94)',
+		color: 'rgb(255 255 255)',
 		'&:hover': {
-			backgroundColor: 'rgb(187 247 208)', // green-200
+			backgroundColor: 'rgb(22 163 74)', // green-600
 		},
 	},
 });
@@ -295,6 +321,17 @@ function createContextMenuTooltip(view: EditorView, issueId: string): TooltipVie
 	const suggestions = issue.lint.suggestions();
 	const isSpelling = issue.lint.lint_kind().toLowerCase().includes('spelling');
 	
+	// Close button
+	const closeBtn = document.createElement('button');
+	closeBtn.className = 'cm-context-menu-close';
+	closeBtn.innerHTML = '×';
+	closeBtn.addEventListener('mousedown', (e) => {
+		e.preventDefault();
+		e.stopPropagation();
+		view.dispatch({ effects: showContextMenuEffect.of(null) });
+	});
+	dom.appendChild(closeBtn);
+	
 	// Title
 	const title = document.createElement('div');
 	title.className = 'cm-context-menu-title';
@@ -444,4 +481,26 @@ const closeMenuOnEscape = EditorView.domEventHandlers({
 	},
 });
 
-export { issueTheme, contextMenuField, closeMenuOnEscape };
+// Dark editor theme
+const darkEditorTheme = EditorView.theme({
+	'&': {
+		color: '#e5e5e5',
+		backgroundColor: '#1a1a1a',
+	},
+	'.cm-content': {
+		caretColor: '#e5e5e5',
+	},
+	'&.cm-focused .cm-cursor': {
+		borderLeftColor: '#e5e5e5',
+	},
+	'&.cm-focused .cm-selectionBackground, ::selection': {
+		backgroundColor: '#3b82f6 !important', // blue-500 with opacity
+		opacity: 0.3,
+	},
+	'.cm-selectionBackground': {
+		backgroundColor: '#3b82f6 !important',
+		opacity: 0.3,
+	},
+}, { dark: true });
+
+export { issueTheme, darkEditorTheme, contextMenuField, closeMenuOnEscape };

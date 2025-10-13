@@ -13,6 +13,10 @@ const App: Component = () => {
 	const [isAnalyzing, setIsAnalyzing] = createSignal(false);
 	const [scrollToIssue, setScrollToIssue] = createSignal<string | null>(null);
 
+	// Debounce state - not reactive, just regular variables
+	let debounceTimeout: number | undefined;
+	let analysisGeneration = 0;
+
 	// Initialize Harper.js on mount
 	onMount(async () => {
 		try {
@@ -23,29 +27,50 @@ const App: Component = () => {
 		}
 	});
 
-	// Debounced text analysis
-	createEffect(() => {
-		const text = content();
+	// Manual debounced analysis function
+	const scheduleAnalysis = (text: string) => {
+		// Clear any pending analysis
+		if (debounceTimeout !== undefined) {
+			clearTimeout(debounceTimeout);
+		}
+		setIsAnalyzing(false);
 
-		if (!isInitialized() || !text.trim()) {
+		// Handle empty text
+		if (!text.trim()) {
 			setIssues([]);
 			return;
 		}
 
-		setIsAnalyzing(true);
-		const timeoutId = setTimeout(async () => {
+		// Increment generation to invalidate any in-flight analysis
+		const currentGeneration = ++analysisGeneration;
+
+		// Schedule new analysis
+		debounceTimeout = window.setTimeout(async () => {
+			setIsAnalyzing(true);
 			try {
 				const lints = await analyzeText(text);
-				const harperIssues = transformLints(lints);
-				setIssues(harperIssues);
+				
+				// Only update if this is still the latest analysis
+				if (currentGeneration === analysisGeneration) {
+					const harperIssues = transformLints(lints);
+					setIssues(harperIssues);
+					setIsAnalyzing(false);
+				}
 			} catch (error) {
-				console.error('Failed to analyze text:', error);
-			} finally {
-				setIsAnalyzing(false);
+				if (currentGeneration === analysisGeneration) {
+					console.error('Failed to analyze text:', error);
+					setIsAnalyzing(false);
+				}
 			}
 		}, 200);
+	};
 
-		return () => clearTimeout(timeoutId);
+	// Watch content changes and trigger analysis
+	createEffect(() => {
+		const text = content();
+		if (isInitialized()) {
+			scheduleAnalysis(text);
+		}
 	});
 
 	const handleCopy = async () => {
@@ -81,67 +106,15 @@ const App: Component = () => {
 		}
 	};
 
-	// Keyboard shortcuts
-	// onMount(() => {
-	// 	const handleKeyDown = (e: KeyboardEvent) => {
-	// 		// Only handle shortcuts when not in input/textarea (editor handles its own)
-	// 		if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
-	// 			return;
-	// 		}
-
-	// 		const currentIssues = issues();
-	// 		const currentSelectedId = selectedIssueId();
-
-	// 		// Navigate to next issue (n key)
-	// 		if (e.key === 'n' && !e.ctrlKey && !e.metaKey) {
-	// 			e.preventDefault();
-	// 			if (currentIssues.length === 0) return;
-
-	// 			const currentIndex = currentSelectedId
-	// 				? currentIssues.findIndex(i => i.id === currentSelectedId)
-	// 				: -1;
-	// 			const nextIndex = (currentIndex + 1) % currentIssues.length;
-	// 			setSelectedIssueId(currentIssues[nextIndex].id);
-	// 		}
-
-	// 		// Navigate to previous issue (p key)
-	// 		if (e.key === 'p' && !e.ctrlKey && !e.metaKey) {
-	// 			e.preventDefault();
-	// 			if (currentIssues.length === 0) return;
-
-	// 			const currentIndex = currentSelectedId
-	// 				? currentIssues.findIndex(i => i.id === currentSelectedId)
-	// 				: 0;
-	// 			const prevIndex = currentIndex === 0 ? currentIssues.length - 1 : currentIndex - 1;
-	// 			setSelectedIssueId(currentIssues[prevIndex].id);
-	// 		}
-
-	// 		// Apply first suggestion (Enter key)
-	// 		if (e.key === 'Enter' && !e.ctrlKey && !e.metaKey && currentSelectedId) {
-	// 			e.preventDefault();
-	// 			const issue = currentIssues.find(i => i.id === currentSelectedId);
-	// 			if (issue) {
-	// 				const suggestions = issue.lint.suggestions();
-	// 				if (suggestions.length > 0) {
-	// 					handleApplySuggestion(currentSelectedId, suggestions[0]);
-	// 				}
-	// 			}
-	// 		}
-	// 	};
-
-	// 	document.addEventListener('keydown', handleKeyDown);
-	// 	onCleanup(() => document.removeEventListener('keydown', handleKeyDown));
-	// });
-
 	return (
-		<div class="h-screen flex flex-col">
+		<div class="h-screen flex flex-col bg-[#1a1a1a]">
 			<TopBar issueCount={issues().length} onCopy={handleCopy} isAnalyzing={isAnalyzing()} />
 
 			{!isInitialized() ? (
-				<div class="flex-1 flex items-center justify-center bg-gray-50">
+				<div class="flex-1 flex items-center justify-center bg-[#1a1a1a]">
 					<div class="text-center">
-						<div class="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent mb-4" />
-						<p class="text-gray-600">Initializing Harper.js...</p>
+						<div class="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-500 border-r-transparent mb-4" />
+						<p class="text-gray-400">Initializing Harper.js...</p>
 					</div>
 				</div>
 			) : (

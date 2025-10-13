@@ -8,6 +8,7 @@ import {
 	issueField, 
 	issueDecorationsField,
 	issueTheme, 
+	darkEditorTheme,
 	issueClickHandler, 
 	updateIssuesEffect, 
 	setSelectedIssueEffect,
@@ -53,6 +54,7 @@ const Editor: Component<EditorProps> = (props) => {
 				issueDecorationsField,
 				contextMenuField,
 				issueTheme,
+				darkEditorTheme,
 				issueClickHandler(),
 				closeMenuOnEscape,
 				EditorView.updateListener.of((update: ViewUpdate) => {
@@ -132,7 +134,7 @@ const Editor: Component<EditorProps> = (props) => {
 	};
 
 	return (
-		<div class="h-full overflow-auto bg-white" onClick={handleContainerClick}>
+		<div class="h-full overflow-auto bg-[#1a1a1a]" onClick={handleContainerClick}>
 			<div class="h-full mx-auto max-w-[65ch] py-4 px-3">
 				<div ref={editorRef} class="h-full text-base" />
 			</div>

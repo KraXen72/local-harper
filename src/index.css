@@ -10,3 +10,9 @@
 		transform: translateY(0);
 	}
 }
+
+/* Dark mode */
+body {
+	background-color: #1a1a1a;
+	color: #e5e5e5;
+}

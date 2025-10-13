@@ -16,10 +16,10 @@ const IssueItem: Component<IssueItemProps> = (props) => {
 
 	return (
 		<div
-			class="p-3 rounded-md border cursor-pointer transition-all duration-150 ease-in-out focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-1"
+			class="p-3 rounded-md border cursor-pointer transition-all duration-150 ease-in-out focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-1 focus-within:ring-offset-[#1a1a1a]"
 			classList={{
-				'bg-blue-50 border-blue-400 shadow-sm': props.isSelected,
-				'bg-white border-gray-300 hover:border-gray-400 hover:shadow-sm': !props.isSelected,
+				'bg-blue-900/30 border-blue-600 shadow-sm': props.isSelected,
+				'bg-[#262626] border-gray-700 hover:border-gray-600 hover:shadow-sm': !props.isSelected,
 			}}
 			onClick={handleClick}
 			tabIndex={0}
@@ -36,8 +36,8 @@ const IssueItem: Component<IssueItemProps> = (props) => {
 					classList={{ 'scale-125': props.isSelected }}
 				/>
 				<div class="flex-1 min-w-0">
-					<p class="text-sm text-gray-900 leading-relaxed">{props.issue.lint.message()}</p>
-					<p class="text-xs text-gray-600 mt-1 font-mono bg-gray-100 px-1.5 py-0.5 rounded inline-block">
+					<p class="text-sm text-gray-200 leading-relaxed">{props.issue.lint.message()}</p>
+					<p class="text-xs text-gray-400 mt-1 font-mono bg-[#1a1a1a] px-1.5 py-0.5 rounded inline-block">
 						"{props.issue.lint.get_problem_text()}"
 					</p>
 				</div>
