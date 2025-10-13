@@ -19,6 +19,7 @@
     "vite-plugin-solid": "^2.11.8"
   },
   "dependencies": {
+    "@codemirror/autocomplete": "^6.19.0",
     "@codemirror/commands": "^6.9.0",
     "@codemirror/language": "^6.11.3",
     "@codemirror/lint": "^6.9.0",
