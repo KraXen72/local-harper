@@ -12,8 +12,9 @@ export const updateIssuesEffect = StateEffect.define<HarperIssue[]>();
 // Effect to update selected issue (kept for sidebar highlighting)
 export const setSelectedIssueEffect = StateEffect.define<string | null>();
 
-// Custom theme for underlines and highlights using CodeMirror's baseTheme
+// Custom theme for issue decorations using CodeMirror's baseTheme
 // Using Flexoki color scheme
+// Only contains styles that MUST be in baseTheme (CodeMirror decorations)
 const issueTheme = EditorView.baseTheme({
 	'.cm-issue-error': {
 		textDecoration: 'underline solid',
@@ -38,48 +39,6 @@ const issueTheme = EditorView.baseTheme({
 	},
 	'.cm-issue-selected': {
 		backgroundColor: 'rgba(58, 169, 159, 0.3)', // flexoki-cyan with opacity
-	},
-	'.cm-issue-tooltip': {
-		padding: '8px 12px',
-		borderRadius: '4px',
-		backgroundColor: '#1C1B1A',
-		border: '1px solid #282726',
-		color: '#CECDC3',
-		fontSize: '13px',
-		maxWidth: '400px',
-	},
-	'.cm-issue-tooltip-header': {
-		display: 'flex',
-		gap: '8px',
-		alignItems: 'center',
-		marginBottom: '4px',
-	},
-	'.cm-issue-tooltip-severity': {
-		padding: '2px 6px',
-		borderRadius: '3px',
-		fontSize: '11px',
-		fontWeight: 'bold',
-		textTransform: 'uppercase',
-	},
-	'.cm-issue-tooltip-severity-error': {
-		backgroundColor: 'rgba(209, 77, 65, 0.2)',
-		color: '#D14D41',
-	},
-	'.cm-issue-tooltip-severity-warning': {
-		backgroundColor: 'rgba(208, 162, 21, 0.2)',
-		color: '#D0A215',
-	},
-	'.cm-issue-tooltip-severity-info': {
-		backgroundColor: 'rgba(67, 133, 190, 0.2)',
-		color: '#4385BE',
-	},
-	'.cm-issue-tooltip-message': {
-		flex: 1,
-	},
-	'.cm-issue-tooltip-rule': {
-		fontSize: '11px',
-		color: '#878580',
-		fontStyle: 'italic',
 	},
 });
 
@@ -333,12 +292,29 @@ function createTooltipFromIssue(issue: HarperIssue): Tooltip {
 	const span = issue.lint.span();
 	const severityClass = getSeverityCssClass(issue.severity).replace('cm-issue-', '');
 	
+	// Check if ignore would be the only option
+	const suggestions = issue.lint.suggestions();
+	const isSpelling = issue.lint.lint_kind().toLowerCase().includes('spelling');
+	const hasActions = suggestions.length > 0 || isSpelling;
+	const showIgnoreButton = !hasActions;
+	
 	return {
 		pos: span.start,
 		end: span.end,
 		create: (view: EditorView) => {
 			const container = view.dom.ownerDocument.createElement('div');
-			const dispose = render(() => IssueTooltipWrapper({ issue, severityClass }), container);
+			const dispose = render(() => IssueTooltipWrapper({ 
+				issue, 
+				severityClass,
+				showIgnoreButton,
+				onIgnore: (showIgnoreButton && issueActions) 
+					? () => {
+						if (issueActions) {
+							issueActions.onIgnore(issue.id);
+						}
+					}
+					: undefined
+			}), container);
 			
 			return {
 				dom: container,
@@ -397,6 +373,26 @@ export const issueClickHandler = EditorView.domEventHandlers({
 		// Check if clicking on an issue
 		const issue = findIssueAtPos(view.state, pos);
 		if (issue) {
+			// Check if this issue has suggestions or dictionary option
+			const suggestions = issue.lint.suggestions();
+			const isSpelling = issue.lint.lint_kind().toLowerCase().includes('spelling');
+			const hasActions = suggestions.length > 0 || isSpelling;
+			
+			if (!hasActions) {
+				// Only "Ignore" would be available - don't trigger autocomplete
+				// The tooltip with ignore button will already be visible from cursor position
+				console.log('Click on issue with no actions - showing tooltip with ignore button');
+				
+				// Just select the issue and position cursor
+				event.preventDefault();
+				view.dispatch({
+					selection: { anchor: pos },
+					effects: setSelectedIssueEffect.of(issue.id),
+				});
+				
+				return true;
+			}
+			
 			console.log('Click on issue detected, triggering autocomplete');
 			
 			// Prevent default to handle cursor positioning ourselves
