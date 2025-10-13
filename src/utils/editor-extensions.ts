@@ -332,18 +332,16 @@ export function issueClickHandler() {
 			const pos = view.posAtCoords({ x: event.clientX, y: event.clientY });
 			if (pos === null) return false;
 
-			// Check if clicking on an issue
-			const decorations = view.state.field(issueDecorationsField).iter(pos);
+			// Check if clicking on an issue - need to verify position is within the decoration range
+			const decorations = view.state.field(issueDecorationsField);
 			let foundIssueId: string | null = null;
 			
-			while (decorations.value !== null) {
-				const spec = decorations.value.spec;
-				if (spec.attributes && spec.attributes['data-issue-id']) {
-					foundIssueId = spec.attributes['data-issue-id'] as string;
-					break;
+			decorations.between(pos, pos, (from, to, value) => {
+				if (value.spec.attributes && value.spec.attributes['data-issue-id']) {
+					foundIssueId = value.spec.attributes['data-issue-id'] as string;
+					return false; // Stop iteration
 				}
-				decorations.next();
-			}
+			});
 
 			if (foundIssueId) {
 				// Show context menu and select issue
