@@ -15,6 +15,9 @@ const App: Component = () => {
 	// Debounce state - not reactive, just regular variables
 	let debounceTimeout: number | undefined;
 	let analysisGeneration = 0;
+	
+	// Set to store ignored issue IDs (persists until page refresh)
+	const ignoredIssues = new Set<string>();
 
 	// Initialize Harper.js on mount
 	onMount(async () => {
@@ -50,7 +53,9 @@ const App: Component = () => {
 				// Only update if this is still the latest analysis
 				if (currentGeneration === analysisGeneration) {
 					const harperIssues = transformLints(lints);
-					setIssues(harperIssues);
+					// Filter out ignored issues
+					const filteredIssues = harperIssues.filter(issue => !ignoredIssues.has(issue.id));
+					setIssues(filteredIssues);
 				}
 			} catch (error) {
 				if (currentGeneration === analysisGeneration) {
@@ -105,10 +110,19 @@ const App: Component = () => {
 			// Re-analyze to update issues
 			const lints = await analyzeText(content());
 			const harperIssues = transformLints(lints);
-			setIssues(harperIssues);
+			const filteredIssues = harperIssues.filter(issue => !ignoredIssues.has(issue.id));
+			setIssues(filteredIssues);
 		} catch (error) {
 			console.error('Failed to add word to dictionary:', error);
 		}
+	};
+	
+	const handleIgnore = (issueId: string) => {
+		// Add to ignored set
+		ignoredIssues.add(issueId);
+		// Remove from current issues
+		setIssues(issues().filter(i => i.id !== issueId));
+		setSelectedIssueId(null);
 	};
 
 	return (
@@ -133,6 +147,7 @@ const App: Component = () => {
 							onIssueSelect={setSelectedIssueId}
 							onApplySuggestion={handleApplySuggestion}
 							onAddToDictionary={handleAddToDictionary}
+							onIgnore={handleIgnore}
 							scrollToIssue={scrollToIssue()}
 						/>
 					</div>

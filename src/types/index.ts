@@ -44,6 +44,7 @@ export interface EditorProps {
 	onIssueSelect: (issueId: string | null) => void;
 	onApplySuggestion: (issueId: string, suggestion: Suggestion) => void;
 	onAddToDictionary: (word: string) => void;
+	onIgnore: (issueId: string) => void;
 	scrollToIssue?: string | null; // Issue ID to scroll to and show context menu
 }
 

@@ -33,9 +33,8 @@ const Editor: Component<EditorProps> = (props) => {
 			onAddToDictionary: (word) => {
 				props.onAddToDictionary(word);
 			},
-			onIgnore: () => {
-				// Just deselect for now
-				props.onIssueSelect(null);
+			onIgnore: (issueId) => {
+				props.onIgnore(issueId);
 			},
 		});
 
@@ -78,39 +77,41 @@ const Editor: Component<EditorProps> = (props) => {
 		}
 	});
 
-	// Combined effect to handle content and issues updates together
-	// This prevents decorations from flashing when both change simultaneously
+	// Track previous values to detect real changes
+	let prevIssues = props.issues;
+	let prevSelectedId = props.selectedIssueId;
+
+	// Update editor content when prop changes
 	createEffect(() => {
-		if (!view) return;
-		
-		const currentContent = view.state.doc.toString();
-		const newContent = props.content;
-		const newIssues = props.issues;
-		const newSelectedId = props.selectedIssueId;
-		
-		const contentChanged = currentContent !== newContent;
-		
-		// If content changed, dispatch both content and issues in same transaction
-		if (contentChanged) {
+		if (view && view.state.doc.toString() !== props.content) {
 			view.dispatch({
 				changes: {
 					from: 0,
 					to: view.state.doc.length,
-					insert: newContent,
+					insert: props.content,
 				},
-				effects: [
-					updateIssuesEffect.of(newIssues),
-					setSelectedIssueEffect.of(newSelectedId),
-				],
 			});
 		}
-		// If only issues or selection changed, dispatch those effects
-		else {
+	});
+
+	// Update issue decorations only when issues actually change
+	createEffect(() => {
+		const newIssues = props.issues;
+		if (view && newIssues !== prevIssues) {
+			prevIssues = newIssues;
 			view.dispatch({
-				effects: [
-					updateIssuesEffect.of(newIssues),
-					setSelectedIssueEffect.of(newSelectedId),
-				],
+				effects: updateIssuesEffect.of(newIssues),
+			});
+		}
+	});
+
+	// Update selected issue only when it actually changes
+	createEffect(() => {
+		const newSelectedId = props.selectedIssueId;
+		if (view && newSelectedId !== prevSelectedId) {
+			prevSelectedId = newSelectedId;
+			view.dispatch({
+				effects: setSelectedIssueEffect.of(newSelectedId),
 			});
 		}
 	});

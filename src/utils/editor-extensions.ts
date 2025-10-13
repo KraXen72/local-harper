@@ -74,35 +74,21 @@ export const issueDecorationsField = StateField.define<DecorationSet>({
 		return Decoration.none;
 	},
 	update(decorations, tr) {
-		// Check for effects first
-		let hasNewIssues = false;
-		let hasSelectionChange = false;
+		// Always map decorations through document changes first to keep positions in sync
+		decorations = decorations.map(tr.changes);
 
-		for (const effect of tr.effects) {
-			if (effect.is(updateIssuesEffect)) {
-				hasNewIssues = true;
-			}
-			if (effect.is(setSelectedIssueEffect)) {
-				hasSelectionChange = true;
-			}
-		}
-
+		const hasNewIssues = tr.effects.some(e => e.is(updateIssuesEffect));
+		const hasSelectionChange = tr.effects.some(e => e.is(setSelectedIssueEffect));
 		const issueState = tr.state.field(issueField);
 
-		// If we have new issues, rebuild decorations from scratch
-		// Don't bother mapping old decorations if we're rebuilding anyway
 		if (hasNewIssues) {
-			decorations = buildDecorations(issueState.issues, issueState.selectedId);
+			// Rebuild all decorations when issues change
+			return buildDecorations(issueState.issues, issueState.selectedId);
 		}
-		// If only selection changed, update classes on existing (mapped) decorations
-		else if (hasSelectionChange) {
-			// Map first, then update selection
-			decorations = decorations.map(tr.changes);
-			decorations = updateDecorationsForSelection(decorations, issueState.selectedId);
-		}
-		// Otherwise, just map decorations through document changes
-		else if (tr.docChanged) {
-			decorations = decorations.map(tr.changes);
+		
+		if (hasSelectionChange) {
+			// Update selection highlighting on existing (already mapped) decorations
+			return updateDecorationsForSelection(decorations, issueState.selectedId);
 		}
 
 		return decorations;
@@ -202,6 +188,9 @@ const contextMenuField = StateField.define<{ issueId: string; pos: number } | nu
 	}),
 });
 
+// Track the last clicked issue to prevent immediate reopening
+let lastClickedIssueId: string | null = null;
+
 // Context menu actions interface
 interface ContextMenuActions {
 	onApplySuggestion: (issueId: string, suggestion: Suggestion) => void;
@@ -213,6 +202,24 @@ let contextMenuActions: ContextMenuActions | null = null;
 
 export function setContextMenuActions(actions: ContextMenuActions) {
 	contextMenuActions = actions;
+}
+
+// Helper to create a button with common styling and click handling
+function createButton(
+	text: string,
+	className: string,
+	onClick: (e: MouseEvent) => void,
+	additionalClasses = ''
+): HTMLButtonElement {
+	const btn = document.createElement('button');
+	btn.className = className + (additionalClasses ? ' ' + additionalClasses : '');
+	btn.textContent = text;
+	btn.addEventListener('mousedown', (e) => {
+		e.preventDefault();
+		e.stopPropagation();
+		onClick(e);
+	});
+	return btn;
 }
 
 function createContextMenuTooltip(view: EditorView, issueId: string, pos: number): TooltipView {
@@ -235,24 +242,20 @@ function createContextMenuTooltip(view: EditorView, issueId: string, pos: number
 	const suggestions = issue.lint.suggestions();
 	const isSpelling = issue.lint.lint_kind().toLowerCase().includes('spelling');
 	
-	// Position adjustment after DOM is mounted
+	// Adjust tooltip position horizontally if it overflows editor bounds
 	const mount = () => {
 		requestAnimationFrame(() => {
 			const coords = view.coordsAtPos(pos);
 			if (!coords) return;
 			
-			const rect = dom.getBoundingClientRect();
+			const tooltipRect = dom.getBoundingClientRect();
 			const editorRect = view.dom.getBoundingClientRect();
+			const margin = 10;
 			
-			// Check if tooltip overflows right edge
-			if (rect.right > editorRect.right) {
-				const overflow = rect.right - editorRect.right;
-				dom.style.transform = `translateX(-${overflow + 10}px)`;
-			}
-			// Check if tooltip overflows left edge
-			else if (rect.left < editorRect.left) {
-				const overflow = editorRect.left - rect.left;
-				dom.style.transform = `translateX(${overflow + 10}px)`;
+			if (tooltipRect.right > editorRect.right) {
+				dom.style.transform = `translateX(-${tooltipRect.right - editorRect.right + margin}px)`;
+			} else if (tooltipRect.left < editorRect.left) {
+				dom.style.transform = `translateX(${editorRect.left - tooltipRect.left + margin}px)`;
 			}
 		});
 	};
@@ -265,12 +268,7 @@ function createContextMenuTooltip(view: EditorView, issueId: string, pos: number
 	titleText.textContent = issue.lint.message();
 	header.appendChild(titleText);
 	
-	const closeBtn = document.createElement('button');
-	closeBtn.className = 'cm-context-menu-close';
-	closeBtn.innerHTML = '×';
-	closeBtn.addEventListener('mousedown', (e) => {
-		e.preventDefault();
-		e.stopPropagation();
+	const closeBtn = createButton('×', 'cm-context-menu-close', () => {
 		view.dispatch({ effects: showContextMenuEffect.of(null) });
 	});
 	header.appendChild(closeBtn);
@@ -284,59 +282,51 @@ function createContextMenuTooltip(view: EditorView, issueId: string, pos: number
 		suggestionsTitle.textContent = 'Suggestions:';
 		dom.appendChild(suggestionsTitle);
 		
+		// Use grid layout for more than 4 suggestions
+		const useGrid = suggestions.length > 4;
+		const container = useGrid ? document.createElement('div') : dom;
+		if (useGrid) {
+			container.className = 'cm-context-menu-suggestions-grid';
+		}
+		
 		suggestions.forEach(suggestion => {
-			const btn = document.createElement('button');
-			btn.className = 'cm-context-menu-button';
+			const isRemove = suggestion.kind() !== SuggestionKind.Replace;
+			const text = isRemove ? '(Remove)' : suggestion.get_replacement_text();
+			const additionalClass = isRemove ? 'cm-context-menu-button-secondary' : '';
 			
-			if (suggestion.kind() === SuggestionKind.Replace) {
-				btn.textContent = suggestion.get_replacement_text();
-			} else {
-				btn.textContent = '(Remove)';
-				btn.classList.add('cm-context-menu-button-secondary');
-			}
-			
-			btn.addEventListener('mousedown', (e) => {
-				e.preventDefault();
-				e.stopPropagation();
+			const btn = createButton(text, 'cm-context-menu-button', () => {
 				if (contextMenuActions) {
 					contextMenuActions.onApplySuggestion(issueId, suggestion);
 				}
-				// Close menu
 				view.dispatch({ effects: showContextMenuEffect.of(null) });
-			});
+			}, additionalClass);
 			
-			dom.appendChild(btn);
+			container.appendChild(btn);
 		});
+		
+		if (useGrid) {
+			dom.appendChild(container);
+		}
 	}
 	
 	// Add to dictionary (for spelling errors)
 	if (isSpelling) {
-		const dictBtn = document.createElement('button');
-		dictBtn.className = 'cm-context-menu-button cm-context-menu-button-success';
-		dictBtn.textContent = 'Add to Dictionary';
-		dictBtn.addEventListener('mousedown', (e) => {
-			e.preventDefault();
-			e.stopPropagation();
+		const dictBtn = createButton('Add to Dictionary', 'cm-context-menu-button', () => {
 			if (contextMenuActions) {
 				contextMenuActions.onAddToDictionary(issue.lint.get_problem_text());
 			}
 			view.dispatch({ effects: showContextMenuEffect.of(null) });
-		});
+		}, 'cm-context-menu-button-success');
 		dom.appendChild(dictBtn);
 	}
 	
 	// Ignore button
-	const ignoreBtn = document.createElement('button');
-	ignoreBtn.className = 'cm-context-menu-button cm-context-menu-button-secondary';
-	ignoreBtn.textContent = 'Ignore';
-	ignoreBtn.addEventListener('mousedown', (e) => {
-		e.preventDefault();
-		e.stopPropagation();
+	const ignoreBtn = createButton('Ignore', 'cm-context-menu-button', () => {
 		if (contextMenuActions) {
 			contextMenuActions.onIgnore(issueId);
 		}
 		view.dispatch({ effects: showContextMenuEffect.of(null) });
-	});
+	}, 'cm-context-menu-button-secondary');
 	dom.appendChild(ignoreBtn);
 	
 	return { dom, mount };
@@ -361,15 +351,29 @@ export function issueClickHandler() {
 			});
 
 			if (foundIssueId) {
-				// Show context menu and select issue
-				view.dispatch({
-					effects: [
-						setSelectedIssueEffect.of(foundIssueId),
-						showContextMenuEffect.of({ issueId: foundIssueId, pos }),
-					],
-				});
+				// If clicking the same issue that was last clicked
+				if (foundIssueId === lastClickedIssueId) {
+					// Close the menu and keep the lastClickedIssueId to prevent reopening
+					view.dispatch({
+						effects: [
+							setSelectedIssueEffect.of(null),
+							showContextMenuEffect.of(null),
+						],
+					});
+					// Don't clear lastClickedIssueId - this prevents immediate reopening
+				} else {
+					// Different issue - show menu and update tracking
+					lastClickedIssueId = foundIssueId;
+					view.dispatch({
+						effects: [
+							setSelectedIssueEffect.of(foundIssueId),
+							showContextMenuEffect.of({ issueId: foundIssueId, pos }),
+						],
+					});
+				}
 			} else {
-				// Close context menu and deselect issue if clicking elsewhere
+				// Clicking elsewhere - clear tracking to allow reopening
+				lastClickedIssueId = null;
 				view.dispatch({
 					effects: [
 						setSelectedIssueEffect.of(null),
@@ -385,9 +389,10 @@ export function issueClickHandler() {
 			// Prevent default context menu
 			event.preventDefault();
 			
-			// Close Harper context menu if open
+			// Close Harper context menu if open and clear tracking
 			const currentMenu = view.state.field(contextMenuField);
 			if (currentMenu) {
+				lastClickedIssueId = null;
 				view.dispatch({
 					effects: [
 						setSelectedIssueEffect.of(null),

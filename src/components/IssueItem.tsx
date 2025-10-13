@@ -37,9 +37,6 @@ const IssueItem: Component<IssueItemProps> = (props) => {
 				/>
 				<div class="flex-1 min-w-0">
 					<p class="text-sm text-[var(--flexoki-tx)] leading-relaxed">{props.issue.lint.message()}</p>
-					<p class="text-xs text-[var(--flexoki-tx-2)] mt-1 font-mono bg-[var(--flexoki-bg)] px-1.5 py-0.5 rounded inline-block">
-						"{props.issue.lint.get_problem_text()}"
-					</p>
 				</div>
 			</div>
 		</div>
