@@ -124,8 +124,15 @@ const Editor: Component<EditorProps> = (props) => {
 		}
 	});
 
+	const handleContainerClick = (e: MouseEvent) => {
+		// If clicking in the empty space (not on the editor), focus the editor
+		if (view && e.target !== editorRef && !(editorRef.contains(e.target as Node))) {
+			view.focus();
+		}
+	};
+
 	return (
-		<div class="h-full overflow-auto bg-white">
+		<div class="h-full overflow-auto bg-white" onClick={handleContainerClick}>
 			<div class="h-full mx-auto max-w-[65ch] py-4 px-3">
 				<div ref={editorRef} class="h-full text-base" />
 			</div>
