@@ -4,9 +4,9 @@ import type { IssueItemProps } from '../types';
 const IssueItem: Component<IssueItemProps> = (props) => {
 	const getSeverityColor = () => {
 		switch (props.issue.severity) {
-			case 'error': return 'bg-red-500';
-			case 'warning': return 'bg-yellow-500';
-			default: return 'bg-blue-500';
+			case 'error': return 'bg-[var(--flexoki-red)]';
+			case 'warning': return 'bg-[var(--flexoki-yellow)]';
+			default: return 'bg-[var(--flexoki-cyan)]';
 		}
 	};
 
@@ -16,10 +16,10 @@ const IssueItem: Component<IssueItemProps> = (props) => {
 
 	return (
 		<div
-			class="p-3 rounded-md border cursor-pointer transition-all duration-150 ease-in-out focus-within:ring-2 focus-within:ring-blue-500 focus-within:ring-offset-1 focus-within:ring-offset-[#1a1a1a]"
+			class="p-3 rounded-md border cursor-pointer transition-all duration-150 ease-in-out focus-within:ring-2 focus-within:ring-[var(--flexoki-cyan)] focus-within:ring-offset-1 focus-within:ring-offset-[var(--flexoki-bg)]"
 			classList={{
-				'bg-blue-900/30 border-blue-600 shadow-sm': props.isSelected,
-				'bg-[#262626] border-gray-700 hover:border-gray-600 hover:shadow-sm': !props.isSelected,
+				'bg-[var(--flexoki-cyan)]/20 border-[var(--flexoki-cyan)] shadow-sm': props.isSelected,
+				'bg-[var(--flexoki-ui)] border-[var(--flexoki-ui-2)] hover:border-[var(--flexoki-ui-3)] hover:shadow-sm': !props.isSelected,
 			}}
 			onClick={handleClick}
 			tabIndex={0}
@@ -36,8 +36,8 @@ const IssueItem: Component<IssueItemProps> = (props) => {
 					classList={{ 'scale-125': props.isSelected }}
 				/>
 				<div class="flex-1 min-w-0">
-					<p class="text-sm text-gray-200 leading-relaxed">{props.issue.lint.message()}</p>
-					<p class="text-xs text-gray-400 mt-1 font-mono bg-[#1a1a1a] px-1.5 py-0.5 rounded inline-block">
+					<p class="text-sm text-[var(--flexoki-tx)] leading-relaxed">{props.issue.lint.message()}</p>
+					<p class="text-xs text-[var(--flexoki-tx-2)] mt-1 font-mono bg-[var(--flexoki-bg)] px-1.5 py-0.5 rounded inline-block">
 						"{props.issue.lint.get_problem_text()}"
 					</p>
 				</div>

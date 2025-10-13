@@ -13,30 +13,31 @@ export const setSelectedIssueEffect = StateEffect.define<string | null>();
 export const showContextMenuEffect = StateEffect.define<{ issueId: string; pos: number } | null>();
 
 // Custom theme for underlines, highlights, and context menu using CodeMirror's baseTheme
+// Using Flexoki color scheme
 const issueTheme = EditorView.baseTheme({
 	'.cm-issue-error': {
 		textDecoration: 'underline solid',
-		textDecorationColor: 'rgb(239 68 68)', // red-500
+		textDecorationColor: '#D14D41', // flexoki-red
 		textDecorationThickness: '2px',
 		textUnderlineOffset: '2px',
 		textDecorationSkipInk: 'auto',
 	},
 	'.cm-issue-warning': {
 		textDecoration: 'underline solid',
-		textDecorationColor: 'rgb(234 179 8)', // yellow-500
+		textDecorationColor: '#D0A215', // flexoki-yellow
 		textDecorationThickness: '2px',
 		textUnderlineOffset: '2px',
 		textDecorationSkipInk: 'auto',
 	},
 	'.cm-issue-info': {
 		textDecoration: 'underline solid',
-		textDecorationColor: 'rgb(59 130 246)', // blue-500
+		textDecorationColor: '#4385BE', // flexoki-blue
 		textDecorationThickness: '2px',
 		textUnderlineOffset: '2px',
 		textDecorationSkipInk: 'auto',
 	},
 	'.cm-issue-selected': {
-		backgroundColor: 'rgba(191 219 254 / 0.5)', // blue-200 with 50% opacity
+		backgroundColor: 'rgba(58, 169, 159, 0.3)', // flexoki-cyan with opacity
 	},
 	'.cm-tooltip.cm-tooltip-above': {
 		'&.cm-tooltip-cursor': {
@@ -45,94 +46,102 @@ const issueTheme = EditorView.baseTheme({
 		},
 	},
 	'.cm-context-menu': {
-		backgroundColor: 'rgb(38 38 38)', // dark gray
-		border: '1px solid rgb(64 64 64)',
-		borderRadius: '0.375rem',
-		boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.2)',
-		padding: '0.5rem',
+		backgroundColor: '#0d1117', // flexoki-bg (darker for contrast)
+		border: '1px solid #282726', // flexoki-ui
+		borderRadius: '8px',
+		boxShadow: '0 4px 12px rgba(1, 4, 9, 0.85)',
+		padding: '8px',
 		minWidth: '200px',
-		maxWidth: '300px',
-		fontFamily: 'system-ui, -apple-system, sans-serif',
+		maxWidth: '420px',
+		maxHeight: '400px',
+		overflowY: 'auto',
+		fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif',
 		position: 'relative',
+		animation: 'fadeIn 100ms ease-in-out forwards',
 	},
 	'.cm-context-menu-title': {
-		fontSize: '0.875rem',
+		display: 'flex',
+		alignItems: 'center',
+		justifyContent: 'space-between',
+		fontSize: '14px',
 		fontWeight: '600',
-		color: 'rgb(229 229 229)', // light gray
-		marginBottom: '0.25rem',
-		lineHeight: '1.25rem',
-		paddingRight: '1.5rem', // space for close button
+		lineHeight: '20px',
+		color: '#CECDC3', // flexoki-tx
+		paddingBottom: '4px',
+		marginBottom: '4px',
+		borderBottom: '2px solid #879A39', // flexoki-green
+		userSelect: 'none',
 	},
 	'.cm-context-menu-problem': {
-		fontSize: '0.75rem',
-		color: 'rgb(163 163 163)',
+		fontSize: '14px',
+		lineHeight: '20px',
+		color: '#878580', // flexoki-tx-2
+		backgroundColor: '#282726', // flexoki-ui
+		padding: '0.125rem 0.25rem',
+		borderRadius: '4px',
 		fontFamily: 'monospace',
-		backgroundColor: 'rgb(64 64 64)',
-		padding: '0.125rem 0.375rem',
-		borderRadius: '0.25rem',
-		marginBottom: '0.5rem',
+		marginTop: '4px',
+		marginBottom: '8px',
 		display: 'inline-block',
 	},
 	'.cm-context-menu-close': {
-		position: 'absolute',
-		top: '0.5rem',
-		right: '0.5rem',
-		width: '1.25rem',
-		height: '1.25rem',
-		padding: '0',
-		border: 'none',
 		backgroundColor: 'transparent',
-		color: 'rgb(163 163 163)',
+		border: 'none',
 		cursor: 'pointer',
-		borderRadius: '0.25rem',
-		display: 'flex',
-		alignItems: 'center',
-		justifyContent: 'center',
-		fontSize: '1rem',
+		fontSize: '20px',
 		lineHeight: '1',
-		transition: 'all 150ms',
+		color: '#878580', // flexoki-tx-2
+		padding: '0 4px',
+		transition: 'color 120ms ease',
 		'&:hover': {
-			backgroundColor: 'rgb(64 64 64)',
-			color: 'rgb(229 229 229)',
+			color: '#CECDC3', // flexoki-tx
 		},
 	},
 	'.cm-context-menu-section-title': {
-		fontSize: '0.75rem',
+		fontSize: '13px',
 		fontWeight: '600',
-		color: 'rgb(163 163 163)',
-		marginTop: '0.5rem',
-		marginBottom: '0.375rem',
+		color: '#878580', // flexoki-tx-2
+		marginTop: '8px',
+		marginBottom: '6px',
 	},
 	'.cm-context-menu-button': {
-		display: 'block',
+		display: 'inline-flex',
+		alignItems: 'center',
+		justifyContent: 'center',
+		gap: '4px',
 		width: '100%',
-		textAlign: 'left',
-		padding: '0.375rem 0.625rem',
-		fontSize: '0.75rem',
-		backgroundColor: 'rgb(64 64 64)',
-		border: '1px solid rgb(82 82 82)',
-		borderRadius: '0.25rem',
-		marginBottom: '0.25rem',
 		cursor: 'pointer',
-		transition: 'all 150ms',
-		color: 'rgb(229 229 229)',
+		border: 'none',
+		borderRadius: '6px',
+		padding: '3px 6px',
+		minHeight: '28px',
+		fontSize: '13px',
+		fontWeight: '600',
+		lineHeight: '20px',
+		backgroundColor: '#282726', // flexoki-ui
+		color: '#CECDC3', // flexoki-tx
+		marginBottom: '6px',
+		transition: 'filter 120ms ease, transform 80ms ease',
 		'&:hover': {
-			backgroundColor: 'rgb(82 82 82)',
+			filter: 'brightness(1.15)',
+		},
+		'&:active': {
+			transform: 'scale(0.97)',
 		},
 		'&:last-child': {
 			marginBottom: '0',
 		},
 	},
 	'.cm-context-menu-button-secondary': {
-		color: 'rgb(163 163 163)',
-		fontStyle: 'italic',
+		background: '#343331', // flexoki-ui-2
+		color: '#878580', // flexoki-tx-2
+		fontWeight: 'lighter',
 	},
 	'.cm-context-menu-button-success': {
-		backgroundColor: 'rgb(34 197 94)', // green-500
-		borderColor: 'rgb(34 197 94)',
-		color: 'rgb(255 255 255)',
+		backgroundColor: '#879A39', // flexoki-green
+		color: '#ffffff',
 		'&:hover': {
-			backgroundColor: 'rgb(22 163 74)', // green-600
+			filter: 'brightness(0.92)',
 		},
 	},
 });
@@ -321,7 +330,14 @@ function createContextMenuTooltip(view: EditorView, issueId: string): TooltipVie
 	const suggestions = issue.lint.suggestions();
 	const isSpelling = issue.lint.lint_kind().toLowerCase().includes('spelling');
 	
-	// Close button
+	// Header container with title and close button
+	const header = document.createElement('div');
+	header.className = 'cm-context-menu-title';
+	
+	const titleText = document.createElement('span');
+	titleText.textContent = issue.lint.message();
+	header.appendChild(titleText);
+	
 	const closeBtn = document.createElement('button');
 	closeBtn.className = 'cm-context-menu-close';
 	closeBtn.innerHTML = '×';
@@ -330,13 +346,9 @@ function createContextMenuTooltip(view: EditorView, issueId: string): TooltipVie
 		e.stopPropagation();
 		view.dispatch({ effects: showContextMenuEffect.of(null) });
 	});
-	dom.appendChild(closeBtn);
+	header.appendChild(closeBtn);
 	
-	// Title
-	const title = document.createElement('div');
-	title.className = 'cm-context-menu-title';
-	title.textContent = issue.lint.message();
-	dom.appendChild(title);
+	dom.appendChild(header);
 	
 	// Problem text
 	const problemText = document.createElement('div');
@@ -481,25 +493,34 @@ const closeMenuOnEscape = EditorView.domEventHandlers({
 	},
 });
 
-// Dark editor theme
+// Dark editor theme with Flexoki colors
 const darkEditorTheme = EditorView.theme({
 	'&': {
-		color: '#e5e5e5',
-		backgroundColor: '#1a1a1a',
+		color: '#CECDC3', // flexoki-tx
+		backgroundColor: '#100F0F', // flexoki-bg
 	},
 	'.cm-content': {
-		caretColor: '#e5e5e5',
+		caretColor: '#CECDC3',
 	},
 	'&.cm-focused .cm-cursor': {
-		borderLeftColor: '#e5e5e5',
+		borderLeftColor: '#CECDC3',
 	},
 	'&.cm-focused .cm-selectionBackground, ::selection': {
-		backgroundColor: '#3b82f6 !important', // blue-500 with opacity
-		opacity: 0.3,
+		backgroundColor: '#3aa99f4c !important', // flexoki-cyan with opacity (matching text-selection)
 	},
 	'.cm-selectionBackground': {
-		backgroundColor: '#3b82f6 !important',
-		opacity: 0.3,
+		backgroundColor: '#3aa99f4c !important',
+	},
+	'.cm-gutters': {
+		backgroundColor: '#1C1B1A', // flexoki-bg-2
+		color: '#878580', // flexoki-tx-2
+		border: 'none',
+	},
+	'.cm-activeLineGutter': {
+		backgroundColor: '#282726', // flexoki-ui
+	},
+	'.cm-activeLine': {
+		backgroundColor: 'rgba(40, 39, 38, 0.5)', // flexoki-ui with transparency
 	},
 }, { dark: true });
 

@@ -18,16 +18,16 @@ const Sidebar: Component<SidebarProps> = (props) => {
 	});
 
 	return (
-		<div ref={containerRef} class="w-80 h-full border-l border-gray-700 bg-[#1a1a1a] overflow-auto">
+		<div ref={containerRef} class="w-80 h-full border-l border-[var(--flexoki-ui)] bg-[var(--flexoki-bg)] overflow-auto">
 			<div class="p-3">
-				<h2 class="text-base font-semibold text-gray-200 mb-3 px-1">Issues</h2>
+				<h2 class="text-base font-semibold text-[var(--flexoki-tx)] mb-3 px-1">Issues</h2>
 
 				<Show
 					when={props.issues.length > 0}
 					fallback={
 						<div class="text-center py-8">
-							<p class="text-sm text-gray-400">No issues found</p>
-							<p class="text-xs text-gray-500 mt-1">Start typing to see suggestions</p>
+							<p class="text-sm text-[var(--flexoki-tx-2)]">No issues found</p>
+							<p class="text-xs text-[var(--flexoki-tx-3)] mt-1">Start typing to see suggestions</p>
 						</div>
 					}
 				>

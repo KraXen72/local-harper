@@ -1,5 +1,28 @@
 @import 'tailwindcss';
 
+:root {
+	/* Flexoki color scheme */
+	--flexoki-bg: #100F0F;
+	--flexoki-bg-2: #1C1B1A;
+	--flexoki-ui: #282726;
+	--flexoki-ui-2: #343331;
+	--flexoki-ui-3: #403E3C;
+	--flexoki-tx-3: #575653;
+	--flexoki-tx-2: #878580;
+	--flexoki-tx: #CECDC3;
+
+	--flexoki-red: #D14D41;
+	--flexoki-orange: #DA702C;
+	--flexoki-yellow: #D0A215;
+	--flexoki-green: #879A39;
+	--flexoki-cyan: #3AA99F;
+	--flexoki-blue: #4385BE;
+	--flexoki-purple: #8B7EC8;
+	--flexoki-magenta: #CE5D97;
+
+	--text-selection-background-color: #3aa99f4c;
+}
+
 @keyframes fadeIn {
 	from {
 		opacity: 0;
@@ -11,8 +34,33 @@
 	}
 }
 
-/* Dark mode */
+/* Dark mode with Flexoki colors */
 body {
-	background-color: #1a1a1a;
-	color: #e5e5e5;
+	background-color: var(--flexoki-bg);
+	color: var(--flexoki-tx);
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+	width: 10px;
+}
+
+::-webkit-scrollbar-track {
+	background: var(--flexoki-bg);
+	border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb {
+	background-color: var(--flexoki-tx-3);
+	border-radius: 5px;
+	border: 1px solid var(--flexoki-bg);
+}
+
+::-webkit-scrollbar-thumb:hover {
+	background-color: var(--flexoki-tx-2);
+}
+
+/* Text selection */
+::selection {
+	background-color: var(--text-selection-background-color);
 }

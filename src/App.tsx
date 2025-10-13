@@ -107,14 +107,14 @@ const App: Component = () => {
 	};
 
 	return (
-		<div class="h-screen flex flex-col bg-[#1a1a1a]">
+		<div class="h-screen flex flex-col bg-[var(--flexoki-bg)]">
 			<TopBar issueCount={issues().length} onCopy={handleCopy} isAnalyzing={isAnalyzing()} />
 
 			{!isInitialized() ? (
-				<div class="flex-1 flex items-center justify-center bg-[#1a1a1a]">
+				<div class="flex-1 flex items-center justify-center bg-[var(--flexoki-bg)]">
 					<div class="text-center">
-						<div class="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-500 border-r-transparent mb-4" />
-						<p class="text-gray-400">Initializing Harper.js...</p>
+						<div class="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[var(--flexoki-cyan)] border-r-transparent mb-4" />
+						<p class="text-[var(--flexoki-tx-2)]">Initializing Harper.js...</p>
 					</div>
 				</div>
 			) : (
