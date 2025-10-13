@@ -86,56 +86,56 @@ const App: Component = () => {
 	};
 
 	// Keyboard shortcuts
-	onMount(() => {
-		const handleKeyDown = (e: KeyboardEvent) => {
-			// Only handle shortcuts when not in input/textarea (editor handles its own)
-			if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
-				return;
-			}
+	// onMount(() => {
+	// 	const handleKeyDown = (e: KeyboardEvent) => {
+	// 		// Only handle shortcuts when not in input/textarea (editor handles its own)
+	// 		if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+	// 			return;
+	// 		}
 
-			const currentIssues = issues();
-			const currentSelectedId = selectedIssueId();
+	// 		const currentIssues = issues();
+	// 		const currentSelectedId = selectedIssueId();
 
-			// Navigate to next issue (n key)
-			if (e.key === 'n' && !e.ctrlKey && !e.metaKey) {
-				e.preventDefault();
-				if (currentIssues.length === 0) return;
+	// 		// Navigate to next issue (n key)
+	// 		if (e.key === 'n' && !e.ctrlKey && !e.metaKey) {
+	// 			e.preventDefault();
+	// 			if (currentIssues.length === 0) return;
 
-				const currentIndex = currentSelectedId
-					? currentIssues.findIndex(i => i.id === currentSelectedId)
-					: -1;
-				const nextIndex = (currentIndex + 1) % currentIssues.length;
-				setSelectedIssueId(currentIssues[nextIndex].id);
-			}
+	// 			const currentIndex = currentSelectedId
+	// 				? currentIssues.findIndex(i => i.id === currentSelectedId)
+	// 				: -1;
+	// 			const nextIndex = (currentIndex + 1) % currentIssues.length;
+	// 			setSelectedIssueId(currentIssues[nextIndex].id);
+	// 		}
 
-			// Navigate to previous issue (p key)
-			if (e.key === 'p' && !e.ctrlKey && !e.metaKey) {
-				e.preventDefault();
-				if (currentIssues.length === 0) return;
+	// 		// Navigate to previous issue (p key)
+	// 		if (e.key === 'p' && !e.ctrlKey && !e.metaKey) {
+	// 			e.preventDefault();
+	// 			if (currentIssues.length === 0) return;
 
-				const currentIndex = currentSelectedId
-					? currentIssues.findIndex(i => i.id === currentSelectedId)
-					: 0;
-				const prevIndex = currentIndex === 0 ? currentIssues.length - 1 : currentIndex - 1;
-				setSelectedIssueId(currentIssues[prevIndex].id);
-			}
+	// 			const currentIndex = currentSelectedId
+	// 				? currentIssues.findIndex(i => i.id === currentSelectedId)
+	// 				: 0;
+	// 			const prevIndex = currentIndex === 0 ? currentIssues.length - 1 : currentIndex - 1;
+	// 			setSelectedIssueId(currentIssues[prevIndex].id);
+	// 		}
 
-			// Apply first suggestion (Enter key)
-			if (e.key === 'Enter' && !e.ctrlKey && !e.metaKey && currentSelectedId) {
-				e.preventDefault();
-				const issue = currentIssues.find(i => i.id === currentSelectedId);
-				if (issue) {
-					const suggestions = issue.lint.suggestions();
-					if (suggestions.length > 0) {
-						handleApplySuggestion(currentSelectedId, suggestions[0]);
-					}
-				}
-			}
-		};
+	// 		// Apply first suggestion (Enter key)
+	// 		if (e.key === 'Enter' && !e.ctrlKey && !e.metaKey && currentSelectedId) {
+	// 			e.preventDefault();
+	// 			const issue = currentIssues.find(i => i.id === currentSelectedId);
+	// 			if (issue) {
+	// 				const suggestions = issue.lint.suggestions();
+	// 				if (suggestions.length > 0) {
+	// 					handleApplySuggestion(currentSelectedId, suggestions[0]);
+	// 				}
+	// 			}
+	// 		}
+	// 	};
 
-		document.addEventListener('keydown', handleKeyDown);
-		onCleanup(() => document.removeEventListener('keydown', handleKeyDown));
-	});
+	// 	document.addEventListener('keydown', handleKeyDown);
+	// 	onCleanup(() => document.removeEventListener('keydown', handleKeyDown));
+	// });
 
 	return (
 		<div class="h-screen flex flex-col">
