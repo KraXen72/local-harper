@@ -231,21 +231,17 @@ function harperAutocomplete(context: CompletionContext): CompletionResult | null
 			label,
 			// detail: isRemove ? 'Remove this text' : 'Replace',
 			apply: async (view) => {
-				// We need to use linter.applySuggestion() to properly apply the suggestion,
-				// because it handles complex cases like insertions (e.g., comma rules)
-				// where the suggestion span differs from the issue span.
-				
-				// Get the linter and apply the suggestion properly
+				// Use linter.applySuggestion() to properly handle all suggestion types,
+				// including insertions (comma rules), replacements, and removals.
 				const { getLinter } = await import('../services/harper-service');
 				const linter = getLinter();
 				const oldText = view.state.doc.toString();
 				const newText = await linter.applySuggestion(oldText, issue.lint, suggestion);
 				
-				// Calculate cursor position: place it at the end of the changed region
-				// Find where the text differs
+				// Find the minimal changed region by comparing from both ends
 				let changeStart = 0;
-				while (changeStart < oldText.length && changeStart < newText.length && 
-				       oldText[changeStart] === newText[changeStart]) {
+				const minLen = Math.min(oldText.length, newText.length);
+				while (changeStart < minLen && oldText[changeStart] === newText[changeStart]) {
 					changeStart++;
 				}
 				
@@ -257,13 +253,11 @@ function harperAutocomplete(context: CompletionContext): CompletionResult | null
 					changeEndNew--;
 				}
 				
-				// Apply the change and position cursor at the end of the replacement
+				// Apply the minimal change and position cursor at the end of the inserted text
 				view.dispatch({
 					changes: { from: changeStart, to: changeEndOld, insert: newText.slice(changeStart, changeEndNew) },
 					selection: { anchor: changeEndNew }
 				});
-				
-				// Trigger re-analysis via the content change listener
 			},
 			type: 'text',
 		});
