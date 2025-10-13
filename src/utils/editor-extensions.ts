@@ -1,6 +1,6 @@
 import { StateField, StateEffect, type EditorState } from '@codemirror/state';
 import { Decoration, DecorationSet, EditorView, showTooltip, type Tooltip } from '@codemirror/view';
-import { autocompletion, startCompletion, type CompletionContext, type CompletionResult, type Completion } from '@codemirror/autocomplete';
+import { autocompletion, startCompletion, closeCompletion, type CompletionContext, type CompletionResult, type Completion } from '@codemirror/autocomplete';
 import type { HarperIssue, Suggestion } from '../types';
 import { IssueSeverity, SuggestionKind } from '../types';
 import { render } from 'solid-js/web';
@@ -230,10 +230,40 @@ function harperAutocomplete(context: CompletionContext): CompletionResult | null
 		options.push({
 			label,
 			// detail: isRemove ? 'Remove this text' : 'Replace',
-			apply: () => {
-				if (issueActions) {
-					issueActions.onApplySuggestion(issue.id, suggestion);
+			apply: async (view) => {
+				// We need to use linter.applySuggestion() to properly apply the suggestion,
+				// because it handles complex cases like insertions (e.g., comma rules)
+				// where the suggestion span differs from the issue span.
+				
+				// Get the linter and apply the suggestion properly
+				const { getLinter } = await import('../services/harper-service');
+				const linter = getLinter();
+				const oldText = view.state.doc.toString();
+				const newText = await linter.applySuggestion(oldText, issue.lint, suggestion);
+				
+				// Calculate cursor position: place it at the end of the changed region
+				// Find where the text differs
+				let changeStart = 0;
+				while (changeStart < oldText.length && changeStart < newText.length && 
+				       oldText[changeStart] === newText[changeStart]) {
+					changeStart++;
 				}
+				
+				let changeEndOld = oldText.length;
+				let changeEndNew = newText.length;
+				while (changeEndOld > changeStart && changeEndNew > changeStart &&
+				       oldText[changeEndOld - 1] === newText[changeEndNew - 1]) {
+					changeEndOld--;
+					changeEndNew--;
+				}
+				
+				// Apply the change and position cursor at the end of the replacement
+				view.dispatch({
+					changes: { from: changeStart, to: changeEndOld, insert: newText.slice(changeStart, changeEndNew) },
+					selection: { anchor: changeEndNew }
+				});
+				
+				// Trigger re-analysis via the content change listener
 			},
 			type: 'text',
 		});
@@ -243,10 +273,12 @@ function harperAutocomplete(context: CompletionContext): CompletionResult | null
 	options.push({
 		label: 'Ignore',
 		// detail: 'Ignore this issue',
-		apply: () => {
+		apply: (view) => {
 			if (issueActions) {
 				issueActions.onIgnore(issue.id);
 			}
+			// Close the autocomplete popup
+			closeCompletion(view);
 		},
 		type: 'class',
 	});
@@ -257,10 +289,12 @@ function harperAutocomplete(context: CompletionContext): CompletionResult | null
 		options.push({
 			label: 'Add to Dictionary',
 			// detail: 'Add word to dictionary',
-			apply: () => {
+			apply: (view) => {
 				if (issueActions) {
 					issueActions.onAddToDictionary(issue.lint.get_problem_text());
 				}
+				// Close the autocomplete popup
+				closeCompletion(view);
 			},
 			type: 'class',
 		});
@@ -336,6 +370,23 @@ const cursorTooltipField = StateField.define<readonly Tooltip[]>({
 		return [createTooltipFromIssue(issue)];
 	},
 	update(tooltips, tr) {
+		// Check if issues were updated (e.g., issue was ignored/removed)
+		const issuesUpdated = tr.effects.some(e => e.is(updateIssuesEffect));
+		
+		// If issues were updated, check if current tooltip's issue still exists
+		if (issuesUpdated && tooltips.length > 0) {
+			const cursorPos = tr.state.selection.main.head;
+			const issue = findIssueAtPos(tr.state, cursorPos);
+			
+			// If the issue no longer exists at cursor position, clear the tooltip
+			if (!issue) {
+				return [];
+			}
+			
+			// If a different issue is now at cursor position, show new tooltip
+			return [createTooltipFromIssue(issue)];
+		}
+		
 		// Only recalculate if document changed or selection changed
 		if (!tr.docChanged && !tr.selection) {
 			return tooltips;

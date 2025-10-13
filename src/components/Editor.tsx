@@ -123,6 +123,7 @@ const Editor: Component<EditorProps> = (props) => {
 			if (issue) {
 				const span = issue.lint.span();
 				view.dispatch({
+					selection: { anchor: span.start },
 					effects: [
 						EditorView.scrollIntoView(span.start, { y: 'center' }),
 						setSelectedIssueEffect.of(scrollTo),

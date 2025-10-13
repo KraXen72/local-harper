@@ -1,5 +1,6 @@
 import { Component, Show } from 'solid-js';
 import type { HarperIssue } from '../types';
+import { FormattedMessage } from '../utils/message-formatter';
 
 interface IssueTooltipProps {
 	issue: HarperIssue;
@@ -15,7 +16,9 @@ const IssueTooltip: Component<IssueTooltipProps> = (props) => {
 				<span class={`cm-issue-tooltip-severity cm-issue-tooltip-severity-${props.severityClass}`}>
 					{props.issue.severity}
 				</span>
-				<span class="flex-1">{props.issue.lint.message()}</span>
+				<span class="flex-1">
+					<FormattedMessage message={props.issue.lint.message()} />
+				</span>
 			</div>
 			<div class="cm-issue-tooltip-rule">{props.issue.lint.lint_kind()}</div>
 			<Show when={props.showIgnoreButton && props.onIgnore}>

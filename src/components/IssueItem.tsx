@@ -1,5 +1,6 @@
 import { Component } from 'solid-js';
 import type { IssueItemProps } from '../types';
+import { FormattedMessage } from '../utils/message-formatter';
 
 const IssueItem: Component<IssueItemProps> = (props) => {
 	const getSeverityColor = () => {
@@ -36,7 +37,9 @@ const IssueItem: Component<IssueItemProps> = (props) => {
 					classList={{ 'scale-125': props.isSelected }}
 				/>
 				<div class="flex-1 min-w-0">
-					<p class="text-sm text-[var(--flexoki-tx)] leading-relaxed">{props.issue.lint.message()}</p>
+					<p class="text-sm text-[var(--flexoki-tx)] leading-relaxed">
+						<FormattedMessage message={props.issue.lint.message()} />
+					</p>
 				</div>
 			</div>
 		</div>
