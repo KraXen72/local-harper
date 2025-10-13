@@ -9,13 +9,12 @@ import {
 	issueDecorationsField,
 	issueTheme,
 	darkEditorTheme,
-	issueClickHandler,
 	updateIssuesEffect,
 	setSelectedIssueEffect,
-	showContextMenuEffect,
-	contextMenuField,
-	closeMenuOnScroll,
-	setContextMenuActions,
+	harperAutocompletion,
+	harperCursorTooltip,
+	setIssueActions,
+	issueClickHandler,
 } from '../utils/editor-extensions';
 
 const Editor: Component<EditorProps> = (props) => {
@@ -25,8 +24,8 @@ const Editor: Component<EditorProps> = (props) => {
 	onMount(() => {
 		if (!editorRef) return;
 
-		// Set up context menu actions
-		setContextMenuActions({
+		// Set up issue actions for autocomplete
+		setIssueActions({
 			onApplySuggestion: (issueId, suggestion) => {
 				props.onApplySuggestion(issueId, suggestion);
 			},
@@ -51,11 +50,11 @@ const Editor: Component<EditorProps> = (props) => {
 				keymap.of([...defaultKeymap, ...historyKeymap]),
 				issueField,
 				issueDecorationsField,
-				contextMenuField,
 				issueTheme,
 				darkEditorTheme,
-				issueClickHandler(),
-				closeMenuOnScroll,
+				harperAutocompletion,
+				harperCursorTooltip,
+				issueClickHandler,
 				EditorView.updateListener.of((update: ViewUpdate) => {
 					if (update.docChanged) {
 						const newContent = update.state.doc.toString();
@@ -116,7 +115,7 @@ const Editor: Component<EditorProps> = (props) => {
 		}
 	});
 
-	// Scroll to issue and show context menu when requested from sidebar
+	// Scroll to issue and select it when requested from sidebar
 	createEffect(() => {
 		const scrollTo = props.scrollToIssue;
 		if (view && scrollTo) {
@@ -126,7 +125,7 @@ const Editor: Component<EditorProps> = (props) => {
 				view.dispatch({
 					effects: [
 						EditorView.scrollIntoView(span.start, { y: 'center' }),
-						showContextMenuEffect.of({ issueId: scrollTo, pos: span.start }),
+						setSelectedIssueEffect.of(scrollTo),
 					],
 				});
 			}

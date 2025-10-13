@@ -1,16 +1,18 @@
-import { StateField, StateEffect, type EditorState } from '@codemirror/state';
-import { Decoration, DecorationSet, EditorView, showTooltip, type Tooltip } from '@codemirror/view';
-import { autocompletion, startCompletion, type CompletionContext, type CompletionResult, type Completion } from '@codemirror/autocomplete';
+import { StateField, StateEffect } from '@codemirror/state';
+import { Decoration, DecorationSet, EditorView, showTooltip, type TooltipView } from '@codemirror/view';
 import type { HarperIssue, Suggestion } from '../types';
-import { IssueSeverity, SuggestionKind } from '../types';
+import { IssueSeverity } from '../types';
 import { render } from 'solid-js/web';
-import IssueTooltipWrapper from '../components/IssueTooltipWrapper';
+import ContextMenu from '../components/ContextMenu';
 
 // Effect to update issues
 export const updateIssuesEffect = StateEffect.define<HarperIssue[]>();
 
-// Effect to update selected issue (kept for sidebar highlighting)
+// Effect to update selected issue
 export const setSelectedIssueEffect = StateEffect.define<string | null>();
+
+// Effect to show context menu
+export const showContextMenuEffect = StateEffect.define<{ issueId: string; pos: number } | null>();
 
 // Custom theme for underlines and highlights using CodeMirror's baseTheme
 // Using Flexoki color scheme
@@ -39,47 +41,11 @@ const issueTheme = EditorView.baseTheme({
 	'.cm-issue-selected': {
 		backgroundColor: 'rgba(58, 169, 159, 0.3)', // flexoki-cyan with opacity
 	},
-	'.cm-issue-tooltip': {
-		padding: '8px 12px',
-		borderRadius: '4px',
-		backgroundColor: '#1C1B1A',
-		border: '1px solid #282726',
-		color: '#CECDC3',
-		fontSize: '13px',
-		maxWidth: '400px',
-	},
-	'.cm-issue-tooltip-header': {
-		display: 'flex',
-		gap: '8px',
-		alignItems: 'center',
-		marginBottom: '4px',
-	},
-	'.cm-issue-tooltip-severity': {
-		padding: '2px 6px',
-		borderRadius: '3px',
-		fontSize: '11px',
-		fontWeight: 'bold',
-		textTransform: 'uppercase',
-	},
-	'.cm-issue-tooltip-severity-error': {
-		backgroundColor: 'rgba(209, 77, 65, 0.2)',
-		color: '#D14D41',
-	},
-	'.cm-issue-tooltip-severity-warning': {
-		backgroundColor: 'rgba(208, 162, 21, 0.2)',
-		color: '#D0A215',
-	},
-	'.cm-issue-tooltip-severity-info': {
-		backgroundColor: 'rgba(67, 133, 190, 0.2)',
-		color: '#4385BE',
-	},
-	'.cm-issue-tooltip-message': {
-		flex: 1,
-	},
-	'.cm-issue-tooltip-rule': {
-		fontSize: '11px',
-		color: '#878580',
-		fontStyle: 'italic',
+	'.cm-tooltip.cm-tooltip-above, .cm-tooltip.cm-tooltip-below': {
+		'&.cm-tooltip-cursor': {
+			backgroundColor: 'transparent',
+			border: 'none',
+		},
 	},
 });
 
@@ -213,12 +179,12 @@ export function setIssueActions(actions: IssueActions) {
 }
 
 // Helper to find issue at cursor position
-function findIssueAtPos(state: EditorState, pos: number): HarperIssue | null {
+function findIssueAtPos(state: any, pos: number): HarperIssue | null {
 	const issueState = state.field(issueField);
 	const decorations = state.field(issueDecorationsField);
 	
 	let foundIssueId: string | null = null;
-	decorations.between(pos, pos, (from, to, value) => {
+	decorations.between(pos, pos, (from: number, to: number, value: any) => {
 		if (value.spec.attributes && value.spec.attributes['data-issue-id']) {
 			foundIssueId = value.spec.attributes['data-issue-id'] as string;
 			return false;
@@ -226,7 +192,7 @@ function findIssueAtPos(state: EditorState, pos: number): HarperIssue | null {
 	});
 	
 	if (foundIssueId) {
-		return issueState.issues.find((i) => i.id === foundIssueId) || null;
+		return issueState.issues.find((i: HarperIssue) => i.id === foundIssueId) || null;
 	}
 	
 	return null;
@@ -235,30 +201,10 @@ function findIssueAtPos(state: EditorState, pos: number): HarperIssue | null {
 // Custom autocomplete source for Harper issues
 function harperAutocomplete(context: CompletionContext): CompletionResult | null {
 	const issue = findIssueAtPos(context.state, context.pos);
-	
-	console.log('harperAutocomplete called:', {
-		pos: context.pos,
-		explicit: context.explicit,
-		hasIssue: !!issue,
-		hasActions: !!issueActions,
-	});
-	
 	if (!issue || !issueActions) return null;
 	
 	const suggestions = issue.lint.suggestions();
 	const span = issue.lint.span();
-	
-	// Debug logging
-	console.log('Issue found:', {
-		kind: issue.lint.lint_kind(),
-		message: issue.lint.message(),
-		problemText: issue.lint.get_problem_text(),
-		suggestionCount: suggestions.length,
-		suggestions: suggestions.map(s => s.get_replacement_text()),
-		span: { start: span.start, end: span.end },
-		contextPos: context.pos,
-	});
-	
 	const options: Completion[] = [];
 	
 	// Add suggestion completions
@@ -270,7 +216,7 @@ function harperAutocomplete(context: CompletionContext): CompletionResult | null
 		
 		options.push({
 			label,
-			// detail: isRemove ? 'Remove this text' : 'Replace',
+			detail: isRemove ? 'Remove this text' : 'Replace',
 			apply: () => {
 				if (issueActions) {
 					issueActions.onApplySuggestion(issue.id, suggestion);
@@ -280,103 +226,69 @@ function harperAutocomplete(context: CompletionContext): CompletionResult | null
 		});
 	}
 	
-	// Always add ignore option first (before dictionary so it's always at the bottom)
-	options.push({
-		label: 'Ignore',
-		// detail: 'Ignore this issue',
-		apply: () => {
-			if (issueActions) {
-				issueActions.onIgnore(issue.id);
-			}
-		},
-		type: 'class',
-	});
-	
-	// Add dictionary option for spelling issues (will appear above Ignore)
+	// Add dictionary option for spelling issues
 	const isSpelling = issue.lint.lint_kind().toLowerCase().includes('spelling');
 	if (isSpelling) {
 		options.push({
 			label: 'Add to Dictionary',
-			// detail: 'Add word to dictionary',
+			detail: 'Add word to dictionary',
 			apply: () => {
 				if (issueActions) {
 					issueActions.onAddToDictionary(issue.lint.get_problem_text());
 				}
 			},
-			type: 'class',
+			type: 'keyword',
 		});
 	}
 	
-	// Don't show autocomplete if there are no options (shouldn't happen, but just in case)
-	if (options.length === 0) {
-		console.log('No options generated!');
-		return null;
-	}
-	
-	console.log('Returning completion result:', {
-		from: span.start,
-		to: span.end,
-		optionCount: options.length,
+	// Add ignore option
+	options.push({
+		label: 'Ignore',
+		detail: 'Ignore this issue',
+		apply: () => {
+			if (issueActions) {
+				issueActions.onIgnore(issue.id);
+			}
+		},
+		type: 'keyword',
 	});
 	
 	return {
 		from: span.start,
 		to: span.end,
 		options,
-		// Don't filter - these are action items, not text completions
-		filter: false,
+		validFor: /^$/,  // Don't filter as user types
 	};
 }
 
-// Helper to create tooltip from issue
-function createTooltipFromIssue(issue: HarperIssue): Tooltip {
+// Hover tooltip for issue details
+function issueHoverTooltip(view: EditorView, pos: number, _side: -1 | 1): Tooltip | null {
+	const issue = findIssueAtPos(view.state, pos);
+	if (!issue) return null;
+	
 	const span = issue.lint.span();
+	const dom = document.createElement('div');
+	dom.className = 'cm-issue-tooltip';
+	
 	const severityClass = getSeverityCssClass(issue.severity).replace('cm-issue-', '');
+	
+	dom.innerHTML = `
+		<div class="cm-issue-tooltip-content">
+			<div class="cm-issue-tooltip-header">
+				<span class="cm-issue-tooltip-severity cm-issue-tooltip-severity-${severityClass}">${issue.severity}</span>
+				<span class="cm-issue-tooltip-message">${issue.lint.message()}</span>
+			</div>
+			<div class="cm-issue-tooltip-rule">${issue.lint.lint_kind()}</div>
+		</div>
+	`;
 	
 	return {
 		pos: span.start,
 		end: span.end,
-		create: (view: EditorView) => {
-			const container = view.dom.ownerDocument.createElement('div');
-			const dispose = render(() => IssueTooltipWrapper({ issue, severityClass }), container);
-			
-			return {
-				dom: container,
-				destroy: () => dispose(),
-			};
-		},
+		create: () => ({ dom }),
 		above: true,
 	};
 }
-
-// StateField to track current tooltip based on cursor position
-const cursorTooltipField = StateField.define<readonly Tooltip[]>({
-	create(state) {
-		const cursorPos = state.selection.main.head;
-		const issue = findIssueAtPos(state, cursorPos);
-		
-		if (!issue) return [];
-		
-		return [createTooltipFromIssue(issue)];
-	},
-	update(tooltips, tr) {
-		// Only recalculate if document changed or selection changed
-		if (!tr.docChanged && !tr.selection) {
-			return tooltips;
-		}
-		
-		const cursorPos = tr.state.selection.main.head;
-		const issue = findIssueAtPos(tr.state, cursorPos);
-		
-		// If there's an issue at cursor, show tooltip
-		if (issue) {
-			return [createTooltipFromIssue(issue)];
-		}
-		
-		return [];
-	},
-	provide: f => showTooltip.computeN([f], state => state.field(f)),
-});
 
 // Export the autocomplete extension
 export const harperAutocompletion = autocompletion({
@@ -385,46 +297,10 @@ export const harperAutocompletion = autocompletion({
 	closeOnBlur: true,
 });
 
-// Export the cursor-based tooltip extension
-export const harperCursorTooltip = cursorTooltipField;
-
-// Click handler to trigger autocomplete when clicking on an issue
-export const issueClickHandler = EditorView.domEventHandlers({
-	mousedown(event, view) {
-		const pos = view.posAtCoords({ x: event.clientX, y: event.clientY });
-		if (pos === null) return false;
-
-		// Check if clicking on an issue
-		const issue = findIssueAtPos(view.state, pos);
-		if (issue) {
-			console.log('Click on issue detected, triggering autocomplete');
-			
-			// Prevent default to handle cursor positioning ourselves
-			event.preventDefault();
-			
-			// Select the issue and position cursor, then trigger autocomplete
-			view.dispatch({
-				selection: { anchor: pos },
-				effects: setSelectedIssueEffect.of(issue.id),
-			});
-			
-			// Trigger autocomplete after state is updated, with a small delay to ensure state is synced
-			setTimeout(() => {
-				console.log('Calling startCompletion');
-				const result = startCompletion(view);
-				console.log('startCompletion result:', result);
-			}, 0);
-			
-			return true; // We handled the event
-		} else {
-			// Clicking elsewhere - clear selection
-			view.dispatch({
-				effects: setSelectedIssueEffect.of(null),
-			});
-		}
-
-		return false;
-	},
+// Export the hover tooltip extension
+export const harperHoverTooltip = hoverTooltip(issueHoverTooltip, {
+	hideOnChange: false,
+	hoverTime: 300,
 });
 
 // Dark editor theme with Flexoki colors

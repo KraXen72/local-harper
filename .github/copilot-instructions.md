@@ -14,6 +14,8 @@ applyTo: "**"
 - Use SolidJS control flow components (`<Show>`, `<For>`, `<Switch>`) instead of ternary operators for conditional rendering
 - Use `classList` prop for conditional CSS classes instead of template string ternaries
 - Extract helper functions for complex logic instead of inline ternaries in JSX
+- NEVER create DOM elements manually (createElement, appendChild, etc.). ALWAYS create a proper .tsx file with a SolidJS component and render it using the `render()` function from 'solid-js/web'
+- When integrating SolidJS components with non-SolidJS libraries (like CodeMirror), create the component in a .tsx file and use `render()` to mount it
 
 ## programming style
 - do not overcomplicate stuff. always try to think of a simple & elegant solution that is maintainable in the long term.
