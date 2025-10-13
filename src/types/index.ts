@@ -66,5 +66,4 @@ export interface IssueItemProps {
 export interface TopBarProps {
 	issueCount: number;
 	onCopy: () => void;
-	isAnalyzing: boolean;
 }

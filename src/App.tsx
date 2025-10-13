@@ -1,4 +1,4 @@
-import { Component, createSignal, onMount, createEffect } from 'solid-js';
+import { Component, createSignal, onMount, createEffect, batch } from 'solid-js';
 import TopBar from './components/TopBar';
 import Editor from './components/Editor';
 import Sidebar from './components/Sidebar';
@@ -10,7 +10,6 @@ const App: Component = () => {
 	const [issues, setIssues] = createSignal<HarperIssue[]>([]);
 	const [selectedIssueId, setSelectedIssueId] = createSignal<string | null>(null);
 	const [isInitialized, setIsInitialized] = createSignal(false);
-	const [isAnalyzing, setIsAnalyzing] = createSignal(false);
 	const [scrollToIssue, setScrollToIssue] = createSignal<string | null>(null);
 
 	// Debounce state - not reactive, just regular variables
@@ -33,7 +32,6 @@ const App: Component = () => {
 		if (debounceTimeout !== undefined) {
 			clearTimeout(debounceTimeout);
 		}
-		setIsAnalyzing(false);
 
 		// Handle empty text
 		if (!text.trim()) {
@@ -46,7 +44,6 @@ const App: Component = () => {
 
 		// Schedule new analysis
 		debounceTimeout = window.setTimeout(async () => {
-			setIsAnalyzing(true);
 			try {
 				const lints = await analyzeText(text);
 				
@@ -54,12 +51,10 @@ const App: Component = () => {
 				if (currentGeneration === analysisGeneration) {
 					const harperIssues = transformLints(lints);
 					setIssues(harperIssues);
-					setIsAnalyzing(false);
 				}
 			} catch (error) {
 				if (currentGeneration === analysisGeneration) {
 					console.error('Failed to analyze text:', error);
-					setIsAnalyzing(false);
 				}
 			}
 		}, 200);
@@ -88,7 +83,17 @@ const App: Component = () => {
 		try {
 			const linter = getLinter();
 			const newText = await linter.applySuggestion(content(), issue.lint, suggestion);
-			setContent(newText);
+			
+			// Immediately analyze the new text
+			const lints = await analyzeText(newText);
+			const harperIssues = transformLints(lints);
+			
+			// Batch both updates together so they happen atomically
+			batch(() => {
+				setSelectedIssueId(null);
+				setContent(newText);
+				setIssues(harperIssues);
+			});
 		} catch (error) {
 			console.error('Failed to apply suggestion:', error);
 		}
@@ -108,7 +113,7 @@ const App: Component = () => {
 
 	return (
 		<div class="h-screen flex flex-col bg-[var(--flexoki-bg)]">
-			<TopBar issueCount={issues().length} onCopy={handleCopy} isAnalyzing={isAnalyzing()} />
+			<TopBar issueCount={issues().length} onCopy={handleCopy} />
 
 			{!isInitialized() ? (
 				<div class="flex-1 flex items-center justify-center bg-[var(--flexoki-bg)]">

@@ -78,33 +78,39 @@ const Editor: Component<EditorProps> = (props) => {
 		}
 	});
 
-	// Update editor content when prop changes (if different from current)
+	// Combined effect to handle content and issues updates together
+	// This prevents decorations from flashing when both change simultaneously
 	createEffect(() => {
-		if (view && view.state.doc.toString() !== props.content) {
+		if (!view) return;
+		
+		const currentContent = view.state.doc.toString();
+		const newContent = props.content;
+		const newIssues = props.issues;
+		const newSelectedId = props.selectedIssueId;
+		
+		const contentChanged = currentContent !== newContent;
+		
+		// If content changed, dispatch both content and issues in same transaction
+		if (contentChanged) {
 			view.dispatch({
 				changes: {
 					from: 0,
 					to: view.state.doc.length,
-					insert: props.content,
+					insert: newContent,
 				},
+				effects: [
+					updateIssuesEffect.of(newIssues),
+					setSelectedIssueEffect.of(newSelectedId),
+				],
 			});
 		}
-	});
-
-	// Update issue decorations when issues change
-	createEffect(() => {
-		if (view) {
+		// If only issues or selection changed, dispatch those effects
+		else {
 			view.dispatch({
-				effects: updateIssuesEffect.of(props.issues),
-			});
-		}
-	});
-
-	// Update selected issue
-	createEffect(() => {
-		if (view) {
-			view.dispatch({
-				effects: setSelectedIssueEffect.of(props.selectedIssueId),
+				effects: [
+					updateIssuesEffect.of(newIssues),
+					setSelectedIssueEffect.of(newSelectedId),
+				],
 			});
 		}
 	});

@@ -12,7 +12,7 @@ export const setSelectedIssueEffect = StateEffect.define<string | null>();
 // Effect to show context menu
 export const showContextMenuEffect = StateEffect.define<{ issueId: string; pos: number } | null>();
 
-// Custom theme for underlines, highlights, and context menu using CodeMirror's baseTheme
+// Custom theme for underlines and highlights using CodeMirror's baseTheme
 // Using Flexoki color scheme
 const issueTheme = EditorView.baseTheme({
 	'.cm-issue-error': {
@@ -39,109 +39,10 @@ const issueTheme = EditorView.baseTheme({
 	'.cm-issue-selected': {
 		backgroundColor: 'rgba(58, 169, 159, 0.3)', // flexoki-cyan with opacity
 	},
-	'.cm-tooltip.cm-tooltip-above': {
+	'.cm-tooltip.cm-tooltip-above, .cm-tooltip.cm-tooltip-below': {
 		'&.cm-tooltip-cursor': {
 			backgroundColor: 'transparent',
 			border: 'none',
-		},
-	},
-	'.cm-context-menu': {
-		backgroundColor: '#0d1117', // flexoki-bg (darker for contrast)
-		border: '1px solid #282726', // flexoki-ui
-		borderRadius: '8px',
-		boxShadow: '0 4px 12px rgba(1, 4, 9, 0.85)',
-		padding: '8px',
-		minWidth: '200px',
-		maxWidth: '420px',
-		maxHeight: '400px',
-		overflowY: 'auto',
-		fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif',
-		position: 'relative',
-		animation: 'fadeIn 100ms ease-in-out forwards',
-	},
-	'.cm-context-menu-title': {
-		display: 'flex',
-		alignItems: 'center',
-		justifyContent: 'space-between',
-		fontSize: '14px',
-		fontWeight: '600',
-		lineHeight: '20px',
-		color: '#CECDC3', // flexoki-tx
-		paddingBottom: '4px',
-		marginBottom: '4px',
-		borderBottom: '2px solid #879A39', // flexoki-green
-		userSelect: 'none',
-	},
-	'.cm-context-menu-problem': {
-		fontSize: '14px',
-		lineHeight: '20px',
-		color: '#878580', // flexoki-tx-2
-		backgroundColor: '#282726', // flexoki-ui
-		padding: '0.125rem 0.25rem',
-		borderRadius: '4px',
-		fontFamily: 'monospace',
-		marginTop: '4px',
-		marginBottom: '8px',
-		display: 'inline-block',
-	},
-	'.cm-context-menu-close': {
-		backgroundColor: 'transparent',
-		border: 'none',
-		cursor: 'pointer',
-		fontSize: '20px',
-		lineHeight: '1',
-		color: '#878580', // flexoki-tx-2
-		padding: '0 4px',
-		transition: 'color 120ms ease',
-		'&:hover': {
-			color: '#CECDC3', // flexoki-tx
-		},
-	},
-	'.cm-context-menu-section-title': {
-		fontSize: '13px',
-		fontWeight: '600',
-		color: '#878580', // flexoki-tx-2
-		marginTop: '8px',
-		marginBottom: '6px',
-	},
-	'.cm-context-menu-button': {
-		display: 'inline-flex',
-		alignItems: 'center',
-		justifyContent: 'center',
-		gap: '4px',
-		width: '100%',
-		cursor: 'pointer',
-		border: 'none',
-		borderRadius: '6px',
-		padding: '3px 6px',
-		minHeight: '28px',
-		fontSize: '13px',
-		fontWeight: '600',
-		lineHeight: '20px',
-		backgroundColor: '#282726', // flexoki-ui
-		color: '#CECDC3', // flexoki-tx
-		marginBottom: '6px',
-		transition: 'filter 120ms ease, transform 80ms ease',
-		'&:hover': {
-			filter: 'brightness(1.15)',
-		},
-		'&:active': {
-			transform: 'scale(0.97)',
-		},
-		'&:last-child': {
-			marginBottom: '0',
-		},
-	},
-	'.cm-context-menu-button-secondary': {
-		background: '#343331', // flexoki-ui-2
-		color: '#878580', // flexoki-tx-2
-		fontWeight: 'lighter',
-	},
-	'.cm-context-menu-button-success': {
-		backgroundColor: '#879A39', // flexoki-green
-		color: '#ffffff',
-		'&:hover': {
-			filter: 'brightness(0.92)',
 		},
 	},
 });
@@ -173,10 +74,7 @@ export const issueDecorationsField = StateField.define<DecorationSet>({
 		return Decoration.none;
 	},
 	update(decorations, tr) {
-		// Map decorations through document changes - this keeps positions in sync
-		decorations = decorations.map(tr.changes);
-
-		// Check for effects
+		// Check for effects first
 		let hasNewIssues = false;
 		let hasSelectionChange = false;
 
@@ -192,12 +90,19 @@ export const issueDecorationsField = StateField.define<DecorationSet>({
 		const issueState = tr.state.field(issueField);
 
 		// If we have new issues, rebuild decorations from scratch
+		// Don't bother mapping old decorations if we're rebuilding anyway
 		if (hasNewIssues) {
 			decorations = buildDecorations(issueState.issues, issueState.selectedId);
 		}
 		// If only selection changed, update classes on existing (mapped) decorations
 		else if (hasSelectionChange) {
+			// Map first, then update selection
+			decorations = decorations.map(tr.changes);
 			decorations = updateDecorationsForSelection(decorations, issueState.selectedId);
+		}
+		// Otherwise, just map decorations through document changes
+		else if (tr.docChanged) {
+			decorations = decorations.map(tr.changes);
 		}
 
 		return decorations;
@@ -289,10 +194,10 @@ const contextMenuField = StateField.define<{ issueId: string; pos: number } | nu
 		if (!val) return null;
 		return {
 			pos: val.pos,
-			above: true,
+			above: false, // Default to showing below
 			strictSide: false,
 			arrow: false,
-			create: (view) => createContextMenuTooltip(view, val.issueId),
+			create: (view) => createContextMenuTooltip(view, val.issueId, val.pos),
 		};
 	}),
 });
@@ -310,7 +215,7 @@ export function setContextMenuActions(actions: ContextMenuActions) {
 	contextMenuActions = actions;
 }
 
-function createContextMenuTooltip(view: EditorView, issueId: string): TooltipView {
+function createContextMenuTooltip(view: EditorView, issueId: string, pos: number): TooltipView {
 	const issueState = view.state.field(issueField);
 	const issue = issueState.issues.find(i => i.id === issueId);
 	
@@ -329,6 +234,28 @@ function createContextMenuTooltip(view: EditorView, issueId: string): TooltipVie
 
 	const suggestions = issue.lint.suggestions();
 	const isSpelling = issue.lint.lint_kind().toLowerCase().includes('spelling');
+	
+	// Position adjustment after DOM is mounted
+	const mount = () => {
+		requestAnimationFrame(() => {
+			const coords = view.coordsAtPos(pos);
+			if (!coords) return;
+			
+			const rect = dom.getBoundingClientRect();
+			const editorRect = view.dom.getBoundingClientRect();
+			
+			// Check if tooltip overflows right edge
+			if (rect.right > editorRect.right) {
+				const overflow = rect.right - editorRect.right;
+				dom.style.transform = `translateX(-${overflow + 10}px)`;
+			}
+			// Check if tooltip overflows left edge
+			else if (rect.left < editorRect.left) {
+				const overflow = editorRect.left - rect.left;
+				dom.style.transform = `translateX(${overflow + 10}px)`;
+			}
+		});
+	};
 	
 	// Header container with title and close button
 	const header = document.createElement('div');
@@ -349,12 +276,6 @@ function createContextMenuTooltip(view: EditorView, issueId: string): TooltipVie
 	header.appendChild(closeBtn);
 	
 	dom.appendChild(header);
-	
-	// Problem text
-	const problemText = document.createElement('div');
-	problemText.className = 'cm-context-menu-problem';
-	problemText.textContent = `"${issue.lint.get_problem_text()}"`;
-	dom.appendChild(problemText);
 	
 	// Suggestions
 	if (suggestions.length > 0) {
@@ -418,7 +339,7 @@ function createContextMenuTooltip(view: EditorView, issueId: string): TooltipVie
 	});
 	dom.appendChild(ignoreBtn);
 	
-	return { dom };
+	return { dom, mount };
 }
 
 // Click handler extension
@@ -459,6 +380,23 @@ export function issueClickHandler() {
 
 			// Always return false to allow default cursor placement
 			return false;
+		},
+		contextmenu(event, view) {
+			// Prevent default context menu
+			event.preventDefault();
+			
+			// Close Harper context menu if open
+			const currentMenu = view.state.field(contextMenuField);
+			if (currentMenu) {
+				view.dispatch({
+					effects: [
+						setSelectedIssueEffect.of(null),
+						showContextMenuEffect.of(null),
+					],
+				});
+			}
+			
+			return true;
 		},
 	});
 }
