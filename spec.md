@@ -195,78 +195,78 @@ All persistence done via localStorage:
 - [x] Test Harper.js integration with sample text
 
 ### Phase 6: Issue Underlining
-- [ ] Create `editor-extensions.ts`
-  - [ ] Define decoration types based on severity:
-    - [ ] Error: red wavy underline (for Spelling, Grammar)
-    - [ ] Warning: yellow/orange wavy underline (for Punctuation)
-    - [ ] Info: blue wavy underline (for Style, Readability)
-  - [ ] Create StateField for decorations
-  - [ ] Implement decoration builder from HarperIssue array
-    - [ ] Get span from `issue.lint.span()`
-    - [ ] Use `span.start` and `span.end` directly (character positions)
-    - [ ] Apply decoration based on `issue.severity`
-  - [ ] CodeMirror handles overlapping issues automatically
-- [ ] Add click handler extension
-  - [ ] Detect clicks on underlined text
-  - [ ] Match click position to issue span (iterate issues)
-  - [ ] Emit selected issue ID
-  - [ ] Update `selectedIssueId` signal
+- [x] Create `editor-extensions.ts`
+  - [x] Define decoration types based on severity:
+    - [x] Error: red wavy underline (for Spelling, Grammar)
+    - [x] Warning: yellow/orange wavy underline (for Punctuation)
+    - [x] Info: blue wavy underline (for Style, Readability)
+  - [x] Create StateField for decorations
+  - [x] Implement decoration builder from HarperIssue array
+    - [x] Get span from `issue.lint.span()`
+    - [x] Use `span.start` and `span.end` directly (character positions)
+    - [x] Apply decoration based on `issue.severity`
+  - [x] CodeMirror handles overlapping issues automatically
+- [x] Add click handler extension
+  - [x] Detect clicks on underlined text
+  - [x] Match click position to issue span (iterate issues)
+  - [x] Emit selected issue ID
+  - [x] Update `selectedIssueId` signal
 
 ### Phase 7: Sidebar Implementation
-- [ ] Create `Sidebar.tsx` component
-  - [ ] Scrollable list of issues
-  - [ ] Group by severity (optional)
-  - [ ] Fixed width, full height
-- [ ] Create `IssueItem.tsx` component
-  - [ ] Collapsible/expandable
-  - [ ] Display message and context
-  - [ ] Show suggestions as buttons
-  - [ ] "Add to Dictionary" button
-  - [ ] Click to scroll editor
-  - [ ] Highlight when selected
-- [ ] Handle empty state (no issues)
+- [x] Create `Sidebar.tsx` component
+  - [x] Scrollable list of issues
+  - [x] Group by severity (optional - skipped, sorted naturally)
+  - [x] Fixed width, full height
+- [x] Create `IssueItem.tsx` component
+  - [x] Collapsible/expandable
+  - [x] Display message and context
+  - [x] Show suggestions as buttons
+  - [x] "Add to Dictionary" button
+  - [x] Click to scroll editor
+  - [x] Highlight when selected
+- [x] Handle empty state (no issues)
 
 ### Phase 8: Two-Way Interaction
-- [ ] Editor → Sidebar
-  - [ ] Click underline sets `selectedIssueId`
-  - [ ] Sidebar scrolls to and expands selected issue
-- [ ] Sidebar → Editor
-  - [ ] Click issue sets `selectedIssueId`
-  - [ ] Editor scrolls issue into view
-  - [ ] Add temporary highlight/focus effect
-- [ ] Sync selection state between both
+- [x] Editor → Sidebar
+  - [x] Click underline sets `selectedIssueId`
+  - [x] Sidebar scrolls to and expands selected issue
+- [x] Sidebar → Editor
+  - [x] Click issue sets `selectedIssueId`
+  - [x] Editor scrolls issue into view
+  - [x] Add temporary highlight/focus effect (via scroll to center)
+- [x] Sync selection state between both
 
 ### Phase 9: Quick Fixes
-- [ ] Implement suggestion application
-  - [ ] Use Harper's built-in `linter.applySuggestion(text, lint, suggestion)`
-  - [ ] Get current editor content
-  - [ ] Call applySuggestion with the Lint and Suggestion instances
-  - [ ] Update editor with returned text
-  - [ ] Re-run Harper.js analysis on new text
-- [ ] Handle multiple suggestions
-  - [ ] Display each suggestion with `suggestion.get_replacement_text()`
-  - [ ] Check `suggestion.kind()` - Replace (0) or Remove (1)
-  - [ ] Button for each suggestion
-  - [ ] Preview on hover (optional)
+- [x] Implement suggestion application
+  - [x] Use Harper's built-in `linter.applySuggestion(text, lint, suggestion)`
+  - [x] Get current editor content
+  - [x] Call applySuggestion with the Lint and Suggestion instances
+  - [x] Update editor with returned text
+  - [x] Re-run Harper.js analysis on new text (automatic via reactive effect)
+- [x] Handle multiple suggestions
+  - [x] Display each suggestion with `suggestion.get_replacement_text()`
+  - [x] Check `suggestion.kind()` - Replace (0) or Remove (1)
+  - [x] Button for each suggestion
+  - [x] Preview on hover (optional - skipped)
 
 ### Phase 10: Dictionary Management
-- [ ] Create `dictionary-store.ts`
-  - [ ] `loadWords()` - load array from localStorage key 'harper-custom-words'
-  - [ ] `saveWords(words: string[])` - save array to localStorage
-  - [ ] `addWord(word: string)` function
-    - [ ] Add to localStorage
-    - [ ] Call `linter.importWords([word])` to add to Harper
-  - [ ] `removeWord(word: string)` function (optional)
-  - [ ] `getWords()` function → returns string[]
-- [ ] Integrate with Harper.js initialization
-  - [ ] Load custom words on app start
-  - [ ] Import them with `linter.importWords(words)`
-  - [ ] Harper will not report these words as issues
-- [ ] Implement "Add to Dictionary" action
-  - [ ] Extract word from spelling issue via `issue.lint.get_problem_text()`
-  - [ ] Add to dictionary store (saves + imports to linter)
-  - [ ] Re-run analysis - Harper won't report this word anymore
-  - [ ] Update UI with new issues
+- [x] Dictionary functions in `harper-service.ts`
+  - [x] `loadWords()` - load array from localStorage key 'harper-custom-words' (internal)
+  - [x] `saveCustomWords(words: string[])` - save array to localStorage
+  - [x] `addWordToDictionary(word: string)` function
+    - [x] Add to localStorage
+    - [x] Call `linter.importWords([word])` to add to Harper
+  - [x] `removeWord(word: string)` function (optional - skipped)
+  - [x] `getCustomWords()` function → returns string[]
+- [x] Integrate with Harper.js initialization
+  - [x] Load custom words on app start
+  - [x] Import them with `linter.importWords(words)`
+  - [x] Harper will not report these words as issues
+- [x] Implement "Add to Dictionary" action
+  - [x] Extract word from spelling issue via `issue.lint.get_problem_text()`
+  - [x] Add to dictionary store (saves + imports to linter)
+  - [x] Re-run analysis - Harper won't report this word anymore
+  - [x] Update UI with new issues
 
 ### Phase 11: Copy Functionality
 - [ ] Implement copy button in `TopBar.tsx`
