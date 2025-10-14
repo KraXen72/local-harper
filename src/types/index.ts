@@ -49,7 +49,6 @@ export interface EditorProps {
 }
 
 export interface TopBarProps {
-	issueCount: number;
 	onCopy: () => void;
 	isAnalyzing: boolean;
 }

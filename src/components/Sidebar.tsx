@@ -30,7 +30,16 @@ const Sidebar: Component<SidebarProps> = (props) => {
 			display: "grid",
 			"grid-template-rows": "min-content 1fr min-content",
 		}}>
-			<h2 class="text-base font-semibold text-[var(--flexoki-tx)] px-4 py-3 tracking-tight bg-[var(--flexoki-bg)]">Issues</h2>
+			<div class="flex items-center justify-between px-4 py-3 bg-[var(--flexoki-bg)]">
+				<div class="flex items-center gap-3">
+					<h2 class="text-base font-semibold text-[var(--flexoki-tx)] tracking-tight">Issues</h2>
+					<Show when={props.issues.length > 0}>
+						<span class="inline-flex items-center justify-center min-w-[2rem] h-6 px-2 rounded-md border border-[var(--flexoki-red)]/40 bg-[var(--flexoki-red)]/15 text-[var(--flexoki-red)] text-xs font-bold tracking-wide shadow-sm">
+							{props.issues.length}
+						</span>
+					</Show>
+				</div>
+			</div>
 			<div class="w-full h-full overflow-auto">
 				<Show
 					when={props.issues.length > 0}

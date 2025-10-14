@@ -1,4 +1,4 @@
-import { Component, createSignal, onMount, createEffect, batch } from 'solid-js';
+import { Component, createSignal, onMount, createEffect, batch, Show } from 'solid-js';
 import TopBar from './components/TopBar';
 import Editor from './components/Editor';
 import Sidebar from './components/Sidebar';
@@ -134,16 +134,9 @@ const App: Component = () => {
 
 	return (
 		<div class="h-screen flex flex-col bg-[var(--flexoki-bg)]">
-			<TopBar issueCount={issues().length} onCopy={handleCopy} isAnalyzing={isAnalyzing()} />
+			<TopBar onCopy={handleCopy} isAnalyzing={isAnalyzing()} />
 
-			{!isInitialized() ? (
-				<div class="flex-1 flex items-center justify-center bg-[var(--flexoki-bg)]">
-					<div class="text-center">
-						<div class="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[var(--flexoki-cyan)] border-r-transparent mb-4" />
-						<p class="text-[var(--flexoki-tx-2)]">Initializing Harper.js...</p>
-					</div>
-				</div>
-			) : (
+			<Show when={isInitialized()} fallback={<LoadingFallback />}>
 				<div class="flex-1 grid overflow-hidden" style="grid-template-columns: minmax(300px, 1fr) minmax(72ch, 2fr) minmax(0, 1fr);">
 					<div class="overflow-hidden">
 						<Sidebar
@@ -177,9 +170,20 @@ const App: Component = () => {
 
 					<div class="overflow-hidden" />	
 				</div>
-			)}
+			</Show>
 		</div>
 	);
 };
+
+function LoadingFallback() {
+	return (
+		<div class="flex-1 flex items-center justify-center bg-[var(--flexoki-bg)]">
+			<div class="text-center">
+				<div class="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[var(--flexoki-cyan)] border-r-transparent mb-4" />
+				<p class="text-[var(--flexoki-tx-2)]">Initializing Harper.js...</p>
+			</div>
+		</div>
+	);
+}
 
 export default App;

@@ -1,5 +1,5 @@
 import { Component, onMount, onCleanup, createEffect } from 'solid-js';
-import { EditorView, keymap, highlightSpecialChars, drawSelection, dropCursor, rectangularSelection, crosshairCursor } from '@codemirror/view';
+import { EditorView, keymap, highlightSpecialChars, drawSelection, dropCursor, rectangularSelection, crosshairCursor, placeholder } from '@codemirror/view';
 import { EditorState } from '@codemirror/state';
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
 import type { ViewUpdate } from '@codemirror/view';
@@ -50,6 +50,7 @@ const Editor: Component<EditorProps> = (props) => {
 				dropCursor(),
 				rectangularSelection(),
 				crosshairCursor(),
+				placeholder("Paste text or start typing..."),
 				EditorView.lineWrapping,
 				keymap.of([...defaultKeymap, ...historyKeymap]),
 				issueNavigationKeymap,
