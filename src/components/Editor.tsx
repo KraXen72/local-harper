@@ -157,8 +157,8 @@ const Editor: Component<EditorProps> = (props) => {
 	return (
 		<div class="h-full overflow-auto bg-[var(--flexoki-bg)]" onClick={handleContainerClick}>
 			{/* Top margin: 20vh (1/5 of screen) */}
-			<div class="pt-12 px-4 pb-12">
-				<div class="bg-[var(--flexoki-bg)] rounded-xl overflow-hidden shadow-2xl border border-[var(--flexoki-ui-2)]">
+			<div class="pt-12 px-4 pb-12 flex justify-center">
+				<div class="bg-[var(--flexoki-bg)] rounded-xl overflow-hidden shadow-2xl border border-[var(--flexoki-ui-2)] max-w-[84ch] w-full">
 					<div ref={editorRef} class="text-base" />
 				</div>
 			</div>
