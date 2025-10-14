@@ -15,7 +15,7 @@ The main idea is that it uses Codemirror as the editor framework, since it's pre
 	- [ ] test fully offline
 
 ## installation & try it out
-pre-req: [pnpm](https://pnpm.io/installation).
+pre-req: git, nodejs, [pnpm](https://pnpm.io/installation).
 ```bash
 git clone https://github.com/KraXen72/local-harper
 cd local-harper
