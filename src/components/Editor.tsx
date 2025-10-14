@@ -15,6 +15,7 @@ import {
 	harperCursorTooltip,
 	setIssueActions,
 	issueClickHandler,
+	issueNavigationKeymap,
 } from '../utils/editor-extensions';
 
 const Editor: Component<EditorProps> = (props) => {
@@ -48,6 +49,7 @@ const Editor: Component<EditorProps> = (props) => {
 				crosshairCursor(),
 				EditorView.lineWrapping,
 				keymap.of([...defaultKeymap, ...historyKeymap]),
+				issueNavigationKeymap,
 				issueField,
 				issueDecorationsField,
 				issueTheme,
@@ -141,9 +143,15 @@ const Editor: Component<EditorProps> = (props) => {
 	};
 
 	return (
-		<div class="h-full overflow-auto bg-[#1a1a1a]" onClick={handleContainerClick}>
-			<div class="h-full mx-auto max-w-[90ch] py-4 px-3 rounded-sm">
-				<div ref={editorRef} class="h-full text-base" />
+		<div class="h-full overflow-auto bg-[var(--flexoki-bg)]" onClick={handleContainerClick}>
+			{/* Top margin: 20vh (1/5 of screen) */}
+			<div class="pt-20 px-4">
+				{/* Card container with rounded corners */}
+				<div class="pb-20">
+					<div class="bg-[var(--flexoki-bg)] rounded-xl overflow-hidden shadow-2xl border border-[var(--flexoki-ui-2)]">
+						<div ref={editorRef} class="text-base" />
+					</div>
+				</div>
 			</div>
 		</div>
 	);

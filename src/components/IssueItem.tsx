@@ -17,10 +17,10 @@ const IssueItem: Component<IssueItemProps> = (props) => {
 
 	return (
 		<div
-			class="p-3 rounded-md border cursor-pointer transition-all duration-150 ease-in-out focus-within:ring-2 focus-within:ring-[var(--flexoki-cyan)] focus-within:ring-offset-1 focus-within:ring-offset-[var(--flexoki-bg)]"
+			class="p-2.5 rounded-lg border cursor-pointer transition-all duration-200 ease-out"
 			classList={{
-				'bg-[var(--flexoki-cyan)]/20 border-[var(--flexoki-cyan)] shadow-sm': props.isSelected,
-				'bg-[var(--flexoki-ui)] border-[var(--flexoki-ui-2)] hover:border-[var(--flexoki-ui-3)] hover:shadow-sm': !props.isSelected,
+				'bg-[var(--flexoki-cyan)]/20 border-[var(--flexoki-cyan)]/60 shadow-md shadow-[var(--flexoki-cyan)]/10 translate-x-0.5': props.isSelected,
+				'bg-[var(--flexoki-ui)]/20 border-[var(--flexoki-ui-2)] hover:border-[var(--flexoki-ui-3)] hover:bg-[var(--flexoki-ui)] hover:shadow-sm hover:translate-x-0.5': !props.isSelected,
 			}}
 			onClick={handleClick}
 			tabIndex={0}
@@ -31,13 +31,12 @@ const IssueItem: Component<IssueItemProps> = (props) => {
 				}
 			}}
 		>
-			<div class="flex items-center gap-2">
+			<div class="flex items-center gap-2.5">
 				<span
 					class={`inline-block w-2 h-2 rounded-full flex-shrink-0 ${getSeverityColor()} transition-all duration-200`}
-					classList={{ 'scale-125': props.isSelected }}
 				/>
 				<div class="flex-1 min-w-0">
-					<p class="text-sm text-[var(--flexoki-tx)] leading-relaxed">
+					<p class="text-sm text-[var(--flexoki-tx)] leading-snug">
 						<FormattedMessage message={props.issue.lint.message()} />
 					</p>
 				</div>

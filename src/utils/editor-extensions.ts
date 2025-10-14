@@ -1,5 +1,5 @@
 import { StateField, StateEffect, type EditorState } from '@codemirror/state';
-import { Decoration, DecorationSet, EditorView, showTooltip, type Tooltip } from '@codemirror/view';
+import { Decoration, DecorationSet, EditorView, showTooltip, type Tooltip, keymap } from '@codemirror/view';
 import { autocompletion, startCompletion, closeCompletion, type CompletionContext, type CompletionResult, type Completion } from '@codemirror/autocomplete';
 import type { HarperIssue, Suggestion } from '../types';
 import { IssueSeverity, SuggestionKind } from '../types';
@@ -260,6 +260,7 @@ function harperAutocomplete(context: CompletionContext): CompletionResult | null
 				});
 			},
 			type: 'text',
+			// info: 'Replace'
 		});
 	}
 	
@@ -350,6 +351,7 @@ function createTooltipFromIssue(issue: HarperIssue): Tooltip {
 			};
 		},
 		above: true,
+		arrow: false
 	};
 }
 
@@ -404,6 +406,7 @@ export const harperAutocompletion = autocompletion({
 	override: [harperAutocomplete],
 	activateOnTyping: false,  // Only activate on Ctrl+Space
 	closeOnBlur: true,
+	aboveCursor: false,
 });
 
 // Export the cursor-based tooltip extension
@@ -473,9 +476,11 @@ const darkEditorTheme = EditorView.theme({
 	'&': {
 		color: '#CECDC3', // flexoki-tx
 		backgroundColor: '#100F0F', // flexoki-bg
+		padding: '1.5rem',
 	},
 	'.cm-content': {
 		caretColor: '#CECDC3',
+		padding: '0',
 	},
 	'&.cm-focused .cm-cursor': {
 		borderLeftColor: '#CECDC3',
@@ -497,6 +502,87 @@ const darkEditorTheme = EditorView.theme({
 	'.cm-activeLine': {
 		backgroundColor: 'rgba(40, 39, 38, 0.5)', // flexoki-ui with transparency
 	},
+	'.cm-scroller': {
+		fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
+		lineHeight: '1.6',
+	},
 }, { dark: true });
+
+// Navigation functions for next/previous issue
+function navigateToNextIssue(view: EditorView): boolean {
+	const issueState = view.state.field(issueField);
+	const issues = issueState.issues;
+	
+	if (issues.length === 0) return false;
+	
+	const currentPos = view.state.selection.main.head;
+	
+	// Find the next issue after current position
+	let nextIssue = issues.find(issue => issue.lint.span().start > currentPos);
+	
+	// If no issue after current position, wrap to first issue
+	if (!nextIssue) {
+		nextIssue = issues[0];
+	}
+	
+	if (nextIssue) {
+		const span = nextIssue.lint.span();
+		view.dispatch({
+			selection: { anchor: span.start },
+			effects: [
+				EditorView.scrollIntoView(span.start, { y: 'center' }),
+				setSelectedIssueEffect.of(nextIssue.id),
+			],
+		});
+		view.focus();
+		return true;
+	}
+	
+	return false;
+}
+
+function navigateToPreviousIssue(view: EditorView): boolean {
+	const issueState = view.state.field(issueField);
+	const issues = issueState.issues;
+	
+	if (issues.length === 0) return false;
+	
+	const currentPos = view.state.selection.main.head;
+	
+	// Find the previous issue before current position (search in reverse)
+	let prevIssue = issues.slice().reverse().find(issue => issue.lint.span().start < currentPos);
+	
+	// If no issue before current position, wrap to last issue
+	if (!prevIssue) {
+		prevIssue = issues[issues.length - 1];
+	}
+	
+	if (prevIssue) {
+		const span = prevIssue.lint.span();
+		view.dispatch({
+			selection: { anchor: span.start },
+			effects: [
+				EditorView.scrollIntoView(span.start, { y: 'center' }),
+				setSelectedIssueEffect.of(prevIssue.id),
+			],
+		});
+		view.focus();
+		return true;
+	}
+	
+	return false;
+}
+
+// Keymap for issue navigation
+export const issueNavigationKeymap = keymap.of([
+	{
+		key: 'Ctrl-j',
+		run: navigateToPreviousIssue,
+	},
+	{
+		key: 'Ctrl-k',
+		run: navigateToNextIssue,
+	},
+]);
 
 export { issueTheme, darkEditorTheme };

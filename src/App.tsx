@@ -144,20 +144,24 @@ const App: Component = () => {
 					</div>
 				</div>
 			) : (
-				<div class="flex-1 flex overflow-hidden">
-					<Sidebar
-						issues={issues()}
-						selectedIssueId={selectedIssueId()}
-						onIssueSelect={(issueId) => {
-							setSelectedIssueId(issueId);
-							setScrollToIssue(issueId);
-							// Reset scroll trigger after a short delay
-							setTimeout(() => setScrollToIssue(null), 100);
-						}}
-						onApplySuggestion={handleApplySuggestion}
-						onAddToDictionary={handleAddToDictionary}
-					/>
-					<div class="flex-1">
+				<div class="flex-1 grid overflow-hidden" style="grid-template-columns: minmax(300px, 1fr) minmax(72ch, 2fr) minmax(0, 1fr);">
+					<div class="overflow-hidden">
+						<Sidebar
+							issues={issues()}
+							selectedIssueId={selectedIssueId()}
+							onIssueSelect={(issueId) => {
+								setSelectedIssueId(issueId);
+								setScrollToIssue(issueId);
+								// Reset scroll trigger after a short delay
+								setTimeout(() => setScrollToIssue(null), 100);
+							}}
+							onApplySuggestion={handleApplySuggestion}
+							onAddToDictionary={handleAddToDictionary}
+						/>
+					</div>
+					
+					{/* Editor - centered area */}
+					<div class="overflow-hidden">
 						<Editor
 							content={content()}
 							onContentChange={setContent}
@@ -171,6 +175,7 @@ const App: Component = () => {
 						/>
 					</div>
 
+					<div class="overflow-hidden" />	
 				</div>
 			)}
 		</div>
