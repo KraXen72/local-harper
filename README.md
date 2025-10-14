@@ -1,6 +1,10 @@
 # local-harper
 ![screenshot](assets/screenshot1.png)
 
+The main idea is that it uses Codemirror as the editor framework, since it's pretty lightweight and has a lot of plugins.  
+- The suggestions are handled using `@codemirror/autocomplete` and some custom handling, so you can use both your keyboard and mouse to accept them
+- The underlining is using `@codemirror/lint`, so it's properly integrated with the editor and doesen't have any de-syncing issues when scrolling
+
 ## todo
 - [x] clicking on an issue in the sidebar should focus the editor so ctrl+space works
 - [ ] gui dictionary manager
