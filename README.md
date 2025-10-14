@@ -4,3 +4,6 @@
 - [ ] gui dictionary manager
 - [ ] gui rule manager
 - [ ] figure out how to publish on github pages (maybe cdn harper's wasm thing)
+- [ ] sidebar toggling
+- [ ] PWA support
+	- [ ] test fully offline
