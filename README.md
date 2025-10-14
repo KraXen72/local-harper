@@ -9,7 +9,7 @@ The main idea is that it uses Codemirror as the editor framework, since it's pre
 - [x] clicking on an issue in the sidebar should focus the editor so ctrl+space works
 - [ ] gui dictionary manager
 - [ ] gui rule manager
-- [ ] figure out how to publish on github pages (maybe cdn harper's wasm thing)
+- [x] figure out how to publish on github pages (maybe cdn harper's wasm thing)
 - [ ] sidebar toggling
 - [ ] PWA support
 	- [ ] test fully offline
