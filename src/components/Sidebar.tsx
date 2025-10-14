@@ -72,13 +72,15 @@ const Sidebar: Component<SidebarProps> = (props) => {
 			</div>
 			<Show when={props.issues.length > 0}>
 					<div class="py-3 border-t border-[var(--flexoki-ui-2)] sticky bottom-0 bg-[var(--flexoki-bg)] z-10">
-						<p class="text-xs text-[var(--flexoki-tx-3)] text-center leading-loose">
+						<p class="text-xs text-[var(--flexoki-tx-3)] text-center leading-6">
 							<Kbd>Ctrl+K</Kbd>
 							&nbsp;&nbsp;/&nbsp;&nbsp;
 							<Kbd>Ctrl+J</Kbd>
 							&nbsp;to navigate
 							<br />
 							<Kbd>Ctrl+Space</Kbd>
+							&nbsp;&nbsp;/&nbsp;&nbsp;
+							<Kbd>Tab</Kbd>
 							&nbsp;&nbsp;/&nbsp;&nbsp;
 							<Kbd>Click</Kbd>
 							&nbsp;on issue to fix
