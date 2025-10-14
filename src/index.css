@@ -251,6 +251,8 @@ body {
 
 .cm-issue-tooltip-rule {
 	font-size: 11px;
+	padding: 2px 6px;
 	color: var(--flexoki-tx-2);
 	font-style: italic;
+	/* font-weight: bold; */
 }

@@ -14,8 +14,8 @@ import {
 	harperAutocompletion,
 	harperCursorTooltip,
 	setIssueActions,
-	issueClickHandler,
 	issueNavigationKeymap,
+	issueSyncExtension,
 } from '../utils/editor-extensions';
 
 const Editor: Component<EditorProps> = (props) => {
@@ -35,6 +35,9 @@ const Editor: Component<EditorProps> = (props) => {
 			},
 			onIgnore: (issueId) => {
 				props.onIgnore(issueId);
+			},
+			onIssueSelect: (issueId) => {
+				props.onIssueSelect(issueId);
 			},
 		});
 
@@ -56,7 +59,7 @@ const Editor: Component<EditorProps> = (props) => {
 				darkEditorTheme,
 				harperAutocompletion,
 				harperCursorTooltip,
-				issueClickHandler,
+				issueSyncExtension,
 				EditorView.updateListener.of((update: ViewUpdate) => {
 					if (update.docChanged) {
 						const newContent = update.state.doc.toString();
@@ -131,6 +134,8 @@ const Editor: Component<EditorProps> = (props) => {
 						setSelectedIssueEffect.of(scrollTo),
 					],
 				});
+				// Focus the editor so user can immediately use Ctrl+Space
+				view.focus();
 			}
 		}
 	});
@@ -145,12 +150,9 @@ const Editor: Component<EditorProps> = (props) => {
 	return (
 		<div class="h-full overflow-auto bg-[var(--flexoki-bg)]" onClick={handleContainerClick}>
 			{/* Top margin: 20vh (1/5 of screen) */}
-			<div class="pt-20 px-4">
-				{/* Card container with rounded corners */}
-				<div class="pb-20">
-					<div class="bg-[var(--flexoki-bg)] rounded-xl overflow-hidden shadow-2xl border border-[var(--flexoki-ui-2)]">
-						<div ref={editorRef} class="text-base" />
-					</div>
+			<div class="pt-12 px-4 pb-12">
+				<div class="bg-[var(--flexoki-bg)] rounded-xl overflow-hidden shadow-2xl border border-[var(--flexoki-ui-2)]">
+					<div ref={editorRef} class="text-base" />
 				</div>
 			</div>
 		</div>

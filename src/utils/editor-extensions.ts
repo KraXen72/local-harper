@@ -1,6 +1,6 @@
 import { StateField, StateEffect, type EditorState } from '@codemirror/state';
 import { Decoration, DecorationSet, EditorView, showTooltip, type Tooltip, keymap } from '@codemirror/view';
-import { autocompletion, startCompletion, closeCompletion, type CompletionContext, type CompletionResult, type Completion } from '@codemirror/autocomplete';
+import { autocompletion, closeCompletion, type CompletionContext, type CompletionResult, type Completion } from '@codemirror/autocomplete';
 import type { HarperIssue, Suggestion } from '../types';
 import { IssueSeverity, SuggestionKind } from '../types';
 import { render } from 'solid-js/web';
@@ -163,6 +163,7 @@ interface IssueActions {
 	onApplySuggestion: (issueId: string, suggestion: Suggestion) => void;
 	onAddToDictionary: (word: string) => void;
 	onIgnore: (issueId: string) => void;
+	onIssueSelect?: (issueId: string | null) => void;
 }
 
 let issueActions: IssueActions | null = null;
@@ -351,15 +352,25 @@ function createTooltipFromIssue(issue: HarperIssue): Tooltip {
 			};
 		},
 		above: true,
-		arrow: false
+		arrow: true
 	};
 }
+
+// Track last notified issue ID to avoid duplicate notifications
+let lastNotifiedIssueId: string | null = null;
 
 // StateField to track current tooltip based on cursor position
 const cursorTooltipField = StateField.define<readonly Tooltip[]>({
 	create(state) {
 		const cursorPos = state.selection.main.head;
 		const issue = findIssueAtPos(state, cursorPos);
+		
+		// Notify parent about initial issue selection
+		const issueId = issue?.id ?? null;
+		if (issueActions?.onIssueSelect) {
+			issueActions.onIssueSelect(issueId);
+			lastNotifiedIssueId = issueId;
+		}
 		
 		if (!issue) return [];
 		
@@ -373,6 +384,13 @@ const cursorTooltipField = StateField.define<readonly Tooltip[]>({
 		if (issuesUpdated && tooltips.length > 0) {
 			const cursorPos = tr.state.selection.main.head;
 			const issue = findIssueAtPos(tr.state, cursorPos);
+			
+			// Notify parent about issue change
+			const issueId = issue?.id ?? null;
+			if (issueId !== lastNotifiedIssueId && issueActions?.onIssueSelect) {
+				issueActions.onIssueSelect(issueId);
+				lastNotifiedIssueId = issueId;
+			}
 			
 			// If the issue no longer exists at cursor position, clear the tooltip
 			if (!issue) {
@@ -390,6 +408,13 @@ const cursorTooltipField = StateField.define<readonly Tooltip[]>({
 		
 		const cursorPos = tr.state.selection.main.head;
 		const issue = findIssueAtPos(tr.state, cursorPos);
+		
+		// Notify parent about issue change (only if it actually changed)
+		const issueId = issue?.id ?? null;
+		if (issueId !== lastNotifiedIssueId && issueActions?.onIssueSelect) {
+			issueActions.onIssueSelect(issueId);
+			lastNotifiedIssueId = issueId;
+		}
 		
 		// If there's an issue at cursor, show tooltip
 		if (issue) {
@@ -412,63 +437,29 @@ export const harperAutocompletion = autocompletion({
 // Export the cursor-based tooltip extension
 export const harperCursorTooltip = cursorTooltipField;
 
-// Click handler to trigger autocomplete when clicking on an issue
-export const issueClickHandler = EditorView.domEventHandlers({
-	mousedown(event, view) {
-		const pos = view.posAtCoords({ x: event.clientX, y: event.clientY });
-		if (pos === null) return false;
-
-		// Check if clicking on an issue
-		const issue = findIssueAtPos(view.state, pos);
-		if (issue) {
-			// Check if this issue has suggestions or dictionary option
-			const suggestions = issue.lint.suggestions();
-			const isSpelling = issue.lint.lint_kind().toLowerCase().includes('spelling');
-			const hasActions = suggestions.length > 0 || isSpelling;
-			
-			if (!hasActions) {
-				// Only "Ignore" would be available - don't trigger autocomplete
-				// The tooltip with ignore button will already be visible from cursor position
-				console.log('Click on issue with no actions - showing tooltip with ignore button');
-				
-				// Just select the issue and position cursor
-				event.preventDefault();
-				view.dispatch({
-					selection: { anchor: pos },
-					effects: setSelectedIssueEffect.of(issue.id),
-				});
-				
-				return true;
-			}
-			
-			console.log('Click on issue detected, triggering autocomplete');
-			
-			// Prevent default to handle cursor positioning ourselves
-			event.preventDefault();
-			
-			// Select the issue and position cursor, then trigger autocomplete
-			view.dispatch({
-				selection: { anchor: pos },
-				effects: setSelectedIssueEffect.of(issue.id),
-			});
-			
-			// Trigger autocomplete after state is updated, with a small delay to ensure state is synced
-			setTimeout(() => {
-				console.log('Calling startCompletion');
-				const result = startCompletion(view);
-				console.log('startCompletion result:', result);
-			}, 0);
-			
-			return true; // We handled the event
-		} else {
-			// Clicking elsewhere - clear selection
-			view.dispatch({
-				effects: setSelectedIssueEffect.of(null),
-			});
-		}
-
-		return false;
-	},
+// Update listener to sync issue selection highlighting with cursor position
+export const issueSyncExtension = EditorView.updateListener.of((update) => {
+	// Only process if selection changed (cursor moved)
+	if (!update.selectionSet) return;
+	
+	// Skip if this update already has a setSelectedIssueEffect (from keyboard nav or sidebar)
+	if (update.transactions.some(tr => tr.effects.some(e => e.is(setSelectedIssueEffect)))) {
+		return;
+	}
+	
+	const cursorPos = update.state.selection.main.head;
+	const issue = findIssueAtPos(update.state, cursorPos);
+	const issueId = issue?.id ?? null;
+	
+	// Get current selected issue
+	const currentSelectedId = update.state.field(issueField).selectedId;
+	
+	// Only dispatch if the issue changed
+	if (issueId !== currentSelectedId) {
+		update.view.dispatch({
+			effects: setSelectedIssueEffect.of(issueId),
+		});
+	}
 });
 
 // Dark editor theme with Flexoki colors
