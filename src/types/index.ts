@@ -69,8 +69,3 @@ export interface IssueItemProps {
 	onApplySuggestion: (suggestion: Suggestion) => void;
 	onAddToDictionary: (word: string) => void;
 }
-
-export interface TopBarProps {
-	issueCount: number;
-	onCopy: () => void;
-}
