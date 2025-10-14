@@ -21,6 +21,32 @@
 	--flexoki-magenta: #CE5D97;
 
 	--text-selection-background-color: #3aa99f4c;
+
+	/* credit to the harper website repository */
+	/* some colors changed/swapped */
+	/* https://github.com/Automattic/harper/blob/8131d60e0a49bc8094a89456bbfc8fba9c253831/packages/web/src/lib/lintKindColor.ts */
+
+	/* Harper lint kind colors (RGB triplets for flexible usage) */
+	--lint-kind-agreement: 34 139 34; /* Forest green */
+	--lint-kind-boundary-error: 139 69 19; /* Saddle brown */
+	--lint-kind-capitalization: 84 13 110; /* Deep purple */
+	--lint-kind-eggcorn: 255 140 0; /* Dark orange */
+	--lint-kind-enhancement: 14 173 105; /* Green */
+	--lint-kind-formatting: 125 60 152; /* Amethyst purple */
+	--lint-kind-grammar: 155 89 182; /* Medium purple */
+	--lint-kind-malapropism: 199 21 133; /* Medium violet red */
+	--lint-kind-miscellaneous: 59 206 172; /* Turquoise */
+	--lint-kind-nonstandard: 0 139 139; /* Dark cyan */
+	--lint-kind-punctuation: 212 132 15; /* Dark orange */
+	--lint-kind-readability: 70 130 180; /* Steel blue */
+	--lint-kind-redundancy: 46 139 87; /* Sea green */
+	--lint-kind-regionalism: 192 97 203; /* Vibrant purple */
+	--lint-kind-repetition: 0 166 124; /* Green-cyan */
+	--lint-kind-spelling: 238 66 102; /* Pink-red */
+	--lint-kind-style: 255 210 63; /* Yellow */
+	--lint-kind-typo: 255 107 53; /* Vibrant orange-red */
+	--lint-kind-usage: 30 144 255; /* Dodger blue */
+	--lint-kind-word-choice: 34 139 34; /* Forest green */
 }
 
 /* Dark mode with Flexoki colors */
@@ -232,21 +258,6 @@ body {
 	font-size: 11px;
 	font-weight: bold;
 	text-transform: uppercase;
-}
-
-.cm-issue-tooltip-severity-error {
-	background-color: rgba(209, 77, 65, 0.2);
-	color: var(--flexoki-red);
-}
-
-.cm-issue-tooltip-severity-warning {
-	background-color: rgba(208, 162, 21, 0.2);
-	color: var(--flexoki-yellow);
-}
-
-.cm-issue-tooltip-severity-info {
-	background-color: rgba(67, 133, 190, 0.2);
-	color: var(--flexoki-blue);
 }
 
 .cm-issue-tooltip-rule {

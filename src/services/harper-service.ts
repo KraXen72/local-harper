@@ -61,22 +61,41 @@ export function getLinter(): WorkerLinter {
 }
 
 /**
- * Analyze text and return lints (debounced by caller)
+ * Analyze text and return organized lints with rule names
  */
-export async function analyzeText(text: string): Promise<Lint[]> {
+export async function analyzeText(text: string): Promise<Record<string, Lint[]>> {
 	const linter = getLinter();
-	return linter.lint(text);
+	return linter.organizedLints(text);
 }
 
 /**
- * Transform Harper Lint objects to HarperIssue objects with metadata
+ * Transform organized Harper Lints to HarperIssue objects with metadata
+ * Issues are sorted by their logical location in the source document (span.start)
  */
-export function transformLints(lints: Lint[]): HarperIssue[] {
-	return lints.map((lint, index) => ({
-		id: `issue-${Date.now()}-${index}`,
-		lint,
-		severity: mapLintKindToSeverity(lint),
-	}));
+export function transformLints(organizedLints: Record<string, Lint[]>): HarperIssue[] {
+	const issues: HarperIssue[] = [];
+	let index = 0;
+	
+	for (const [rule, lints] of Object.entries(organizedLints)) {
+		for (const lint of lints) {
+			issues.push({
+				id: `issue-${Date.now()}-${index}`,
+				lint,
+				severity: mapLintKindToSeverity(lint),
+				rule,
+			});
+			index++;
+		}
+	}
+	
+	// Sort issues by their location in the source document
+	issues.sort((a, b) => {
+		const spanA = a.lint.span();
+		const spanB = b.lint.span();
+		return spanA.start - spanB.start;
+	});
+	
+	return issues;
 }
 
 /**
