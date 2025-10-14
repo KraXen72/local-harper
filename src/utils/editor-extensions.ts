@@ -1,6 +1,6 @@
 import { StateField, StateEffect, type EditorState } from '@codemirror/state';
 import { Decoration, DecorationSet, EditorView, showTooltip, type Tooltip, keymap } from '@codemirror/view';
-import { autocompletion, closeCompletion, type CompletionContext, type CompletionResult, type Completion } from '@codemirror/autocomplete';
+import { autocompletion, closeCompletion, startCompletion, type CompletionContext, type CompletionResult, type Completion } from '@codemirror/autocomplete';
 import type { HarperIssue, Suggestion } from '../types';
 import { IssueSeverity, SuggestionKind } from '../types';
 import { render } from 'solid-js/web';
@@ -11,6 +11,9 @@ export const updateIssuesEffect = StateEffect.define<HarperIssue[]>();
 
 // Effect to update selected issue (kept for sidebar highlighting)
 export const setSelectedIssueEffect = StateEffect.define<string | null>();
+
+// Effect to trigger autocomplete
+export const triggerAutocompleteEffect = StateEffect.define<boolean>();
 
 // Custom theme for issue decorations using CodeMirror's baseTheme
 // Using Flexoki color scheme
@@ -437,6 +440,50 @@ export const harperAutocompletion = autocompletion({
 // Export the cursor-based tooltip extension
 export const harperCursorTooltip = cursorTooltipField;
 
+// Extension to handle autocomplete trigger effect
+export const autocompleteExtension = EditorView.updateListener.of((update) => {
+	// Check if we should trigger autocomplete
+	const shouldTrigger = update.transactions.some(tr => 
+		tr.effects.some(e => e.is(triggerAutocompleteEffect))
+	);
+	
+	if (shouldTrigger) {
+		// Use setTimeout to ensure this runs after the transaction is complete
+		setTimeout(() => {
+			startCompletion(update.view);
+		}, 0);
+	}
+});
+
+// Track last clicked issue in editor to avoid re-triggering autocomplete
+let lastClickedIssueInEditor: string | null = null;
+
+// Click handler to trigger autocomplete when clicking on issues
+export const issueClickAutocomplete = EditorView.domEventHandlers({
+	mousedown(event, view) {
+		const pos = view.posAtCoords({ x: event.clientX, y: event.clientY });
+		if (pos === null) return false;
+
+		const issue = findIssueAtPos(view.state, pos);
+		
+		if (issue) {
+			// Only trigger autocomplete if it's a different issue than last clicked
+			if (issue.id !== lastClickedIssueInEditor) {
+				lastClickedIssueInEditor = issue.id;
+				// Schedule autocomplete to trigger after the selection update
+				setTimeout(() => {
+					startCompletion(view);
+				}, 0);
+			}
+		} else {
+			// Clicking off an issue resets the tracking
+			lastClickedIssueInEditor = null;
+		}
+		
+		return false; // Don't prevent default behavior
+	},
+});
+
 // Update listener to sync issue selection highlighting with cursor position
 export const issueSyncExtension = EditorView.updateListener.of((update) => {
 	// Only process if selection changed (cursor moved)
@@ -459,6 +506,12 @@ export const issueSyncExtension = EditorView.updateListener.of((update) => {
 		update.view.dispatch({
 			effects: setSelectedIssueEffect.of(issueId),
 		});
+	}
+	
+	// Reset editor click tracking when cursor moves away from the last clicked issue
+	// This allows clicking the same issue again to trigger autocomplete
+	if (issueId !== lastClickedIssueInEditor) {
+		lastClickedIssueInEditor = null;
 	}
 });
 
@@ -564,8 +617,27 @@ function navigateToPreviousIssue(view: EditorView): boolean {
 	return false;
 }
 
-// Keymap for issue navigation
+// Handler for Tab key to trigger autocomplete on issues
+function handleTabOnIssue(view: EditorView): boolean {
+	const cursorPos = view.state.selection.main.head;
+	const issue = findIssueAtPos(view.state, cursorPos);
+	
+	// If cursor is on an issue, trigger autocomplete
+	if (issue) {
+		startCompletion(view);
+		return true;
+	}
+	
+	// Otherwise, let Tab behave normally (indentation)
+	return false;
+}
+
+// Keymap for issue navigation and Tab trigger
 export const issueNavigationKeymap = keymap.of([
+	{
+		key: 'Tab',
+		run: handleTabOnIssue,
+	},
 	{
 		key: 'Ctrl-j',
 		run: navigateToPreviousIssue,

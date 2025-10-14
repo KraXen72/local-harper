@@ -20,6 +20,9 @@ const App: Component = () => {
 	// Set to store ignored issue IDs (persists until page refresh)
 	const ignoredIssues = new Set<string>();
 
+	// Track the last clicked issue from sidebar to avoid re-triggering autocomplete
+	let lastClickedIssueFromSidebar: string | null = null;
+
 	// Initialize Harper.js on mount
 	onMount(async () => {
 		try {
@@ -143,10 +146,17 @@ const App: Component = () => {
 							issues={issues()}
 							selectedIssueId={selectedIssueId()}
 							onIssueSelect={(issueId) => {
+								// Only trigger scroll/autocomplete if it's a different issue than last clicked
+								const shouldTrigger = issueId !== lastClickedIssueFromSidebar;
+								lastClickedIssueFromSidebar = issueId;
+								
 								setSelectedIssueId(issueId);
-								setScrollToIssue(issueId);
-								// Reset scroll trigger after a short delay
-								setTimeout(() => setScrollToIssue(null), 100);
+								
+								if (shouldTrigger) {
+									setScrollToIssue(issueId);
+									// Reset scroll trigger after a short delay
+									setTimeout(() => setScrollToIssue(null), 100);
+								}
 							}}
 							onApplySuggestion={handleApplySuggestion}
 							onAddToDictionary={handleAddToDictionary}
@@ -160,7 +170,14 @@ const App: Component = () => {
 							onContentChange={setContent}
 							issues={issues()}
 							selectedIssueId={selectedIssueId()}
-							onIssueSelect={setSelectedIssueId}
+							onIssueSelect={(issueId) => {
+								// When selecting an issue from editor (cursor movement), clear the last clicked sidebar issue
+								// This allows clicking the same issue again from sidebar to trigger autocomplete
+								if (issueId !== lastClickedIssueFromSidebar) {
+									lastClickedIssueFromSidebar = null;
+								}
+								setSelectedIssueId(issueId);
+							}}
 							onApplySuggestion={handleApplySuggestion}
 							onAddToDictionary={handleAddToDictionary}
 							onIgnore={handleIgnore}

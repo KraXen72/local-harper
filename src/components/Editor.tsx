@@ -16,6 +16,9 @@ import {
 	setIssueActions,
 	issueNavigationKeymap,
 	issueSyncExtension,
+	autocompleteExtension,
+	triggerAutocompleteEffect,
+	issueClickAutocomplete,
 } from '../utils/editor-extensions';
 
 const Editor: Component<EditorProps> = (props) => {
@@ -61,6 +64,8 @@ const Editor: Component<EditorProps> = (props) => {
 				harperAutocompletion,
 				harperCursorTooltip,
 				issueSyncExtension,
+				autocompleteExtension,
+				issueClickAutocomplete,
 				EditorView.updateListener.of((update: ViewUpdate) => {
 					if (update.docChanged) {
 						const newContent = update.state.doc.toString();
@@ -133,9 +138,10 @@ const Editor: Component<EditorProps> = (props) => {
 					effects: [
 						EditorView.scrollIntoView(span.start, { y: 'center' }),
 						setSelectedIssueEffect.of(scrollTo),
+						triggerAutocompleteEffect.of(true),
 					],
 				});
-				// Focus the editor so user can immediately use Ctrl+Space
+				// Focus the editor so user can immediately interact
 				view.focus();
 			}
 		}
