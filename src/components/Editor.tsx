@@ -16,9 +16,8 @@ import {
 	setIssueActions,
 	issueNavigationKeymap,
 	issueSyncExtension,
-	autocompleteExtension,
-	triggerAutocompleteEffect,
 	issueClickAutocomplete,
+	triggerAutocompleteForIssue,
 } from '../utils/editor-extensions';
 
 const Editor: Component<EditorProps> = (props) => {
@@ -64,7 +63,6 @@ const Editor: Component<EditorProps> = (props) => {
 				harperAutocompletion,
 				harperCursorTooltip,
 				issueSyncExtension,
-				autocompleteExtension,
 				issueClickAutocomplete,
 				EditorView.updateListener.of((update: ViewUpdate) => {
 					if (update.docChanged) {
@@ -133,16 +131,20 @@ const Editor: Component<EditorProps> = (props) => {
 			const issue = props.issues.find(i => i.id === scrollTo);
 			if (issue) {
 				const span = issue.lint.span();
+				
 				view.dispatch({
 					selection: { anchor: span.start },
 					effects: [
 						EditorView.scrollIntoView(span.start, { y: 'center' }),
 						setSelectedIssueEffect.of(scrollTo),
-						triggerAutocompleteEffect.of(true),
 					],
 				});
+				
 				// Focus the editor so user can immediately interact
 				view.focus();
+				
+				// Trigger autocomplete using the unified helper (will skip if only Ignore would be shown)
+				triggerAutocompleteForIssue(view, issue);
 			}
 		}
 	});

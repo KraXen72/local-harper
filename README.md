@@ -10,9 +10,12 @@ The main idea is that it uses Codemirror as the editor framework, since it's pre
 - [ ] gui dictionary manager
 - [ ] gui rule manager
 - [ ] gui dialect changer
-- [ ] yoink the severities from https://writewithharper.com instead of ad-hoc heuristics
+- [x] yoink the severities from https://writewithharper.com instead of ad-hoc heuristics
 - [x] figure out how to publish on github pages (maybe cdn harper's wasm thing)
+- [x] issues in sidebar shouldn't be sorted by kind or title, but by their logical location in the source document.
+- [ ] move away from custom `HarperIssue` type to pure `OrganizedLint` or an extension of it.
 - [ ] sidebar toggling
+- [ ] implement tests so we can verify large refactors didn't break anything
 - [ ] PWA support
 	- [ ] test fully offline
 
@@ -27,21 +30,31 @@ pnpm dev
 
 ## testing text:
 ```
-There are some cases where the the standard grammar
-checkers don't cut it. That;s where Harper comes in handy.
+There are some cases where the standard grammar
+checkers don't cut it. That's where Harper comes in handy.
 
-Harper is an language checker for developers. It can detect
-improper capitalization and misspellled words,
+Harper is a language checker for developers. It can detect
+improper capitalization and misspelled words,
 as well as a number of other issues.
-Like if you break up words you shoul dn't.
-Harper can be an lifesaver when writing technical documents, 
-emails or other formal forms of communication.
+Like if you break up words you shouldn't.
+Harper can be a lifesaver when writing technical documents, 
+emails, or other formal forms of communication.
 
-Harper works everywhere, even when you're not online. Since your data
-never leaves your device, you don't ned too worry aout us
+Harper works everywhere, even when you're offline. Since your data
+never leaves your device, you don't need to worry about us
 selling it or using it to train large language models.
 
 The best part: Harper can give you feedback instantly.
+For most documents, Harper can serve up suggestions in
+under 10 milliseconds, faster than Grammarly.
+
+The best part: Harper can give you feedback instantly,
+For most documents, Harper can serve up suggestions in
+under 10 ms, faster that Grammarly,
+The best part: Harper can give you feedback instantly,
+For most documents, Harper can serve up suggestions in
+under 10 ms, faster that Grammarly,
+The best part: Harper can give you feedback instantly,
 For most documents, Harper can serve up suggestions in
 under 10 ms, faster that Grammarly.
 ```

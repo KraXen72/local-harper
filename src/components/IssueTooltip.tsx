@@ -1,25 +1,40 @@
 import { Component, Show } from 'solid-js';
 import type { HarperIssue } from '../types';
 import { FormattedMessage } from '../utils/message-formatter';
+import { lintKindColor, lintKindColorWithAlpha } from '../utils/lint-kind-colors';
 
 interface IssueTooltipProps {
 	issue: HarperIssue;
-	severityClass: string;
+	lintKind: string;
+	rule: string;
 	showIgnoreButton?: boolean;
 	onIgnore?: () => void;
 }
 
 const IssueTooltip: Component<IssueTooltipProps> = (props) => {
+	const color = () => lintKindColor(props.lintKind);
+	const bgColor = () => lintKindColorWithAlpha(props.lintKind, 0.2);
+
+	// Icon from Lucide by Lucide Contributors - https://github.com/lucide-icons/lucide/blob/main/LICENSE
+	
 	return (
 		<div class="grid gap-x-1 gap-y-1" style={{
 			"grid-template-rows": "min-content 1fr min-content",
 			"grid-template-columns": "min-content 1fr min-content"
 		}}>
-			<span class={`cm-issue-tooltip-severity cm-issue-tooltip-severity-${props.severityClass}`}>
-				{props.issue.severity}
+			<span 
+				class="cm-issue-tooltip-severity whitespace-nowrap"
+				style={{
+					"background-color": bgColor(),
+					"color": color()
+				}}
+			>
+				{props.issue.lint.lint_kind_pretty()}
 			</span>
 			<span></span>
-			<div class="cm-issue-tooltip-rule">{props.issue.lint.lint_kind()}</div>
+			<div class="cm-issue-tooltip-rule cursor-help" title={props.rule}>
+				<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4m0-4h.01"/></g></svg>
+			</div>
 
 			<div class="flex gap-2 items-center mb-1 col-span-full">
 				<span class="flex-1">

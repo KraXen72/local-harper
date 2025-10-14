@@ -2,9 +2,10 @@ import { StateField, StateEffect, type EditorState } from '@codemirror/state';
 import { Decoration, DecorationSet, EditorView, showTooltip, type Tooltip, keymap } from '@codemirror/view';
 import { autocompletion, closeCompletion, startCompletion, type CompletionContext, type CompletionResult, type Completion } from '@codemirror/autocomplete';
 import type { HarperIssue, Suggestion } from '../types';
-import { IssueSeverity, SuggestionKind } from '../types';
+import { SuggestionKind } from '../types';
 import { render } from 'solid-js/web';
 import IssueTooltipWrapper from '../components/IssueTooltipWrapper';
+import { lintKindColor, lintKindBackgroundColor } from './lint-kind-colors';
 
 // Effect to update issues
 export const updateIssuesEffect = StateEffect.define<HarperIssue[]>();
@@ -12,30 +13,11 @@ export const updateIssuesEffect = StateEffect.define<HarperIssue[]>();
 // Effect to update selected issue (kept for sidebar highlighting)
 export const setSelectedIssueEffect = StateEffect.define<string | null>();
 
-// Effect to trigger autocomplete
-export const triggerAutocompleteEffect = StateEffect.define<boolean>();
-
 // Custom theme for issue decorations using CodeMirror's baseTheme
-// Using Flexoki color scheme
-// Only contains styles that MUST be in baseTheme (CodeMirror decorations)
+// Only contains base styles, actual colors are applied inline via decorations
 const issueTheme = EditorView.baseTheme({
-	'.cm-issue-error': {
+	'.cm-issue-underline': {
 		textDecoration: 'underline solid',
-		textDecorationColor: '#D14D41', // flexoki-red
-		textDecorationThickness: '2px',
-		textUnderlineOffset: '2px',
-		textDecorationSkipInk: 'auto',
-	},
-	'.cm-issue-warning': {
-		textDecoration: 'underline solid',
-		textDecorationColor: '#D0A215', // flexoki-yellow
-		textDecorationThickness: '2px',
-		textUnderlineOffset: '2px',
-		textDecorationSkipInk: 'auto',
-	},
-	'.cm-issue-info': {
-		textDecoration: 'underline solid',
-		textDecorationColor: '#4385BE', // flexoki-blue
 		textDecorationThickness: '2px',
 		textUnderlineOffset: '2px',
 		textDecorationSkipInk: 'auto',
@@ -100,15 +82,23 @@ function buildDecorations(issues: HarperIssue[], selectedId: string | null): Dec
 	for (const issue of issues) {
 		const span = issue.lint.span();
 		const isSelected = issue.id === selectedId;
-		const cssClass = getSeverityCssClass(issue.severity) + (isSelected ? ' cm-issue-selected' : '');
+		const lintKind = issue.lint.lint_kind();
+		const color = lintKindColor(lintKind);
+		const bgColor = lintKindBackgroundColor(lintKind);
+		
+		const cssClass = 'cm-issue-underline' + (isSelected ? ' cm-issue-selected' : '');
 
-		// Use Decoration.mark for inline text decoration
+		// Use Decoration.mark with inline styles for colors
 		decorations.push({
 			from: span.start,
 			to: span.end,
 			decoration: Decoration.mark({
 				class: cssClass,
-				attributes: { 'data-issue-id': issue.id },
+				attributes: { 
+					'data-issue-id': issue.id,
+					'data-lint-kind': lintKind,
+					style: `text-decoration-color: ${color}; background-color: ${bgColor};`,
+				},
 			}),
 		});
 	}
@@ -126,39 +116,29 @@ function updateDecorationsForSelection(decorations: DecorationSet, selectedId: s
 	decorations.between(0, Number.MAX_SAFE_INTEGER, (from, to, value) => {
 		if (value.spec.attributes && value.spec.attributes['data-issue-id']) {
 			const issueId = value.spec.attributes['data-issue-id'] as string;
+			const lintKind = value.spec.attributes['data-lint-kind'] as string;
 			const isSelected = issueId === selectedId;
 			
-			// Extract the base class (severity) from the current decoration
-			let baseClass = '';
-			if (value.spec.class) {
-				baseClass = value.spec.class.replace(' cm-issue-selected', '');
-			}
-			
-			const cssClass = baseClass + (isSelected ? ' cm-issue-selected' : '');
+			const cssClass = 'cm-issue-underline' + (isSelected ? ' cm-issue-selected' : '');
+			const color = lintKindColor(lintKind);
+			const bgColor = lintKindBackgroundColor(lintKind);
 			
 			updated.push({
 				from,
 				to,
 				decoration: Decoration.mark({
 					class: cssClass,
-					attributes: { 'data-issue-id': issueId },
+					attributes: { 
+						'data-issue-id': issueId,
+						'data-lint-kind': lintKind,
+						style: `text-decoration-color: ${color}; background-color: ${bgColor};`,
+					},
 				}),
 			});
 		}
 	});
 
 	return Decoration.set(updated.map(d => d.decoration.range(d.from, d.to)));
-}
-
-function getSeverityCssClass(severity: IssueSeverity): string {
-	switch (severity) {
-		case IssueSeverity.Error:
-			return 'cm-issue-error';
-		case IssueSeverity.Warning:
-			return 'cm-issue-warning';
-		case IssueSeverity.Info:
-			return 'cm-issue-info';
-	}
 }
 
 // Actions interface for applying suggestions
@@ -193,6 +173,14 @@ function findIssueAtPos(state: EditorState, pos: number): HarperIssue | null {
 	}
 	
 	return null;
+}
+
+// Helper function to check if an issue would only show "Ignore" option
+export function wouldOnlyShowIgnore(issue: HarperIssue): boolean {
+	const suggestions = issue.lint.suggestions();
+	const isSpelling = issue.lint.lint_kind().toLowerCase().includes('spelling');
+	// If there are suggestions or it's a spelling issue (which gets "Add to Dictionary"), return false
+	return suggestions.length === 0 && !isSpelling;
 }
 
 // Custom autocomplete source for Harper issues
@@ -323,11 +311,11 @@ function harperAutocomplete(context: CompletionContext): CompletionResult | null
 // Helper to create tooltip from issue
 function createTooltipFromIssue(issue: HarperIssue): Tooltip {
 	const span = issue.lint.span();
-	const severityClass = getSeverityCssClass(issue.severity).replace('cm-issue-', '');
+	const lintKind = issue.lint.lint_kind();
 	
 	// Check if ignore would be the only option
 	const suggestions = issue.lint.suggestions();
-	const isSpelling = issue.lint.lint_kind().toLowerCase().includes('spelling');
+	const isSpelling = lintKind.toLowerCase().includes('spelling');
 	const hasActions = suggestions.length > 0 || isSpelling;
 	const showIgnoreButton = !hasActions;
 	
@@ -338,7 +326,7 @@ function createTooltipFromIssue(issue: HarperIssue): Tooltip {
 			const container = view.dom.ownerDocument.createElement('div');
 			const dispose = render(() => IssueTooltipWrapper({ 
 				issue, 
-				severityClass,
+				lintKind,
 				showIgnoreButton,
 				onIgnore: (showIgnoreButton && issueActions) 
 					? () => {
@@ -355,7 +343,7 @@ function createTooltipFromIssue(issue: HarperIssue): Tooltip {
 			};
 		},
 		above: true,
-		arrow: true
+		arrow: false
 	};
 }
 
@@ -440,23 +428,25 @@ export const harperAutocompletion = autocompletion({
 // Export the cursor-based tooltip extension
 export const harperCursorTooltip = cursorTooltipField;
 
-// Extension to handle autocomplete trigger effect
-export const autocompleteExtension = EditorView.updateListener.of((update) => {
-	// Check if we should trigger autocomplete
-	const shouldTrigger = update.transactions.some(tr => 
-		tr.effects.some(e => e.is(triggerAutocompleteEffect))
-	);
-	
-	if (shouldTrigger) {
-		// Use setTimeout to ensure this runs after the transaction is complete
-		setTimeout(() => {
-			startCompletion(update.view);
-		}, 0);
-	}
-});
-
 // Track last clicked issue in editor to avoid re-triggering autocomplete
 let lastClickedIssueInEditor: string | null = null;
+
+// Helper function to trigger autocomplete for an issue (returns true if triggered, false if skipped)
+export function triggerAutocompleteForIssue(view: EditorView, issue: HarperIssue, explicit = false): boolean {
+	// For explicit triggers (Ctrl+Space), always trigger
+	if (explicit) {
+		setTimeout(() => startCompletion(view), 0);
+		return true;
+	}
+	
+	// For implicit triggers (click/sidebar), check if only Ignore would be shown
+	if (wouldOnlyShowIgnore(issue)) {
+		return false;
+	}
+	
+	setTimeout(() => startCompletion(view), 0);
+	return true;
+}
 
 // Click handler to trigger autocomplete when clicking on issues
 export const issueClickAutocomplete = EditorView.domEventHandlers({
@@ -470,10 +460,7 @@ export const issueClickAutocomplete = EditorView.domEventHandlers({
 			// Only trigger autocomplete if it's a different issue than last clicked
 			if (issue.id !== lastClickedIssueInEditor) {
 				lastClickedIssueInEditor = issue.id;
-				// Schedule autocomplete to trigger after the selection update
-				setTimeout(() => {
-					startCompletion(view);
-				}, 0);
+				triggerAutocompleteForIssue(view, issue);
 			}
 		} else {
 			// Clicking off an issue resets the tracking

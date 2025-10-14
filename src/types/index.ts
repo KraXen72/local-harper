@@ -27,6 +27,7 @@ export interface HarperIssue {
 	id: string;              // Generated unique ID
 	lint: Lint;              // The actual Harper Lint object
 	severity: IssueSeverity; // Mapped from lint_kind()
+	rule: string;            // The rule name that generated this lint
 }
 
 export interface EditorPosition {

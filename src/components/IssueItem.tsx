@@ -1,15 +1,10 @@
 import { Component } from 'solid-js';
 import type { IssueItemProps } from '../types';
 import { FormattedMessage } from '../utils/message-formatter';
+import { lintKindColor } from '../utils/lint-kind-colors';
 
 const IssueItem: Component<IssueItemProps> = (props) => {
-	const getSeverityColor = () => {
-		switch (props.issue.severity) {
-			case 'error': return 'bg-[var(--flexoki-red)]';
-			case 'warning': return 'bg-[var(--flexoki-yellow)]';
-			default: return 'bg-[var(--flexoki-cyan)]';
-		}
-	};
+	const lintColor = () => lintKindColor(props.issue.lint.lint_kind());
 
 	const handleClick = () => {
 		props.onSelect(props.issue.id);
@@ -33,7 +28,8 @@ const IssueItem: Component<IssueItemProps> = (props) => {
 		>
 			<div class="flex items-center gap-2.5">
 				<span
-					class={`inline-block w-2 h-2 rounded-full flex-shrink-0 ${getSeverityColor()} transition-all duration-200`}
+					class="inline-block w-2 h-2 rounded-full flex-shrink-0 transition-all duration-200"
+					style={{ "background-color": lintColor() }}
 				/>
 				<div class="flex-1 min-w-0">
 					<p class="text-sm text-[var(--flexoki-tx)] leading-snug">
