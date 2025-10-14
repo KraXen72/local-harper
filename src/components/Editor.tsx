@@ -1,5 +1,5 @@
 import { Component, onMount, onCleanup, createEffect } from 'solid-js';
-import { EditorView, keymap, highlightSpecialChars, drawSelection, dropCursor, rectangularSelection, crosshairCursor } from '@codemirror/view';
+import { EditorView, keymap, highlightSpecialChars, drawSelection, dropCursor, rectangularSelection, crosshairCursor, placeholder } from '@codemirror/view';
 import { EditorState } from '@codemirror/state';
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
 import type { ViewUpdate } from '@codemirror/view';
@@ -9,13 +9,13 @@ import {
 	issueDecorationsField,
 	issueTheme,
 	darkEditorTheme,
-	issueClickHandler,
 	updateIssuesEffect,
 	setSelectedIssueEffect,
-	showContextMenuEffect,
-	contextMenuField,
-	closeMenuOnScroll,
-	setContextMenuActions,
+	harperAutocompletion,
+	harperCursorTooltip,
+	setIssueActions,
+	issueNavigationKeymap,
+	issueSyncExtension,
 } from '../utils/editor-extensions';
 
 const Editor: Component<EditorProps> = (props) => {
@@ -25,8 +25,8 @@ const Editor: Component<EditorProps> = (props) => {
 	onMount(() => {
 		if (!editorRef) return;
 
-		// Set up context menu actions
-		setContextMenuActions({
+		// Set up issue actions for autocomplete
+		setIssueActions({
 			onApplySuggestion: (issueId, suggestion) => {
 				props.onApplySuggestion(issueId, suggestion);
 			},
@@ -35,6 +35,9 @@ const Editor: Component<EditorProps> = (props) => {
 			},
 			onIgnore: (issueId) => {
 				props.onIgnore(issueId);
+			},
+			onIssueSelect: (issueId) => {
+				props.onIssueSelect(issueId);
 			},
 		});
 
@@ -47,15 +50,17 @@ const Editor: Component<EditorProps> = (props) => {
 				dropCursor(),
 				rectangularSelection(),
 				crosshairCursor(),
+				placeholder("Paste text or start typing..."),
 				EditorView.lineWrapping,
 				keymap.of([...defaultKeymap, ...historyKeymap]),
+				issueNavigationKeymap,
 				issueField,
 				issueDecorationsField,
-				contextMenuField,
 				issueTheme,
 				darkEditorTheme,
-				issueClickHandler(),
-				closeMenuOnScroll,
+				harperAutocompletion,
+				harperCursorTooltip,
+				issueSyncExtension,
 				EditorView.updateListener.of((update: ViewUpdate) => {
 					if (update.docChanged) {
 						const newContent = update.state.doc.toString();
@@ -116,7 +121,7 @@ const Editor: Component<EditorProps> = (props) => {
 		}
 	});
 
-	// Scroll to issue and show context menu when requested from sidebar
+	// Scroll to issue and select it when requested from sidebar
 	createEffect(() => {
 		const scrollTo = props.scrollToIssue;
 		if (view && scrollTo) {
@@ -124,11 +129,14 @@ const Editor: Component<EditorProps> = (props) => {
 			if (issue) {
 				const span = issue.lint.span();
 				view.dispatch({
+					selection: { anchor: span.start },
 					effects: [
 						EditorView.scrollIntoView(span.start, { y: 'center' }),
-						showContextMenuEffect.of({ issueId: scrollTo, pos: span.start }),
+						setSelectedIssueEffect.of(scrollTo),
 					],
 				});
+				// Focus the editor so user can immediately use Ctrl+Space
+				view.focus();
 			}
 		}
 	});
@@ -141,9 +149,12 @@ const Editor: Component<EditorProps> = (props) => {
 	};
 
 	return (
-		<div class="h-full overflow-auto bg-[#1a1a1a]" onClick={handleContainerClick}>
-			<div class="h-full mx-auto max-w-[90ch] py-4 px-3 rounded-sm">
-				<div ref={editorRef} class="h-full text-base" />
+		<div class="h-full overflow-auto bg-[var(--flexoki-bg)]" onClick={handleContainerClick}>
+			{/* Top margin: 20vh (1/5 of screen) */}
+			<div class="pt-12 px-4 pb-12">
+				<div class="bg-[var(--flexoki-bg)] rounded-xl overflow-hidden shadow-2xl border border-[var(--flexoki-ui-2)]">
+					<div ref={editorRef} class="text-base" />
+				</div>
 			</div>
 		</div>
 	);

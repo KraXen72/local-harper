@@ -49,7 +49,6 @@ export interface EditorProps {
 }
 
 export interface TopBarProps {
-	issueCount: number;
 	onCopy: () => void;
 	isAnalyzing: boolean;
 }
@@ -68,9 +67,4 @@ export interface IssueItemProps {
 	onSelect: (issueId: string) => void;
 	onApplySuggestion: (suggestion: Suggestion) => void;
 	onAddToDictionary: (word: string) => void;
-}
-
-export interface TopBarProps {
-	issueCount: number;
-	onCopy: () => void;
 }

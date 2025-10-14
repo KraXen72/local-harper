@@ -1,6 +1,7 @@
 import { Component, For, Show } from 'solid-js';
 import type { HarperIssue, Suggestion } from '../types';
 import { SuggestionKind } from '../types';
+import { FormattedMessage } from '../utils/message-formatter';
 
 export interface ContextMenuProps {
 	issue: HarperIssue;
@@ -106,7 +107,9 @@ const ContextMenu: Component<ContextMenuProps> = (props) => {
 		<div class="cm-context-menu">
 			{/* Header */}
 			<div class="cm-context-menu-title">
-				<span>{props.issue.lint.message()}</span>
+				<span>
+					<FormattedMessage message={props.issue.lint.message()} />
+				</span>
 				<span class="cm-context-menu-info-icon" title={props.issue.lint.lint_kind()}>
 					ⓘ
 				</span>

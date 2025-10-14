@@ -1,21 +1,20 @@
-import { StateField, StateEffect } from '@codemirror/state';
-import { Decoration, DecorationSet, EditorView, showTooltip, type TooltipView } from '@codemirror/view';
+import { StateField, StateEffect, type EditorState } from '@codemirror/state';
+import { Decoration, DecorationSet, EditorView, showTooltip, type Tooltip, keymap } from '@codemirror/view';
+import { autocompletion, closeCompletion, type CompletionContext, type CompletionResult, type Completion } from '@codemirror/autocomplete';
 import type { HarperIssue, Suggestion } from '../types';
-import { IssueSeverity } from '../types';
+import { IssueSeverity, SuggestionKind } from '../types';
 import { render } from 'solid-js/web';
-import ContextMenu from '../components/ContextMenu';
+import IssueTooltipWrapper from '../components/IssueTooltipWrapper';
 
 // Effect to update issues
 export const updateIssuesEffect = StateEffect.define<HarperIssue[]>();
 
-// Effect to update selected issue
+// Effect to update selected issue (kept for sidebar highlighting)
 export const setSelectedIssueEffect = StateEffect.define<string | null>();
 
-// Effect to show context menu
-export const showContextMenuEffect = StateEffect.define<{ issueId: string; pos: number } | null>();
-
-// Custom theme for underlines and highlights using CodeMirror's baseTheme
+// Custom theme for issue decorations using CodeMirror's baseTheme
 // Using Flexoki color scheme
+// Only contains styles that MUST be in baseTheme (CodeMirror decorations)
 const issueTheme = EditorView.baseTheme({
 	'.cm-issue-error': {
 		textDecoration: 'underline solid',
@@ -40,12 +39,6 @@ const issueTheme = EditorView.baseTheme({
 	},
 	'.cm-issue-selected': {
 		backgroundColor: 'rgba(58, 169, 159, 0.3)', // flexoki-cyan with opacity
-	},
-	'.cm-tooltip.cm-tooltip-above, .cm-tooltip.cm-tooltip-below': {
-		'&.cm-tooltip-cursor': {
-			backgroundColor: 'transparent',
-			border: 'none',
-		},
 	},
 });
 
@@ -165,211 +158,308 @@ function getSeverityCssClass(severity: IssueSeverity): string {
 	}
 }
 
-// StateField for context menu
-const contextMenuField = StateField.define<{ issueId: string; pos: number } | null>({
-	create() {
-		return null;
-	},
-	update(value, tr) {
-		for (const effect of tr.effects) {
-			if (effect.is(showContextMenuEffect)) {
-				return effect.value;
-			}
-		}
-		return value;
-	},
-	provide: f => showTooltip.from(f, val => {
-		if (!val) return null;
-		return {
-			pos: val.pos,
-			above: false, // Default to showing below
-			strictSide: false,
-			arrow: false,
-			create: (view) => createContextMenuTooltip(view, val.issueId, val.pos),
-		};
-	}),
-});
-
-// Track the last clicked issue to prevent immediate reopening
-let lastClickedIssueId: string | null = null;
-
-// Context menu actions interface
-interface ContextMenuActions {
+// Actions interface for applying suggestions
+interface IssueActions {
 	onApplySuggestion: (issueId: string, suggestion: Suggestion) => void;
 	onAddToDictionary: (word: string) => void;
 	onIgnore: (issueId: string) => void;
+	onIssueSelect?: (issueId: string | null) => void;
 }
 
-let contextMenuActions: ContextMenuActions | null = null;
+let issueActions: IssueActions | null = null;
 
-export function setContextMenuActions(actions: ContextMenuActions) {
-	contextMenuActions = actions;
+export function setIssueActions(actions: IssueActions) {
+	issueActions = actions;
 }
 
-function createContextMenuTooltip(view: EditorView, issueId: string, pos: number): TooltipView {
-	const issueState = view.state.field(issueField);
-	const issue = issueState.issues.find(i => i.id === issueId);
+// Helper to find issue at cursor position
+function findIssueAtPos(state: EditorState, pos: number): HarperIssue | null {
+	const issueState = state.field(issueField);
+	const decorations = state.field(issueDecorationsField);
 	
-	const dom = document.createElement('div');
-	
-	// Prevent clicks on the tooltip from propagating to the editor
-	dom.addEventListener('mousedown', (e) => {
-		e.stopPropagation();
+	let foundIssueId: string | null = null;
+	decorations.between(pos, pos, (from, to, value) => {
+		if (value.spec.attributes && value.spec.attributes['data-issue-id']) {
+			foundIssueId = value.spec.attributes['data-issue-id'] as string;
+			return false;
+		}
 	});
 	
-	if (!issue) {
-		dom.textContent = 'Issue not found';
-		return { dom };
+	if (foundIssueId) {
+		return issueState.issues.find((i) => i.id === foundIssueId) || null;
 	}
 	
-	// Mount SolidJS component
-	const dispose = render(
-		() => ContextMenu({
-			issue,
-			onApplySuggestion: (suggestion: Suggestion) => {
-				if (contextMenuActions) {
-					contextMenuActions.onApplySuggestion(issueId, suggestion);
-				}
-				view.dispatch({ effects: showContextMenuEffect.of(null) });
-			},
-			onAddToDictionary: (word: string) => {
-				if (contextMenuActions) {
-					contextMenuActions.onAddToDictionary(word);
-				}
-				view.dispatch({ effects: showContextMenuEffect.of(null) });
-			},
-			onIgnore: () => {
-				if (contextMenuActions) {
-					contextMenuActions.onIgnore(issueId);
-				}
-				view.dispatch({ effects: showContextMenuEffect.of(null) });
-			},
-			onClose: () => {
-				view.dispatch({ effects: showContextMenuEffect.of(null) });
-			},
-		}),
-		dom
-	);
-	
-	// Adjust tooltip position horizontally if it overflows editor bounds
-	const mount = () => {
-		requestAnimationFrame(() => {
-			const coords = view.coordsAtPos(pos);
-			if (!coords) return;
-			
-			const tooltipRect = dom.getBoundingClientRect();
-			const editorRect = view.dom.getBoundingClientRect();
-			const margin = 10;
-			
-			if (tooltipRect.right > editorRect.right) {
-				dom.style.transform = `translateX(-${tooltipRect.right - editorRect.right + margin}px)`;
-			} else if (tooltipRect.left < editorRect.left) {
-				dom.style.transform = `translateX(${editorRect.left - tooltipRect.left + margin}px)`;
-			}
-		});
-	};
-	
-	return { 
-		dom, 
-		mount,
-		destroy: () => {
-			dispose();
-		}
-	};
+	return null;
 }
 
-// Click handler extension
-export function issueClickHandler() {
-	return EditorView.domEventHandlers({
-		mousedown(event, view) {
-			const pos = view.posAtCoords({ x: event.clientX, y: event.clientY });
-			if (pos === null) return false;
-
-			// Check if clicking on an issue - need to verify position is within the decoration range
-			const decorations = view.state.field(issueDecorationsField);
-			let foundIssueId: string | null = null;
-			
-			decorations.between(pos, pos, (from, to, value) => {
-				if (value.spec.attributes && value.spec.attributes['data-issue-id']) {
-					foundIssueId = value.spec.attributes['data-issue-id'] as string;
-					return false; // Stop iteration
-				}
-			});
-
-			if (foundIssueId) {
-				// If clicking the same issue that was last clicked
-				if (foundIssueId === lastClickedIssueId) {
-					// Close the menu and keep the lastClickedIssueId to prevent reopening
-					view.dispatch({
-						effects: [
-							setSelectedIssueEffect.of(null),
-							showContextMenuEffect.of(null),
-						],
-					});
-					// Don't clear lastClickedIssueId - this prevents immediate reopening
-				} else {
-					// Different issue - show menu and update tracking
-					lastClickedIssueId = foundIssueId;
-					view.dispatch({
-						effects: [
-							setSelectedIssueEffect.of(foundIssueId),
-							showContextMenuEffect.of({ issueId: foundIssueId, pos }),
-						],
-					});
-				}
-			} else {
-				// Clicking elsewhere - clear tracking to allow reopening
-				lastClickedIssueId = null;
-				view.dispatch({
-					effects: [
-						setSelectedIssueEffect.of(null),
-						showContextMenuEffect.of(null),
-					],
-				});
-			}
-
-			// Always return false to allow default cursor placement
-			return false;
-		},
-		contextmenu(event, view) {
-			// Prevent default context menu
-			event.preventDefault();
-			
-			// Close Harper context menu if open and clear tracking
-			const currentMenu = view.state.field(contextMenuField);
-			if (currentMenu) {
-				lastClickedIssueId = null;
-				view.dispatch({
-					effects: [
-						setSelectedIssueEffect.of(null),
-						showContextMenuEffect.of(null),
-					],
-				});
-			}
-			
-			return true;
-		},
+// Custom autocomplete source for Harper issues
+function harperAutocomplete(context: CompletionContext): CompletionResult | null {
+	const issue = findIssueAtPos(context.state, context.pos);
+	
+	console.log('harperAutocomplete called:', {
+		pos: context.pos,
+		explicit: context.explicit,
+		hasIssue: !!issue,
+		hasActions: !!issueActions,
 	});
+	
+	if (!issue || !issueActions) return null;
+	
+	const suggestions = issue.lint.suggestions();
+	const span = issue.lint.span();
+	
+	// Debug logging
+	console.log('Issue found:', {
+		kind: issue.lint.lint_kind(),
+		message: issue.lint.message(),
+		problemText: issue.lint.get_problem_text(),
+		suggestionCount: suggestions.length,
+		suggestions: suggestions.map(s => s.get_replacement_text()),
+		span: { start: span.start, end: span.end },
+		contextPos: context.pos,
+	});
+	
+	const options: Completion[] = [];
+	
+	// Add suggestion completions
+	for (const suggestion of suggestions) {
+		const kind = suggestion.kind();
+		const isRemove = kind === SuggestionKind.Remove;
+		const replacementText = isRemove ? '' : suggestion.get_replacement_text();
+		const label = isRemove ? '(Remove)' : replacementText;
+		
+		options.push({
+			label,
+			// detail: isRemove ? 'Remove this text' : 'Replace',
+			apply: async (view) => {
+				// Use linter.applySuggestion() to properly handle all suggestion types,
+				// including insertions (comma rules), replacements, and removals.
+				const { getLinter } = await import('../services/harper-service');
+				const linter = getLinter();
+				const oldText = view.state.doc.toString();
+				const newText = await linter.applySuggestion(oldText, issue.lint, suggestion);
+				
+				// Find the minimal changed region by comparing from both ends
+				let changeStart = 0;
+				const minLen = Math.min(oldText.length, newText.length);
+				while (changeStart < minLen && oldText[changeStart] === newText[changeStart]) {
+					changeStart++;
+				}
+				
+				let changeEndOld = oldText.length;
+				let changeEndNew = newText.length;
+				while (changeEndOld > changeStart && changeEndNew > changeStart &&
+				       oldText[changeEndOld - 1] === newText[changeEndNew - 1]) {
+					changeEndOld--;
+					changeEndNew--;
+				}
+				
+				// Apply the minimal change and position cursor at the end of the inserted text
+				view.dispatch({
+					changes: { from: changeStart, to: changeEndOld, insert: newText.slice(changeStart, changeEndNew) },
+					selection: { anchor: changeEndNew }
+				});
+			},
+			type: 'text',
+			// info: 'Replace'
+		});
+	}
+	
+	// Always add ignore option first (before dictionary so it's always at the bottom)
+	options.push({
+		label: 'Ignore',
+		// detail: 'Ignore this issue',
+		apply: (view) => {
+			if (issueActions) {
+				issueActions.onIgnore(issue.id);
+			}
+			// Close the autocomplete popup
+			closeCompletion(view);
+		},
+		type: 'class',
+	});
+	
+	// Add dictionary option for spelling issues (will appear above Ignore)
+	const isSpelling = issue.lint.lint_kind().toLowerCase().includes('spelling');
+	if (isSpelling) {
+		options.push({
+			label: 'Add to Dictionary',
+			// detail: 'Add word to dictionary',
+			apply: (view) => {
+				if (issueActions) {
+					issueActions.onAddToDictionary(issue.lint.get_problem_text());
+				}
+				// Close the autocomplete popup
+				closeCompletion(view);
+			},
+			type: 'class',
+		});
+	}
+	
+	// Don't show autocomplete if there are no options (shouldn't happen, but just in case)
+	if (options.length === 0) {
+		console.log('No options generated!');
+		return null;
+	}
+	
+	console.log('Returning completion result:', {
+		from: span.start,
+		to: span.end,
+		optionCount: options.length,
+	});
+	
+	return {
+		from: span.start,
+		to: span.end,
+		options,
+		// Don't filter - these are action items, not text completions
+		filter: false,
+	};
 }
 
-// Extension to close menu on scroll
-const closeMenuOnScroll = EditorView.domEventHandlers({
-	scroll(event, view) {
-		const currentMenu = view.state.field(contextMenuField);
-		if (currentMenu) {
-			// Check if the menu position is still visible
-			const coords = view.coordsAtPos(currentMenu.pos);
-			if (coords) {
-				const rect = view.dom.getBoundingClientRect();
-				// Close if the position is outside the visible editor area
-				if (coords.top < rect.top || coords.bottom > rect.bottom) {
-					lastClickedIssueId = null;
-					view.dispatch({ effects: showContextMenuEffect.of(null) });
-				}
-			}
+// Helper to create tooltip from issue
+function createTooltipFromIssue(issue: HarperIssue): Tooltip {
+	const span = issue.lint.span();
+	const severityClass = getSeverityCssClass(issue.severity).replace('cm-issue-', '');
+	
+	// Check if ignore would be the only option
+	const suggestions = issue.lint.suggestions();
+	const isSpelling = issue.lint.lint_kind().toLowerCase().includes('spelling');
+	const hasActions = suggestions.length > 0 || isSpelling;
+	const showIgnoreButton = !hasActions;
+	
+	return {
+		pos: span.start,
+		end: span.end,
+		create: (view: EditorView) => {
+			const container = view.dom.ownerDocument.createElement('div');
+			const dispose = render(() => IssueTooltipWrapper({ 
+				issue, 
+				severityClass,
+				showIgnoreButton,
+				onIgnore: (showIgnoreButton && issueActions) 
+					? () => {
+						if (issueActions) {
+							issueActions.onIgnore(issue.id);
+						}
+					}
+					: undefined
+			}), container);
+			
+			return {
+				dom: container,
+				destroy: () => dispose(),
+			};
+		},
+		above: true,
+		arrow: true
+	};
+}
+
+// Track last notified issue ID to avoid duplicate notifications
+let lastNotifiedIssueId: string | null = null;
+
+// StateField to track current tooltip based on cursor position
+const cursorTooltipField = StateField.define<readonly Tooltip[]>({
+	create(state) {
+		const cursorPos = state.selection.main.head;
+		const issue = findIssueAtPos(state, cursorPos);
+		
+		// Notify parent about initial issue selection
+		const issueId = issue?.id ?? null;
+		if (issueActions?.onIssueSelect) {
+			issueActions.onIssueSelect(issueId);
+			lastNotifiedIssueId = issueId;
 		}
-		return false;
+		
+		if (!issue) return [];
+		
+		return [createTooltipFromIssue(issue)];
 	},
+	update(tooltips, tr) {
+		// Check if issues were updated (e.g., issue was ignored/removed)
+		const issuesUpdated = tr.effects.some(e => e.is(updateIssuesEffect));
+		
+		// If issues were updated, check if current tooltip's issue still exists
+		if (issuesUpdated && tooltips.length > 0) {
+			const cursorPos = tr.state.selection.main.head;
+			const issue = findIssueAtPos(tr.state, cursorPos);
+			
+			// Notify parent about issue change
+			const issueId = issue?.id ?? null;
+			if (issueId !== lastNotifiedIssueId && issueActions?.onIssueSelect) {
+				issueActions.onIssueSelect(issueId);
+				lastNotifiedIssueId = issueId;
+			}
+			
+			// If the issue no longer exists at cursor position, clear the tooltip
+			if (!issue) {
+				return [];
+			}
+			
+			// If a different issue is now at cursor position, show new tooltip
+			return [createTooltipFromIssue(issue)];
+		}
+		
+		// Only recalculate if document changed or selection changed
+		if (!tr.docChanged && !tr.selection) {
+			return tooltips;
+		}
+		
+		const cursorPos = tr.state.selection.main.head;
+		const issue = findIssueAtPos(tr.state, cursorPos);
+		
+		// Notify parent about issue change (only if it actually changed)
+		const issueId = issue?.id ?? null;
+		if (issueId !== lastNotifiedIssueId && issueActions?.onIssueSelect) {
+			issueActions.onIssueSelect(issueId);
+			lastNotifiedIssueId = issueId;
+		}
+		
+		// If there's an issue at cursor, show tooltip
+		if (issue) {
+			return [createTooltipFromIssue(issue)];
+		}
+		
+		return [];
+	},
+	provide: f => showTooltip.computeN([f], state => state.field(f)),
+});
+
+// Export the autocomplete extension
+export const harperAutocompletion = autocompletion({
+	override: [harperAutocomplete],
+	activateOnTyping: false,  // Only activate on Ctrl+Space
+	closeOnBlur: true,
+	aboveCursor: false,
+});
+
+// Export the cursor-based tooltip extension
+export const harperCursorTooltip = cursorTooltipField;
+
+// Update listener to sync issue selection highlighting with cursor position
+export const issueSyncExtension = EditorView.updateListener.of((update) => {
+	// Only process if selection changed (cursor moved)
+	if (!update.selectionSet) return;
+	
+	// Skip if this update already has a setSelectedIssueEffect (from keyboard nav or sidebar)
+	if (update.transactions.some(tr => tr.effects.some(e => e.is(setSelectedIssueEffect)))) {
+		return;
+	}
+	
+	const cursorPos = update.state.selection.main.head;
+	const issue = findIssueAtPos(update.state, cursorPos);
+	const issueId = issue?.id ?? null;
+	
+	// Get current selected issue
+	const currentSelectedId = update.state.field(issueField).selectedId;
+	
+	// Only dispatch if the issue changed
+	if (issueId !== currentSelectedId) {
+		update.view.dispatch({
+			effects: setSelectedIssueEffect.of(issueId),
+		});
+	}
 });
 
 // Dark editor theme with Flexoki colors
@@ -377,9 +467,11 @@ const darkEditorTheme = EditorView.theme({
 	'&': {
 		color: '#CECDC3', // flexoki-tx
 		backgroundColor: '#100F0F', // flexoki-bg
+		padding: '1.5rem',
 	},
 	'.cm-content': {
 		caretColor: '#CECDC3',
+		padding: '0',
 	},
 	'&.cm-focused .cm-cursor': {
 		borderLeftColor: '#CECDC3',
@@ -401,6 +493,87 @@ const darkEditorTheme = EditorView.theme({
 	'.cm-activeLine': {
 		backgroundColor: 'rgba(40, 39, 38, 0.5)', // flexoki-ui with transparency
 	},
+	'.cm-scroller': {
+		fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
+		lineHeight: '1.6',
+	},
 }, { dark: true });
 
-export { issueTheme, darkEditorTheme, contextMenuField, closeMenuOnScroll };
+// Navigation functions for next/previous issue
+function navigateToNextIssue(view: EditorView): boolean {
+	const issueState = view.state.field(issueField);
+	const issues = issueState.issues;
+	
+	if (issues.length === 0) return false;
+	
+	const currentPos = view.state.selection.main.head;
+	
+	// Find the next issue after current position
+	let nextIssue = issues.find(issue => issue.lint.span().start > currentPos);
+	
+	// If no issue after current position, wrap to first issue
+	if (!nextIssue) {
+		nextIssue = issues[0];
+	}
+	
+	if (nextIssue) {
+		const span = nextIssue.lint.span();
+		view.dispatch({
+			selection: { anchor: span.start },
+			effects: [
+				EditorView.scrollIntoView(span.start, { y: 'center' }),
+				setSelectedIssueEffect.of(nextIssue.id),
+			],
+		});
+		view.focus();
+		return true;
+	}
+	
+	return false;
+}
+
+function navigateToPreviousIssue(view: EditorView): boolean {
+	const issueState = view.state.field(issueField);
+	const issues = issueState.issues;
+	
+	if (issues.length === 0) return false;
+	
+	const currentPos = view.state.selection.main.head;
+	
+	// Find the previous issue before current position (search in reverse)
+	let prevIssue = issues.slice().reverse().find(issue => issue.lint.span().start < currentPos);
+	
+	// If no issue before current position, wrap to last issue
+	if (!prevIssue) {
+		prevIssue = issues[issues.length - 1];
+	}
+	
+	if (prevIssue) {
+		const span = prevIssue.lint.span();
+		view.dispatch({
+			selection: { anchor: span.start },
+			effects: [
+				EditorView.scrollIntoView(span.start, { y: 'center' }),
+				setSelectedIssueEffect.of(prevIssue.id),
+			],
+		});
+		view.focus();
+		return true;
+	}
+	
+	return false;
+}
+
+// Keymap for issue navigation
+export const issueNavigationKeymap = keymap.of([
+	{
+		key: 'Ctrl-j',
+		run: navigateToPreviousIssue,
+	},
+	{
+		key: 'Ctrl-k',
+		run: navigateToNextIssue,
+	},
+]);
+
+export { issueTheme, darkEditorTheme };
