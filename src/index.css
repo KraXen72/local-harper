@@ -209,6 +209,9 @@ body {
 .cm-tooltip {
 	border-radius: 4px;
 }
+.cm-tooltip-arrow {
+	display: none;
+}
 
 /* Harper Issue Tooltip Styles */
 .cm-issue-tooltip {
@@ -219,7 +222,7 @@ body {
 	border: 1px solid var(--flexoki-ui);
 	color: var(--flexoki-tx);
 	font-size: 13px;
-	max-width: 400px;
+	max-width: 320px;
 	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
 }
 
