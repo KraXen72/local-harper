@@ -25,6 +25,9 @@
 	--flexoki-magenta: #CE5D97;
 
 	--text-selection-background-color: #3aa99f4c;
+	--br-mini: 3px;
+	--br-small: 5px;
+	--br-lg: 8px;
 
 	/* credit to the harper website repository */
 	/* some colors changed/swapped */
@@ -33,7 +36,7 @@
 	/* Harper lint kind colors (RGB triplets for flexible usage) */
 	--lint-kind-agreement: 34 139 34; /* Forest green */
 	--lint-kind-boundary-error: 139 69 19; /* Saddle brown */
-	--lint-kind-capitalization: 84 13 110; /* Deep purple */
+	--lint-kind-capitalization: 150 56 156; /* purple, modified */
 	--lint-kind-eggcorn: 255 140 0; /* Dark orange */
 	--lint-kind-enhancement: 14 173 105; /* Green */
 	--lint-kind-formatting: 125 60 152; /* Amethyst purple */
@@ -59,159 +62,6 @@ body {
 	color: var(--flexoki-tx);
 }
 
-/* Harper Context Menu Styles */
-/* TESTING: if nothing is affected by these, remove them. */
-/* .cm-context-menu {
-	background-color: var(--flexoki-bg-2);
-	border: 1px solid var(--flexoki-ui-2);
-	border-radius: 8px;
-	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6), 0 0 0 1px var(--flexoki-ui);
-	padding: 8px;
-	min-width: 200px;
-	max-width: 250px;
-	max-height: 400px;
-	overflow-y: auto;
-	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
-	position: relative;
-	z-index: 10000;
-}
-
-.cm-context-menu-title {
-	display: flex;
-	align-items: center;
-	gap: 6px;
-	font-size: 14px;
-	font-weight: 600;
-	line-height: 20px;
-	color: var(--flexoki-tx);
-	padding-bottom: 4px;
-	margin-bottom: 4px;
-	border-bottom: 2px solid var(--flexoki-green);
-	user-select: none;
-}
-
-.cm-context-menu-title > span:first-child {
-	flex: 1;
-}
-
-.cm-context-menu-info-icon {
-	font-size: 14px;
-	color: var(--flexoki-tx-2);
-	cursor: help;
-	transition: color 120ms ease;
-	flex-shrink: 0;
-}
-
-.cm-context-menu-info-icon:hover {
-	color: var(--flexoki-cyan);
-}
-
-.cm-context-menu-problem {
-	font-size: 14px;
-	line-height: 20px;
-	color: var(--flexoki-tx-2);
-	background-color: var(--flexoki-ui);
-	padding: 0.125rem 0.25rem;
-	border-radius: 4px;
-	font-family: monospace;
-	margin-top: 4px;
-	margin-bottom: 8px;
-	display: inline-block;
-}
-
-.cm-context-menu-close {
-	background-color: transparent;
-	border: none;
-	cursor: pointer;
-	font-size: 20px;
-	line-height: 1;
-	color: var(--flexoki-tx-2);
-	padding: 0 4px;
-	transition: color 120ms ease;
-}
-
-.cm-context-menu-close:hover {
-	color: var(--flexoki-tx);
-}
-
-.cm-context-menu-section-title {
-	font-size: 13px;
-	font-weight: 600;
-	color: var(--flexoki-tx-2);
-	margin-top: 8px;
-	margin-bottom: 6px;
-}
-
-.cm-context-menu-suggestions-grid {
-	display: grid;
-	grid-template-columns: repeat(2, 1fr);
-	gap: 6px;
-}
-
-.cm-context-menu-button {
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	gap: 4px;
-	width: 100%;
-	cursor: pointer;
-	border: 1px solid var(--flexoki-ui-2);
-	border-radius: 6px;
-	padding: 4px 8px;
-	min-height: 28px;
-	font-size: 13px;
-	font-weight: 600;
-	line-height: 20px;
-	background-color: var(--flexoki-ui);
-	color: var(--flexoki-tx);
-	margin-bottom: 6px;
-	transition: all 150ms ease;
-	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-}
-
-.cm-context-menu-button:hover {
-	background-color: var(--flexoki-ui-2);
-	border-color: var(--flexoki-ui-3);
-	transform: translateY(-1px);
-	box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
-}
-
-.cm-context-menu-button:focus {
-	outline: 2px solid var(--flexoki-cyan);
-	outline-offset: 2px;
-}
-
-.cm-context-menu-button:active {
-	transform: translateY(0) scale(0.98);
-	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-}
-
-.cm-context-menu-button:last-child {
-	margin-bottom: 0;
-}
-
-.cm-context-menu-suggestions-grid .cm-context-menu-button {
-	margin-bottom: 0;
-}
-
-.cm-context-menu-button-secondary {
-	background: var(--flexoki-ui-2);
-	color: var(--flexoki-tx-2);
-	font-weight: lighter;
-}
-
-.cm-context-menu-button-success {
-	background-color: var(--flexoki-green);
-	border-color: var(--flexoki-green);
-	color: #ffffff;
-}
-
-.cm-context-menu-button-success:hover {
-	background-color: #96ab4a;
-	border-color: #96ab4a;
-	box-shadow: 0 2px 8px rgba(135, 154, 57, 0.4);
-} */
-
 /* Scrollbar styling */
 ::-webkit-scrollbar {
 	width: 10px;
@@ -219,12 +69,12 @@ body {
 
 ::-webkit-scrollbar-track {
 	background: var(--flexoki-bg);
-	border-radius: 5px;
+	border-radius: var(--br-small);
 }
 
 ::-webkit-scrollbar-thumb {
 	background-color: var(--flexoki-tx-3);
-	border-radius: 5px;
+	border-radius: var(--br-small);
 	border: 1px solid var(--flexoki-bg);
 }
 
@@ -238,17 +88,41 @@ body {
 }
 
 .cm-tooltip {
-	border-radius: 4px;
+	border-radius: var(--br-small);
 }
 .cm-tooltip-arrow {
 	display: none;
 }
 
+.shared-card {
+	padding: 10px;
+	border-radius: var(--radius-lg);
+	border-style: solid;
+	border-width: 1px;
+	transition: all 200ms cubic-bezier(0, 0, 0.2, 1);
+
+	background-color: color-mix(in oklab, var(--flexoki-ui) 20%, transparent);
+	border-color: var(--flexoki-ui-2);
+}
+.shared-card:not(.shared-card-selected):hover {
+	background-color: var(--flexoki-ui);
+	border-color: var(--flexoki-ui-3);
+
+	@apply shadow-sm;
+}
+
+.shared-card-selected {
+	background-color: color-mix(in oklab, var(--flexoki-cyan) 20%, transparent);
+	border-color: color-mix(in oklab, var(--flexoki-cyan) 60%, transparent);
+
+	@apply shadow-md shadow-[var(--flexoki-cyan)]/10;
+}
+
 /* Harper Issue Tooltip Styles */
 .cm-issue-tooltip {
 	/* margin-block: 4px; */
-	padding: 8px 12px;
-	border-radius: 4px;
+	padding: 8px;
+	border-radius: var(--br-small);
 	background-color: var(--flexoki-bg-2);
 	border: 1px solid var(--flexoki-ui);
 	color: var(--flexoki-tx);
@@ -259,15 +133,16 @@ body {
 
 .cm-issue-tooltip-severity {
 	padding: 2px 6px;
-	border-radius: 3px;
+	border-radius: var(--br-small);
 	font-size: 11px;
 	font-weight: bold;
 	text-transform: uppercase;
+	line-height: 2;
 }
 
 .cm-issue-tooltip-rule {
 	font-size: 11px;
-	padding: 2px 6px;
+	padding: 2px 0px;
 	color: var(--flexoki-tx-2);
 	font-style: italic;
 	/* font-weight: bold; */
