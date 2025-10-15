@@ -6,6 +6,7 @@ import { SuggestionKind } from '../types';
 import { render } from 'solid-js/web';
 import IssueTooltipWrapper from '../components/IssueTooltipWrapper';
 import { lintKindColor, lintKindBackgroundColor } from './lint-kind-colors';
+import { getLinter } from '../services/harper-service';
 
 // Effect to update issues
 export const updateIssuesEffect = StateEffect.define<HarperIssue[]>();
@@ -225,7 +226,6 @@ function harperAutocomplete(context: CompletionContext): CompletionResult | null
 			apply: async (view) => {
 				// Use linter.applySuggestion() to properly handle all suggestion types,
 				// including insertions (comma rules), replacements, and removals.
-				const { getLinter } = await import('../services/harper-service');
 				const linter = getLinter();
 				const oldText = view.state.doc.toString();
 				const newText = await linter.applySuggestion(oldText, issue.lint, suggestion);
