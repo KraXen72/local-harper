@@ -2,8 +2,9 @@ import { Component, createSignal, onMount, createEffect, batch, Show } from 'sol
 import TopBar from './components/TopBar';
 import Editor from './components/Editor';
 import Sidebar from './components/Sidebar';
-import { initHarper, analyzeText, transformLints, getLinter, addWordToDictionary } from './services/harper-service';
-import type { HarperIssue, Suggestion } from './types';
+import RuleManager from './components/RuleManager';
+import { initHarper, analyzeText, transformLints, getLinter, addWordToDictionary, updateSingleRule, getLintConfig } from './services/harper-service';
+import type { HarperIssue, Suggestion, LintConfig } from './types';
 
 const App: Component = () => {
 	const [content, setContent] = createSignal('');
@@ -12,6 +13,8 @@ const App: Component = () => {
 	const [isInitialized, setIsInitialized] = createSignal(false);
 	const [scrollToIssue, setScrollToIssue] = createSignal<string | null>(null);
 	const [isAnalyzing, setIsAnalyzing] = createSignal(false);
+	const [isRuleManagerOpen, setIsRuleManagerOpen] = createSignal(false);
+	const [currentLintConfig, setCurrentLintConfig] = createSignal<LintConfig | null>(null);
 
 	// Debounce state - not reactive, just regular variables
 	let debounceTimeout: number | undefined;
@@ -27,6 +30,8 @@ const App: Component = () => {
 	onMount(async () => {
 		try {
 			await initHarper();
+			const config = await getLintConfig();
+			setCurrentLintConfig(config);
 			setIsInitialized(true);
 		} catch (error) {
 			console.error('Failed to initialize Harper:', error);
@@ -135,13 +140,63 @@ const App: Component = () => {
 		setSelectedIssueId(null);
 	};
 
+	const toggleRuleManager = () => {
+		setIsRuleManagerOpen(!isRuleManagerOpen());
+	};
+
+	const handleRuleToggle = async (ruleName: string, enabled: boolean) => {
+		try {
+			await updateSingleRule(ruleName, enabled);
+			// Update current config
+			const newConfig = await getLintConfig();
+			setCurrentLintConfig(newConfig);
+			// Re-analyze current text
+			const lints = await analyzeText(content());
+			const harperIssues = transformLints(lints);
+			const filteredIssues = harperIssues.filter(issue => !ignoredIssues.has(issue.id));
+			setIssues(filteredIssues);
+		} catch (error) {
+			console.error('Failed to toggle rule:', error);
+		}
+	};
+
+	const handleConfigImported = async () => {
+		try {
+			// Refresh config from storage
+			const newConfig = await getLintConfig();
+			setCurrentLintConfig(newConfig);
+			// Re-analyze current text with new config
+			const lints = await analyzeText(content());
+			const harperIssues = transformLints(lints);
+			const filteredIssues = harperIssues.filter(issue => !ignoredIssues.has(issue.id));
+			setIssues(filteredIssues);
+		} catch (error) {
+			console.error('Failed to refresh config after import:', error);
+		}
+	};
+
 	return (
 		<div class="h-screen flex flex-col bg-[var(--flexoki-bg)]">
-			<TopBar onCopy={handleCopy} isAnalyzing={isAnalyzing()} />
+			<TopBar 
+				onCopy={handleCopy} 
+				isAnalyzing={isAnalyzing()} 
+				isRuleManagerOpen={isRuleManagerOpen()}
+				onToggleRuleManager={toggleRuleManager}
+			/>
 
 			<Show when={isInitialized()} fallback={<LoadingFallback />}>
-				<div class="flex-1 grid overflow-hidden" style="grid-template-columns: minmax(300px, 1fr) minmax(72ch, 2fr) minmax(0, 1fr);">
-					<div class="overflow-hidden">
+				<div 
+					class="flex-1 grid overflow-hidden app-layout"
+					classList={{
+						'rule-manager-open': isRuleManagerOpen()
+					}}
+				>
+					{/* Left - Issue Sidebar/Rule manager on small screens */}
+					<div class="overflow-hidden sidebar-left"
+						classList={{
+							'hidden-on-mobile': isRuleManagerOpen()
+						}}
+					>
 						<Sidebar
 							issues={issues()}
 							selectedIssueId={selectedIssueId()}
@@ -164,7 +219,7 @@ const App: Component = () => {
 					</div>
 					
 					{/* Editor - centered area */}
-					<div class="overflow-hidden">
+					<div class="overflow-hidden editor-wrapper">
 						<Editor
 							content={content()}
 							onContentChange={setContent}
@@ -185,7 +240,23 @@ const App: Component = () => {
 						/>
 					</div>
 
-					<div class="overflow-hidden" />	
+					{/* Right - Rule manager/nothing */}
+					<div 
+						class="overflow-hidden sidebar-right"
+						classList={{
+							'visible-on-mobile': isRuleManagerOpen()
+						}}
+					>
+						<Show when={currentLintConfig()}>
+							<RuleManager
+								isOpen={isRuleManagerOpen()}
+								onClose={() => setIsRuleManagerOpen(false)}
+								onRuleToggle={handleRuleToggle}
+								onConfigImported={handleConfigImported}
+								currentConfig={currentLintConfig()!}
+							/>
+						</Show>
+					</div>
 				</div>
 			</Show>
 		</div>

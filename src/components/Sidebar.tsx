@@ -11,6 +11,7 @@ const Kbd: ParentComponent = (props) => (
 );
 
 const Sidebar: Component<SidebarProps> = (props) => {
+	// oxlint-disable-next-line no-unassigned-vars
 	let containerRef!: HTMLDivElement;
 	const issueRefs = new Map<string, HTMLDivElement>();
 
@@ -26,8 +27,7 @@ const Sidebar: Component<SidebarProps> = (props) => {
 	});
 
 	return (
-		<div ref={containerRef} class="h-full border-l border-[var(--flexoki-ui-2)] bg-[var(--flexoki-bg)]/95 backdrop-blur-md shadow-2xl max-w-[400px]" style={{
-			display: "grid",
+		<div ref={containerRef} class="grid h-full border-l border-[var(--flexoki-ui-2)] bg-[var(--flexoki-bg)]/95 backdrop-blur-md shadow-2xl max-w-[400px]" style={{
 			"grid-template-rows": "min-content 1fr min-content",
 		}}>
 			<div class="flex items-center justify-between px-4 py-3 bg-[var(--flexoki-bg)]">

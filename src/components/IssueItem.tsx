@@ -12,11 +12,8 @@ const IssueItem: Component<IssueItemProps> = (props) => {
 
 	return (
 		<div
-			class="p-2.5 rounded-lg border cursor-pointer transition-all duration-200 ease-out"
-			classList={{
-				'bg-[var(--flexoki-cyan)]/20 border-[var(--flexoki-cyan)]/60 shadow-md shadow-[var(--flexoki-cyan)]/10 translate-x-0.5': props.isSelected,
-				'bg-[var(--flexoki-ui)]/20 border-[var(--flexoki-ui-2)] hover:border-[var(--flexoki-ui-3)] hover:bg-[var(--flexoki-ui)] hover:shadow-sm hover:translate-x-0.5': !props.isSelected,
-			}}
+			class="shared-card cursor-pointer hover:translate-x-0.5"
+			classList={{ 'shared-card-selected translate-x-0.5': props.isSelected }}
 			onClick={handleClick}
 			tabIndex={0}
 			onKeyDown={(e) => {

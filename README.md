@@ -5,19 +5,14 @@ The main idea is that it uses Codemirror as the editor framework, since it's pre
 - The suggestions are handled using `@codemirror/autocomplete` and some custom handling, so you can use both your keyboard and mouse to accept them
 - The underlining is using `@codemirror/lint`, so it's properly integrated with the editor and doesen't have any de-syncing issues when scrolling
 
-## todo
-- [x] clicking on an issue in the sidebar should focus the editor so ctrl+space works
-- [ ] gui dictionary manager
-- [ ] gui rule manager
-- [ ] gui dialect changer
-- [x] yoink the severities from https://writewithharper.com instead of ad-hoc heuristics
-- [x] figure out how to publish on github pages (maybe cdn harper's wasm thing)
-- [x] issues in sidebar shouldn't be sorted by kind or title, but by their logical location in the source document.
-- [ ] move away from custom `HarperIssue` type to pure `OrganizedLint` or an extension of it.
-- [ ] sidebar toggling
-- [ ] implement tests so we can verify large refactors didn't break anything
-- [ ] PWA support
-	- [ ] test fully offline
+## features
+- live, performant and local grammar checking with [harper](https://github.com/Automattic/harper)
+- keyboard shortcuts & navigation
+- issue sidebar: clicking issue in editor focused sidebar and vice-versa
+- initial dictionary support (localStorage)
+- sleek UI built with solid-js and tailwindcss@4
+- rule manager
+- planned: dictionary manager
 
 ## installation & try it out
 pre-req: git, nodejs, [pnpm](https://pnpm.io/installation).
@@ -27,6 +22,12 @@ cd local-harper
 pnpm i
 pnpm dev
 ```
+
+## note to harper maintainers/potential contributors
+Most of the harper specific logic is probably (possibly very) bad. 
+This is due to the fact that it's mostly vibecoded. I am in the process of cleaning up the codebase, so it goes from the "working PoC" stage into something more maintainable long term.
+I will eargerly accept any improvements/rewrites to the harper-specific logic (or to any part of the app, really).
+Thank you for making harper!
 
 ## testing text:
 ```
@@ -58,3 +59,4 @@ The best part: Harper can give you feedback instantly,
 For most documents, Harper can serve up suggestions in
 under 10 ms, faster that Grammarly.
 ```
+
