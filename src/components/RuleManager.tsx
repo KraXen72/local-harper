@@ -2,8 +2,7 @@ import { Component, createSignal, createMemo, For, Show, createResource } from '
 import type { RuleManagerProps, RuleInfo } from '../types';
 import { pascalCaseToWords } from '../utils/pascal-case';
 import { exportRuleConfig, importRuleConfig, getLintDescriptions } from '../services/harper-service';
-import RuleToggleItem from './RuleToggleItem';
-import Icon from './Icon';
+import RuleCard from './RuleCard';
 import uFuzzy from '@leeoniya/ufuzzy';
 
 const RuleManager: Component<RuleManagerProps> = (props) => {
@@ -144,7 +143,7 @@ const RuleManager: Component<RuleManagerProps> = (props) => {
 						class="p-1.5 hover:bg-[var(--flexoki-ui-3)] aspect-square rounded-md transition-colors duration-150"
 						aria-label="Close rule manager"
 					>
-						<Icon icon="lucide:x" width={"20px"} height={"20px"} class="text-[var(--flexoki-tx-2)]" />
+						<span class="iconify lucide--x w-5 h-5 text-[var(--flexoki-tx-2)]" />
 					</button>
 				</div>
 				
@@ -165,7 +164,7 @@ const RuleManager: Component<RuleManagerProps> = (props) => {
 								class="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-[var(--flexoki-ui-3)] rounded transition-colors"
 								aria-label="Clear filter"
 							>
-								<Icon icon="lucide:x" class="w-4 h-4 text-[var(--flexoki-tx-3)]" />
+								<span class="iconify lucide--x w-4 h-4 text-[var(--flexoki-tx-3)]" />
 							</button>
 						</Show>
 					</div>
@@ -176,14 +175,14 @@ const RuleManager: Component<RuleManagerProps> = (props) => {
 							onClick={handleExport}
 							class="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-[var(--flexoki-cyan)] hover:brightness-110 active:scale-95 text-white text-sm font-medium rounded-md shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[var(--flexoki-cyan)] focus:ring-offset-2 focus:ring-offset-[var(--flexoki-bg-2)]"
 						>
-							<Icon icon="lucide:download" class="w-4 h-4" />
+							<span class="iconify lucide--download w-4 h-4" />
 							Export
 						</button>
 						<button
 							onClick={handleImport}
 							class="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-[var(--flexoki-cyan)] hover:brightness-110 active:scale-95 text-white text-sm font-medium rounded-md shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[var(--flexoki-cyan)] focus:ring-offset-2 focus:ring-offset-[var(--flexoki-bg-2)]"
 						>
-							<Icon icon="lucide:upload" class="w-4 h-4" />
+							<span class="iconify lucide--upload w-4 h-4" />
 							Import
 						</button>
 					</div>
@@ -191,7 +190,7 @@ const RuleManager: Component<RuleManagerProps> = (props) => {
 					{/* Error message */}
 					<Show when={importError()}>
 						<div class="flex items-start gap-2 p-3 bg-[var(--flexoki-re)] bg-opacity-10 border border-[var(--flexoki-re)] rounded-md">
-							<Icon icon="lucide:alert-circle" class="w-5 h-5 text-[var(--flexoki-re)] flex-shrink-0 mt-0.5" />
+							<span class="iconify lucide--alert-circle w-5 h-5 text-[var(--flexoki-re)] flex-shrink-0 mt-0.5" />
 							<div class="flex-1 min-w-0">
 								<p class="text-sm text-[var(--flexoki-re)] break-words">{importError()}</p>
 							</div>
@@ -200,7 +199,7 @@ const RuleManager: Component<RuleManagerProps> = (props) => {
 								class="p-0.5 hover:bg-[var(--flexoki-ui-3)] rounded transition-colors flex-shrink-0"
 								aria-label="Dismiss error"
 							>
-								<Icon icon="lucide:x" class="w-4 h-4 text-[var(--flexoki-re)]" />
+								<span class="iconify lucide--x w-4 h-4 text-[var(--flexoki-re)]" />
 							</button>
 						</div>
 					</Show>
@@ -219,7 +218,7 @@ const RuleManager: Component<RuleManagerProps> = (props) => {
 						>
 							<For each={filteredRules()}>
 								{(rule) => (
-									<RuleToggleItem
+									<RuleCard
 										name={rule.name}
 										displayName={rule.displayName}
 										description={rule.description}

@@ -1,6 +1,5 @@
 import { Component } from 'solid-js';
 import type { TopBarProps } from '../types';
-import Icon from './Icon';
 
 const TopBar: Component<TopBarProps> = (props) => {
 	return (
@@ -36,7 +35,7 @@ const TopBar: Component<TopBarProps> = (props) => {
 					aria-label="Toggle rule manager"
 				>
 					<div class="flex items-center gap-2">
-						<Icon icon="lucide:settings" class="w-4 h-4" />
+						<span class="iconify lucide--settings w-4 h-4" />
 						Rules
 					</div>
 				</button>

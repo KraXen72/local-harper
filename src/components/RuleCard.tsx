@@ -1,4 +1,3 @@
-import { Component } from 'solid-js';
 import { FormattedMessage } from '../utils/message-formatter';
 import Toggle from './Toggle';
 
@@ -10,10 +9,7 @@ export interface RuleToggleItemProps {
 	onToggle: (enabled: boolean) => void;
 }
 
-const RuleToggleItem: Component<RuleToggleItemProps> = (props) => {
-	// TODO: many classes/visual styles are shared between the IssueItem and RuleToggleItem. 
-	// however, ruleToggleItem doesen't have the concept of selected
-	// it'd be better if there was one class for the common unselected styles that's shared between the two
+export default function RuleCard(props: RuleToggleItemProps) {
 	return (
 		<div class="p-2.5 rounded-lg border cursor-pointer transition-all duration-200 ease-out bg-[var(--flexoki-ui)]/20 border-[var(--flexoki-ui-2)] hover:border-[var(--flexoki-ui-3)] hover:bg-[var(--flexoki-ui)] hover:shadow-sm">
 			<div class="flex items-start justify-between gap-3">
@@ -36,5 +32,3 @@ const RuleToggleItem: Component<RuleToggleItemProps> = (props) => {
 		</div>
 	);
 };
-
-export default RuleToggleItem;

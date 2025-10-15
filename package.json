@@ -12,6 +12,7 @@
   "license": "MIT",
   "devDependencies": {
     "@iconify-json/lucide": "^1.2.69",
+    "@iconify/tailwind4": "^1.0.6",
     "@tailwindcss/vite": "^4.1.13",
     "solid-devtools": "^0.34.3",
     "tailwindcss": "^4.1.13",
@@ -29,7 +30,6 @@
     "@codemirror/view": "^6.38.6",
     "@leeoniya/ufuzzy": "^1.0.19",
     "harper.js": "^0.67.0",
-    "iconify-icon": "^3.0.1",
     "solid-js": "^1.9.9",
     "valibot": "^1.1.0"
   }
