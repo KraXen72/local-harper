@@ -20,12 +20,12 @@ The main idea is that it uses Codemirror as the editor framework, since it's pre
 	- [ ] verify: allow imports where not all rules are defined
 - [ ] introduce vitest and automated tests
 	- [ ] run tests in CI
+- [ ] move UI to daisyUI w custom, flexoki theme?
 - [ ] move away from custom `HarperIssue` type to pure `OrganizedLint` or an extension of it.
-- [ ] sidebar toggling
+- [ ] (left) issue sidebar toggling
 - [ ] implement tests so we can verify large refactors didn't break anything
 - [ ] PWA support
 	- [ ] test fully offline
-- [ ] (maybe) move UI to daisyUI w custom, flexoki theme?
 - [x] yoink the severities from https://writewithharper.com instead of ad-hoc heuristics
 - [x] figure out how to publish on github pages (maybe cdn harper's wasm thing)
 - [x] issues in sidebar shouldn't be sorted by kind or title, but by their logical location in the source document.
