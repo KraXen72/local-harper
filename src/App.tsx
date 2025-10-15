@@ -176,9 +176,8 @@ const App: Component = () => {
 						'rule-manager-open': isRuleManagerOpen()
 					}}
 				>
-					{/* Left sidebar - Issues */}
-					<div 
-						class="overflow-hidden sidebar-left"
+					{/* Left - Issue Sidebar/Rule manager on small screens */}
+					<div class="overflow-hidden sidebar-left"
 						classList={{
 							'hidden-on-mobile': isRuleManagerOpen()
 						}}
@@ -205,7 +204,7 @@ const App: Component = () => {
 					</div>
 					
 					{/* Editor - centered area */}
-					<div class="overflow-hidden">
+					<div class="overflow-hidden editor-wrapper">
 						<Editor
 							content={content()}
 							onContentChange={setContent}
@@ -225,6 +224,8 @@ const App: Component = () => {
 							scrollToIssue={scrollToIssue()}
 						/>
 					</div>
+
+					{/* Right - Rule manager/nothing */}
 					<div 
 						class="overflow-hidden sidebar-right"
 						classList={{

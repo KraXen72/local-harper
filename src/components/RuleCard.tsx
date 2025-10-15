@@ -11,7 +11,7 @@ export interface RuleToggleItemProps {
 
 export default function RuleCard(props: RuleToggleItemProps) {
 	return (
-		<div class="p-2.5 rounded-lg border cursor-pointer transition-all duration-200 ease-out bg-[var(--flexoki-ui)]/20 border-[var(--flexoki-ui-2)] hover:border-[var(--flexoki-ui-3)] hover:bg-[var(--flexoki-ui)] hover:shadow-sm">
+		<div class="shared-card cursor-pointer">
 			<div class="flex items-start justify-between gap-3">
 				<div class="flex flex-col gap-1 flex-1 min-w-0">
 					<span class="text-sm font-medium text-[var(--flexoki-tx)]">

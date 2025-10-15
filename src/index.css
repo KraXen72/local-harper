@@ -151,7 +151,11 @@ body {
 /* App Layout - Responsive Grid */
 .app-layout {
 	grid-template-columns: minmax(300px, 1fr) minmax(72ch, 2fr) minmax(0, 1fr);
+	grid-template-areas: "issues editor rulemanager";
 }
+.sidebar-left { grid-area: issues }
+.editor-wrapper { grid-area: editor; }
+.sidebar-right { grid-area: rulemanager; }
 
 .app-layout.rule-manager-open {
 	grid-template-columns: minmax(200px, 1fr) minmax(60ch, 2fr) minmax(200px, 1fr);
@@ -161,7 +165,10 @@ body {
 @media (max-width: 1400px) {
 	/* When rule manager is open on smaller screens, hide the left sidebar */
 	.app-layout.rule-manager-open {
-		grid-template-columns: 0 minmax(60ch, 1fr) minmax(300px, 1fr);
+		grid-template-columns: minmax(375px, 1fr) minmax(60ch, 2fr) 0;
+	}
+	.sidebar-right { 
+		grid-area: issues;
 	}
 	
 	.sidebar-left.hidden-on-mobile {
@@ -170,11 +177,6 @@ body {
 	
 	.sidebar-right.visible-on-mobile {
 		display: block;
-	}
-	
-	/* When rule manager is closed, show normal layout */
-	.app-layout:not(.rule-manager-open) {
-		grid-template-columns: minmax(300px, 1fr) minmax(60ch, 2fr) 0;
 	}
 	
 	.sidebar-right:not(.visible-on-mobile) {

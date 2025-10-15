@@ -51,6 +51,8 @@ const RuleManager: Component<RuleManagerProps> = (props) => {
 		
 		const rules = allRules();
 		
+		// TODO optimize this to be faster / swap to a diff library maybe?
+		
 		// Search in display names (higher priority)
 		const nameHaystack = rules.map(r => r.displayName);
 		const nameIdxs = fuzzy.filter(nameHaystack, filter);
@@ -134,13 +136,13 @@ const RuleManager: Component<RuleManagerProps> = (props) => {
 	
 	return (
 		<Show when={props.isOpen}>
-			<div class="h-full flex flex-col bg-[var(--flexoki-bg-2)] border-l border-[var(--flexoki-ui-2)]">
+			<div class="h-full flex flex-col bg-[var(--flexoki-bg)]">
 				{/* Header */}
-				<div class="flex items-center justify-between px-4 py-3 border-b border-[var(--flexoki-ui-2)]">
+				<div class="flex items-center justify-between px-4 py-3 border-x border-[var(--flexoki-ui-2)]">
 					<h2 class="text-lg font-semibold text-[var(--flexoki-tx)]">Rule Manager</h2>
 					<button
 						onClick={props.onClose}
-						class="p-1.5 hover:bg-[var(--flexoki-ui-3)] aspect-square rounded-md transition-colors duration-150"
+						class="p-1.5 hover:bg-[var(--flexoki-ui-3)] aspect-square rounded-md transition-colors duration-150 flex"
 						aria-label="Close rule manager"
 					>
 						<span class="iconify lucide--x w-5 h-5 text-[var(--flexoki-tx-2)]" />
@@ -148,7 +150,7 @@ const RuleManager: Component<RuleManagerProps> = (props) => {
 				</div>
 				
 				{/* Controls */}
-				<div class="px-4 py-3 border-b border-[var(--flexoki-ui-2)] space-y-3">
+				<div class="px-4 py-3 space-y-3 border-x border-b border-[var(--flexoki-ui-2)]">
 					{/* Search bar */}
 					<div class="relative">
 						<input
@@ -161,33 +163,19 @@ const RuleManager: Component<RuleManagerProps> = (props) => {
 						<Show when={filterText()}>
 							<button
 								onClick={() => setFilterText('')}
-								class="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-[var(--flexoki-ui-3)] rounded transition-colors"
+								class="absolute right-2 top-1/2 -translate-y-1/2 hover:bg-[var(--flexoki-ui-3)] rounded transition-colors flex items-center"
 								aria-label="Clear filter"
 							>
-								<span class="iconify lucide--x w-4 h-4 text-[var(--flexoki-tx-3)]" />
+								<span class="iconify lucide--x text-lg text-[var(--flexoki-tx-3)]" />
 							</button>
 						</Show>
 					</div>
 					
-					{/* Import/Export buttons */}
-					<div class="flex gap-2">
-						<button
-							onClick={handleExport}
-							class="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-[var(--flexoki-cyan)] hover:brightness-110 active:scale-95 text-white text-sm font-medium rounded-md shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[var(--flexoki-cyan)] focus:ring-offset-2 focus:ring-offset-[var(--flexoki-bg-2)]"
-						>
-							<span class="iconify lucide--download w-4 h-4" />
-							Export
-						</button>
-						<button
-							onClick={handleImport}
-							class="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-[var(--flexoki-cyan)] hover:brightness-110 active:scale-95 text-white text-sm font-medium rounded-md shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[var(--flexoki-cyan)] focus:ring-offset-2 focus:ring-offset-[var(--flexoki-bg-2)]"
-						>
-							<span class="iconify lucide--upload w-4 h-4" />
-							Import
-						</button>
-					</div>
-					
-					{/* Error message */}
+				{/* Import/Export buttons */}
+				<div class="flex gap-2">
+					<Button onClick={handleImport} icon="lucide--upload" text="Import" />
+					<Button onClick={handleExport} icon="lucide--download" text="Export" />
+				</div>
 					<Show when={importError()}>
 						<div class="flex items-start gap-2 p-3 bg-[var(--flexoki-re)] bg-opacity-10 border border-[var(--flexoki-re)] rounded-md">
 							<span class="iconify lucide--alert-circle w-5 h-5 text-[var(--flexoki-re)] flex-shrink-0 mt-0.5" />
@@ -206,7 +194,7 @@ const RuleManager: Component<RuleManagerProps> = (props) => {
 				</div>
 				
 				{/* Rule list */}
-				<div class="flex-1 overflow-y-auto px-4 py-3">
+				<div class="flex-1 overflow-y-auto px-4 py-3 border-x border-[var(--flexoki-ui-2)]">
 					<div class="space-y-2">
 						<Show
 							when={filteredRules().length > 0}
@@ -235,4 +223,17 @@ const RuleManager: Component<RuleManagerProps> = (props) => {
 	);
 };
 
+function Button(props: { onClick: () => void; icon: string; text: string; }) {
+	return (
+		<button
+			onClick={props.onClick}
+			class="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-[var(--flexoki-cyan)] hover:brightness-110 active:scale-95 text-white text-sm font-medium rounded-md shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[var(--flexoki-cyan)] focus:ring-offset-2 focus:ring-offset-[var(--flexoki-bg-2)]"
+		>
+			<span class={`iconify ${props.icon} w-4 h-4`} />
+			{props.text}
+		</button>
+	);
+}
+
 export default RuleManager;
+
