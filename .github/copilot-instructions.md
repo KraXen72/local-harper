@@ -16,6 +16,7 @@ applyTo: "**"
 - Extract helper functions for complex logic instead of inline ternaries in JSX
 - NEVER create DOM elements manually (createElement, appendChild, etc.). ALWAYS create a proper .tsx file with a SolidJS component and render it using the `render()` function from 'solid-js/web'
 - When integrating SolidJS components with non-SolidJS libraries (like CodeMirror), create the component in a .tsx file and use `render()` to mount it
+- Use the Icon component from './components/Icon' with lucide icons via iconify instead of raw SVG elements. Example: `<Icon icon="lucide:settings" class="w-4 h-4" />`
 
 ## programming style
 - do not overcomplicate stuff. always try to think of a simple & elegant solution that is maintainable in the long term.

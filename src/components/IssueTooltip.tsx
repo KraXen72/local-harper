@@ -2,6 +2,7 @@ import { Component, Show } from 'solid-js';
 import type { HarperIssue } from '../types';
 import { FormattedMessage } from '../utils/message-formatter';
 import { lintKindColor, lintKindColorWithAlpha } from '../utils/lint-kind-colors';
+import Icon from './Icon';
 
 interface IssueTooltipProps {
 	issue: HarperIssue;
@@ -33,7 +34,7 @@ const IssueTooltip: Component<IssueTooltipProps> = (props) => {
 			</span>
 			<span></span>
 			<div class="cm-issue-tooltip-rule cursor-help" title={props.rule}>
-				<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4m0-4h.01"/></g></svg>
+				<Icon icon="lucide:info" width="16" height="16" />
 			</div>
 
 			<div class="flex gap-2 items-center mb-1 col-span-full">

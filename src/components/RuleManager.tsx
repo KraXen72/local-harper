@@ -191,9 +191,7 @@ const RuleManager: Component<RuleManagerProps> = (props) => {
 					{/* Error message */}
 					<Show when={importError()}>
 						<div class="flex items-start gap-2 p-3 bg-[var(--flexoki-re)] bg-opacity-10 border border-[var(--flexoki-re)] rounded-md">
-							<svg class="w-5 h-5 text-[var(--flexoki-re)] flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-							</svg>
+							<Icon icon="lucide:alert-circle" class="w-5 h-5 text-[var(--flexoki-re)] flex-shrink-0 mt-0.5" />
 							<div class="flex-1 min-w-0">
 								<p class="text-sm text-[var(--flexoki-re)] break-words">{importError()}</p>
 							</div>
@@ -202,9 +200,7 @@ const RuleManager: Component<RuleManagerProps> = (props) => {
 								class="p-0.5 hover:bg-[var(--flexoki-ui-3)] rounded transition-colors flex-shrink-0"
 								aria-label="Dismiss error"
 							>
-								<svg class="w-4 h-4 text-[var(--flexoki-re)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-								</svg>
+								<Icon icon="lucide:x" class="w-4 h-4 text-[var(--flexoki-re)]" />
 							</button>
 						</div>
 					</Show>
