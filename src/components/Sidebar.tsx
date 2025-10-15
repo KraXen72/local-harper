@@ -11,6 +11,7 @@ const Kbd: ParentComponent = (props) => (
 );
 
 const Sidebar: Component<SidebarProps> = (props) => {
+	// oxlint-disable-next-line no-unassigned-vars
 	let containerRef!: HTMLDivElement;
 	const issueRefs = new Map<string, HTMLDivElement>();
 

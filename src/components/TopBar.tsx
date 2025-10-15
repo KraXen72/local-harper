@@ -1,5 +1,6 @@
 import { Component } from 'solid-js';
 import type { TopBarProps } from '../types';
+import Icon from './Icon';
 
 const TopBar: Component<TopBarProps> = (props) => {
 	return (
@@ -17,12 +18,29 @@ const TopBar: Component<TopBarProps> = (props) => {
 				</span>
 			</div>
 
-			<button
-				onClick={props.onCopy}
-				class="px-4 py-1.5 bg-[var(--flexoki-cyan)] cursor-pointer hover:brightness-110 active:scale-95 text-white text-sm font-medium rounded-md shadow-md hover:shadow-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[var(--flexoki-cyan)] focus:ring-offset-2 focus:ring-offset-[var(--flexoki-bg-2)]"
-			>
-				Copy Text
-			</button>
+			<div class="flex items-center gap-2">
+				<button
+					onClick={props.onCopy}
+					class="px-4 py-1.5 bg-[var(--flexoki-cyan)] cursor-pointer hover:brightness-110 active:scale-95 text-white text-sm font-medium rounded-md shadow-md hover:shadow-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[var(--flexoki-cyan)] focus:ring-offset-2 focus:ring-offset-[var(--flexoki-bg-2)]"
+				>
+					Copy Text
+				</button>
+				
+				<button
+					onClick={props.onToggleRuleManager}
+					class="px-4 py-1.5 cursor-pointer hover:brightness-110 active:scale-95 text-white text-sm font-medium rounded-md shadow-md hover:shadow-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[var(--flexoki-bg-2)]"
+					classList={{
+						'bg-[var(--flexoki-cyan)] focus:ring-[var(--flexoki-cyan)]': props.isRuleManagerOpen,
+						'bg-[var(--flexoki-ui-3)] text-[var(--flexoki-tx-2)] focus:ring-[var(--flexoki-ui-3)]': !props.isRuleManagerOpen
+					}}
+					aria-label="Toggle rule manager"
+				>
+					<div class="flex items-center gap-2">
+						<Icon icon="lucide:settings" class="w-4 h-4" />
+						Rules
+					</div>
+				</button>
+			</div>
 		</div>
 	);
 };

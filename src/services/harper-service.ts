@@ -2,9 +2,15 @@ import { WorkerLinter, binary, Dialect } from 'harper.js';
 import type { Lint, LintConfig } from 'harper.js';
 import type { HarperIssue } from '../types';
 import { IssueSeverity } from '../types';
+import * as v from 'valibot';
 
 let linter: WorkerLinter | null = null;
 let initPromise: Promise<void> | null = null;
+
+/**
+ * Rules that are disabled by default
+ */
+const DEFAULT_DISABLED_RULES = ['AvoidCurses'];
 
 /**
  * Initialize Harper.js linter with configuration from localStorage
@@ -40,10 +46,15 @@ export async function initHarper(): Promise<void> {
 				console.error('Failed to load lint config:', e);
 			}
 		} else {
-			// Apply default configuration with AvoidCurses disabled
+			// Apply default configuration with our custom defaults
 			const defaultConfig = await linter.getDefaultLintConfig();
-			defaultConfig.AvoidCurses = false;
+			for (const rule of DEFAULT_DISABLED_RULES) {
+				if (rule in defaultConfig) {
+					defaultConfig[rule as keyof LintConfig] = false;
+				}
+			}
 			await linter.setLintConfig(defaultConfig);
+			localStorage.setItem('harper-lint-config', JSON.stringify(defaultConfig));
 		}
 	})();
 
@@ -185,4 +196,94 @@ export async function setLintConfig(config: LintConfig): Promise<void> {
 export async function setDialect(dialect: Dialect): Promise<void> {
 	await getLinter().setDialect(dialect);
 	localStorage.setItem('harper-dialect', dialect.toString());
+}
+
+/**
+ * Initialize default rule configuration
+ * Gets default config from Harper and applies our custom defaults
+ */
+export async function initializeDefaultRuleConfig(): Promise<LintConfig> {
+	const defaultConfig = await getLinter().getDefaultLintConfig();
+	
+	// Apply our custom defaults
+	for (const rule of DEFAULT_DISABLED_RULES) {
+		if (rule in defaultConfig) {
+			defaultConfig[rule as keyof LintConfig] = false;
+		}
+	}
+	
+	// Save to localStorage if no config exists
+	const savedConfig = localStorage.getItem('harper-lint-config');
+	if (!savedConfig) {
+		localStorage.setItem('harper-lint-config', JSON.stringify(defaultConfig));
+	}
+	
+	return defaultConfig;
+}
+
+/**
+ * Update a single rule in the configuration
+ */
+export async function updateSingleRule(ruleName: string, enabled: boolean): Promise<void> {
+	const currentConfig = await getLintConfig();
+	currentConfig[ruleName as keyof LintConfig] = enabled;
+	await setLintConfig(currentConfig);
+}
+
+/**
+ * Export rule configuration as JSON string
+ */
+export function exportRuleConfig(): string {
+	const savedConfig = localStorage.getItem('harper-lint-config');
+	if (!savedConfig) {
+		throw new Error('No rule configuration found');
+	}
+	
+	const config = JSON.parse(savedConfig);
+	const exportData = {
+		version: 1,
+		rules: config
+	};
+	
+	return JSON.stringify(exportData, null, 2);
+}
+
+/**
+ * Import rule configuration from JSON string
+ */
+export async function importRuleConfig(jsonString: string): Promise<void> {
+	let parsed: any;
+	
+	try {
+		parsed = JSON.parse(jsonString);
+	} catch {
+		throw new Error('Invalid JSON format');
+	}
+	
+	const ImportSchema = v.object({
+		version: v.number(),
+		rules: v.record(v.string(), v.boolean())
+	});
+	
+	try {
+		const validated = v.parse(ImportSchema, parsed);
+		
+		// Apply the configuration
+		await setLintConfig(validated.rules as LintConfig);
+	} catch (e: any) {
+		// Use valibot's formatting if available
+		if (e.issues) {
+			const { flatten } = await import('valibot');
+			const flat = flatten(e.issues);
+			throw new Error(`Validation failed: ${JSON.stringify(flat)}`);
+		}
+		throw new Error(`Invalid configuration format: ${e.message}`);
+	}
+}
+
+/**
+ * Get rule descriptions (formatted as Markdown)
+ */
+export async function getLintDescriptions(): Promise<Record<string, string>> {
+	return getLinter().getLintDescriptions();
 }

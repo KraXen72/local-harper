@@ -52,6 +52,8 @@ export interface EditorProps {
 export interface TopBarProps {
 	onCopy: () => void;
 	isAnalyzing: boolean;
+	isRuleManagerOpen: boolean;
+	onToggleRuleManager: () => void;
 }
 
 export interface SidebarProps {
@@ -68,4 +70,18 @@ export interface IssueItemProps {
 	onSelect: (issueId: string) => void;
 	onApplySuggestion: (suggestion: Suggestion) => void;
 	onAddToDictionary: (word: string) => void;
+}
+
+export interface RuleManagerProps {
+	isOpen: boolean;
+	onClose: () => void;
+	onRuleToggle: (ruleName: string, enabled: boolean) => void;
+	currentConfig: LintConfig;
+}
+
+export interface RuleInfo {
+	name: string;         // Original PascalCase name
+	displayName: string;  // Human-readable name
+	description: string;  // Rule description (Markdown formatted)
+	enabled: boolean;
 }

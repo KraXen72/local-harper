@@ -35,6 +35,9 @@ importers:
       harper.js:
         specifier: ^0.67.0
         version: 0.67.0
+      iconify-icon:
+        specifier: ^3.0.1
+        version: 3.0.1
       solid-js:
         specifier: ^1.9.9
         version: 1.9.9
@@ -758,6 +761,9 @@ packages:
 
   html-entities@2.3.3:
     resolution: {integrity: sha512-DV5Ln36z34NNTDgnz0EWGBLZENelNAtkiFA4kyNOG2tDI6Mz1uSWiq1wAKdyjnJwyDiDO7Fa2SO1CTxPXL8VxA==}
+
+  iconify-icon@3.0.1:
+    resolution: {integrity: sha512-M3/kH3C+e/ufhmQuOSYSb1Ri1ImJ+ZEQYcVRMKnlSc8Nrdoy+iY9YvFnplX8t/3aCRuo5wN4RVPtCSHGnbt8dg==}
 
   is-what@4.1.16:
     resolution: {integrity: sha512-ZhMwEosbFJkA0YhFnNDgTM4ZxDRsS6HqTo7qsZM08fehyRYIYa0yHu5R6mgo1n/8MgaPBXiPimPD77baVFYg+A==}
@@ -1691,6 +1697,10 @@ snapshots:
   harper.js@0.67.0: {}
 
   html-entities@2.3.3: {}
+
+  iconify-icon@3.0.1:
+    dependencies:
+      '@iconify/types': 2.0.0
 
   is-what@4.1.16: {}
 

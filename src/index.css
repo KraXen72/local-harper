@@ -267,3 +267,48 @@ body {
 	font-style: italic;
 	/* font-weight: bold; */
 }
+
+/* App Layout - Responsive Grid */
+.app-layout {
+	grid-template-columns: minmax(300px, 1fr) minmax(72ch, 2fr) minmax(0, 1fr);
+}
+
+.app-layout.rule-manager-open {
+	grid-template-columns: minmax(200px, 1fr) minmax(60ch, 2fr) minmax(200px, 1fr);
+}
+
+/* Responsive behavior for smaller screens */
+@media (max-width: 1400px) {
+	/* When rule manager is open on smaller screens, hide the left sidebar */
+	.app-layout.rule-manager-open {
+		grid-template-columns: 0 minmax(60ch, 1fr) minmax(300px, 1fr);
+	}
+	
+	.sidebar-left.hidden-on-mobile {
+		display: none;
+	}
+	
+	.sidebar-right.visible-on-mobile {
+		display: block;
+	}
+	
+	/* When rule manager is closed, show normal layout */
+	.app-layout:not(.rule-manager-open) {
+		grid-template-columns: minmax(300px, 1fr) minmax(60ch, 2fr) 0;
+	}
+	
+	.sidebar-right:not(.visible-on-mobile) {
+		display: none;
+	}
+}
+
+/* Even smaller screens - always single sidebar */
+@media (max-width: 900px) {
+	.app-layout {
+		grid-template-columns: minmax(250px, 1fr) 1fr 0;
+	}
+	
+	.app-layout.rule-manager-open {
+		grid-template-columns: 0 1fr minmax(250px, 1fr);
+	}
+}
