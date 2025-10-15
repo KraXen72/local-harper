@@ -23,6 +23,12 @@ pnpm i
 pnpm dev
 ```
 
+## note to harper maintainers/potential contributors
+Most of the harper specific logic is probably (possibly very) bad. 
+This is due to the fact that it's mostly vibecoded. I am in the process of cleaning up the codebase, so it goes from the "working PoC" stage into something more maintainable long term.
+I will eargerly accept any improvements/rewrites to the harper-specific logic (or to any part of the app, really).
+Thank you for making harper!
+
 ## testing text:
 ```
 There are some cases where the the standard grammar
@@ -53,3 +59,4 @@ The best part: Harper can give you feedback instantly,
 For most documents, Harper can serve up suggestions in
 under 10 ms, faster that Grammarly.
 ```
+
