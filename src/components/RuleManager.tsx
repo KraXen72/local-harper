@@ -141,10 +141,10 @@ const RuleManager: Component<RuleManagerProps> = (props) => {
 					<h2 class="text-lg font-semibold text-[var(--flexoki-tx)]">Rule Manager</h2>
 					<button
 						onClick={props.onClose}
-						class="p-1.5 hover:bg-[var(--flexoki-ui-3)] rounded-md transition-colors duration-150"
+						class="p-1.5 hover:bg-[var(--flexoki-ui-3)] aspect-square rounded-md transition-colors duration-150"
 						aria-label="Close rule manager"
 					>
-						<Icon icon="lucide:x" class="w-5 h-5 text-[var(--flexoki-tx-2)]" />
+						<Icon icon="lucide:x" width={"20px"} height={"20px"} class="text-[var(--flexoki-tx-2)]" />
 					</button>
 				</div>
 				
