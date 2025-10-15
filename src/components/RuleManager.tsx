@@ -43,57 +43,44 @@ const RuleManager: Component<RuleManagerProps> = (props) => {
 	
 	// Apply fuzzy search filtering
 	const filteredRules = createMemo(() => {
-		const filter = filterText().trim();
-		if (!filter) {
-			// No search - return all rules
-			return allRules();
+	const filter = filterText().trim();
+	if (!filter) {
+		return allRules();
+	}
+
+	const rules = allRules();
+
+	// Search display names (high priority)
+	const nameHaystack = rules.map(r => r.displayName);
+	const [nameIdxs, nameInfo, nameOrder] = fuzzy.search(nameHaystack, filter);
+
+	// Search descriptions (fallback)
+	const descHaystack = rules.map(r => r.description);
+	const [descIdxs, descInfo, descOrder] = fuzzy.search(descHaystack, filter);
+
+	const matchedByName = new Set(nameIdxs || []);
+	const results: RuleInfo[] = [];
+
+	// Add name matches (already sorted)
+	if (nameOrder && nameInfo) {
+		for (let i = 0; i < nameOrder.length; i++) {
+			const idx = nameInfo.idx[nameOrder[i]];
+			results.push(rules[idx]);
 		}
-		
-		const rules = allRules();
-		
-		// TODO optimize this to be faster / swap to a diff library maybe?
-		
-		// Search in display names (higher priority)
-		const nameHaystack = rules.map(r => r.displayName);
-		const nameIdxs = fuzzy.filter(nameHaystack, filter);
-		
-		// Search in descriptions (lower priority, fallback)
-		const descHaystack = rules.map(r => r.description);
-		const descIdxs = fuzzy.filter(descHaystack, filter);
-		
-		// Combine results, prioritizing name matches
-		const matchedByName = new Set(nameIdxs || []);
-		const matchedByDesc = new Set(descIdxs || []);
-		
-		// If nothing matched, return empty
-		if (matchedByName.size === 0 && matchedByDesc.size === 0) {
-			return [];
-		}
-		
-		// Get matches that are ONLY in name (highest priority)
-		const nameOnlyMatches: RuleInfo[] = [];
-		if (nameIdxs && nameIdxs.length > 0) {
-			const info = fuzzy.info(nameIdxs, nameHaystack, filter);
-			const order = fuzzy.sort(info, nameHaystack, filter);
-			nameOnlyMatches.push(...order.map(i => rules[info.idx[order[i]]]));
-		}
-		
-		// Get matches that are ONLY in description (lower priority)
-		const descOnlyMatches: RuleInfo[] = [];
-		if (descIdxs && descIdxs.length > 0) {
-			// Filter out items that were already matched by name
-			const descOnlyIdxs = descIdxs.filter(idx => !matchedByName.has(idx));
-			if (descOnlyIdxs.length > 0) {
-				const info = fuzzy.info(descOnlyIdxs, descHaystack, filter);
-				const order = fuzzy.sort(info, descHaystack, filter);
-				descOnlyMatches.push(...order.map(i => rules[info.idx[order[i]]]));
+	}
+
+	// Add description-only matches (already sorted)
+	if (descOrder && descInfo) {
+		for (let i = 0; i < descOrder.length; i++) {
+			const idx = descInfo.idx[descOrder[i]];
+			if (!matchedByName.has(idx)) {
+				results.push(rules[idx]);
 			}
 		}
-		
-		// Combine and limit to 20 results when searching
-		const combined = [...nameOnlyMatches, ...descOnlyMatches];
-		return combined.slice(0, 20);
-	});
+	}
+
+	return results.slice(0, 20);
+});
 	
 	const handleExport = () => {
 		try {
@@ -125,7 +112,8 @@ const RuleManager: Component<RuleManagerProps> = (props) => {
 				const text = await file.text();
 				await importRuleConfig(text);
 				setImportError(null);
-				// The parent will be notified via re-render due to config change
+				// Notify parent to refresh config and re-analyze
+				await props.onConfigImported();
 			} catch (error: any) {
 				console.error('Failed to import rules:', error);
 				setImportError(error.message || 'Failed to import rules');
@@ -136,7 +124,9 @@ const RuleManager: Component<RuleManagerProps> = (props) => {
 	
 	return (
 		<Show when={props.isOpen}>
-			<div class="h-full flex flex-col bg-[var(--flexoki-bg)]">
+			<div class="h-full bg-[var(--flexoki-bg)] grid" style={{
+				"grid-template-rows": "min-content min-content 1fr",
+			}}>
 				{/* Header */}
 				<div class="flex items-center justify-between px-4 py-3 border-x border-[var(--flexoki-ui-2)]">
 					<h2 class="text-lg font-semibold text-[var(--flexoki-tx)]">Rule Manager</h2>
@@ -173,8 +163,8 @@ const RuleManager: Component<RuleManagerProps> = (props) => {
 					
 				{/* Import/Export buttons */}
 				<div class="flex gap-2">
-					<Button onClick={handleImport} icon="lucide--upload" text="Import" />
 					<Button onClick={handleExport} icon="lucide--download" text="Export" />
+					<Button onClick={handleImport} icon="lucide--upload" text="Import" />
 				</div>
 					<Show when={importError()}>
 						<div class="flex items-start gap-2 p-3 bg-[var(--flexoki-re)] bg-opacity-10 border border-[var(--flexoki-re)] rounded-md">
@@ -194,9 +184,8 @@ const RuleManager: Component<RuleManagerProps> = (props) => {
 				</div>
 				
 				{/* Rule list */}
-				<div class="flex-1 overflow-y-auto px-4 py-3 border-x border-[var(--flexoki-ui-2)]">
-					<div class="space-y-2">
-						<Show
+				<div class="overflow-y-auto p-2 border-x border-[var(--flexoki-ui-2)] min-h-0">
+					<Show
 							when={filteredRules().length > 0}
 							fallback={
 								<div class="text-center py-8 text-[var(--flexoki-tx-3)] text-sm">
@@ -216,7 +205,6 @@ const RuleManager: Component<RuleManagerProps> = (props) => {
 								)}
 							</For>
 						</Show>
-					</div>
 				</div>
 			</div>
 		</Show>

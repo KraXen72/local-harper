@@ -76,6 +76,7 @@ export interface RuleManagerProps {
 	isOpen: boolean;
 	onClose: () => void;
 	onRuleToggle: (ruleName: string, enabled: boolean) => void;
+	onConfigImported: () => void | Promise<void>;
 	currentConfig: LintConfig;
 }
 

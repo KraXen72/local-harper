@@ -1,7 +1,7 @@
 import { FormattedMessage } from '../utils/message-formatter';
 import Toggle from './Toggle';
 
-export interface RuleToggleItemProps {
+export interface RuleToggleItemProps  {
 	name: string;
 	displayName: string;
 	description: string;
@@ -11,7 +11,7 @@ export interface RuleToggleItemProps {
 
 export default function RuleCard(props: RuleToggleItemProps) {
 	return (
-		<div class="shared-card cursor-pointer">
+		<div class="shared-card cursor-pointer mb-2">
 			<div class="flex items-start justify-between gap-3">
 				<div class="flex flex-col gap-1 flex-1 min-w-0">
 					<span class="text-sm font-medium text-[var(--flexoki-tx)]">

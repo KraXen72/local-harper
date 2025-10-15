@@ -273,9 +273,7 @@ export async function importRuleConfig(jsonString: string): Promise<void> {
 	} catch (e: any) {
 		// Use valibot's formatting if available
 		if (e.issues) {
-			const { flatten } = await import('valibot');
-			const flat = flatten(e.issues);
-			throw new Error(`Validation failed: ${JSON.stringify(flat)}`);
+			throw new Error(`Validation failed: ${v.summarize(e.issues)}`);
 		}
 		throw new Error(`Invalid configuration format: ${e.message}`);
 	}

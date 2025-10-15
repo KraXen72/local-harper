@@ -60,6 +60,7 @@
 body {
 	background-color: var(--flexoki-bg);
 	color: var(--flexoki-tx);
+	overflow: hidden;
 }
 
 /* Scrollbar styling */
@@ -152,6 +153,7 @@ body {
 .app-layout {
 	grid-template-columns: minmax(300px, 1fr) minmax(72ch, 2fr) minmax(0, 1fr);
 	grid-template-areas: "issues editor rulemanager";
+	max-height: calc(100vh - 3.5rem);
 }
 .sidebar-left { grid-area: issues }
 .editor-wrapper { grid-area: editor; }

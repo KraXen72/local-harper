@@ -160,6 +160,21 @@ const App: Component = () => {
 		}
 	};
 
+	const handleConfigImported = async () => {
+		try {
+			// Refresh config from storage
+			const newConfig = await getLintConfig();
+			setCurrentLintConfig(newConfig);
+			// Re-analyze current text with new config
+			const lints = await analyzeText(content());
+			const harperIssues = transformLints(lints);
+			const filteredIssues = harperIssues.filter(issue => !ignoredIssues.has(issue.id));
+			setIssues(filteredIssues);
+		} catch (error) {
+			console.error('Failed to refresh config after import:', error);
+		}
+	};
+
 	return (
 		<div class="h-screen flex flex-col bg-[var(--flexoki-bg)]">
 			<TopBar 
@@ -237,6 +252,7 @@ const App: Component = () => {
 								isOpen={isRuleManagerOpen()}
 								onClose={() => setIsRuleManagerOpen(false)}
 								onRuleToggle={handleRuleToggle}
+								onConfigImported={handleConfigImported}
 								currentConfig={currentLintConfig()!}
 							/>
 						</Show>
