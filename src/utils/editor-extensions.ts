@@ -627,11 +627,11 @@ export const issueNavigationKeymap = keymap.of([
 	},
 	{
 		key: 'Ctrl-j',
-		run: navigateToPreviousIssue,
+		run: navigateToNextIssue,
 	},
 	{
 		key: 'Ctrl-k',
-		run: navigateToNextIssue,
+		run: navigateToPreviousIssue,
 	},
 ]);
 

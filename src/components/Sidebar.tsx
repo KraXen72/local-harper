@@ -73,9 +73,9 @@ const Sidebar: Component<SidebarProps> = (props) => {
 			<Show when={props.issues.length > 0}>
 					<div class="py-3 border-t border-[var(--flexoki-ui-2)] sticky bottom-0 bg-[var(--flexoki-bg)] z-10">
 						<p class="text-xs text-[var(--flexoki-tx-3)] text-center leading-6">
-							<Kbd>Ctrl+K</Kbd>
-							&nbsp;&nbsp;/&nbsp;&nbsp;
 							<Kbd>Ctrl+J</Kbd>
+							&nbsp;&nbsp;/&nbsp;&nbsp;
+							<Kbd>Ctrl+K</Kbd>
 							&nbsp;to navigate
 							<br />
 							<Kbd>Ctrl+Space</Kbd>
