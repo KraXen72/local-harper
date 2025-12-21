@@ -1,533 +1,31 @@
-import { StateField, StateEffect, type EditorState } from '@codemirror/state';
-import { Decoration, DecorationSet, EditorView, showTooltip, type Tooltip, keymap } from '@codemirror/view';
-import { autocompletion, closeCompletion, startCompletion, type CompletionContext, type CompletionResult, type Completion } from '@codemirror/autocomplete';
-import type { HarperIssue, Suggestion } from '../types';
-import { SummonEvent } from '../types';
-import { SuggestionKind } from '../types';
-import { render } from 'solid-js/web';
-import IssueTooltipWrapper from '../components/IssueTooltipWrapper';
-import { lintKindColor, lintKindBackgroundColor } from './lint-kind-colors';
-import { getLinter } from '../services/harper-service';
+// src/utils/editor-extensions.ts (simplified)
+import { StateField, StateEffect } from '@codemirror/state';
+import { Decoration, DecorationSet, EditorView, showTooltip, keymap } from '@codemirror/view';
+import { autocompletion, closeCompletion, startCompletion } from '@codemirror/autocomplete';
+import { getSuggestionActions } from './suggestion-actions';
+import type { HarperIssue } from '../types';
 
-// Effect to update issues
-export const updateIssuesEffect = StateEffect.define<HarperIssue[]>();
-
-// Effect to update selected issue (kept for sidebar highlighting)
-export const setSelectedIssueEffect = StateEffect.define<string | null>();
-
-// Custom theme for issue decorations using CodeMirror's baseTheme
-// Only contains base styles, actual colors are applied inline via decorations
-const issueTheme = EditorView.baseTheme({
-	'.cm-issue-underline': {
-		textDecoration: 'underline solid',
-		textDecorationThickness: '2px',
-		textUnderlineOffset: '2px',
-		textDecorationSkipInk: 'auto',
-	},
-	'.cm-issue-selected': {
-		backgroundColor: 'rgba(58, 169, 159, 0.3)', // flexoki-cyan with opacity
-	},
-});
-
-// StateField to track current issues and selected issue
-export const issueField = StateField.define<{ issues: HarperIssue[]; selectedId: string | null }>({
-	create() {
-		return { issues: [], selectedId: null };
-	},
-	update(state, tr) {
-		let newState = state;
-
-		for (const effect of tr.effects) {
-			if (effect.is(updateIssuesEffect)) {
-				newState = { ...newState, issues: effect.value };
-			}
-			if (effect.is(setSelectedIssueEffect)) {
-				newState = { ...newState, selectedId: effect.value };
-			}
-		}
-
-		return newState;
-	},
-});
-
-// StateField for decorations
-export const issueDecorationsField = StateField.define<DecorationSet>({
-	create() {
-		return Decoration.none;
-	},
-	update(decorations, tr) {
-		// Always map decorations through document changes first to keep positions in sync
-		decorations = decorations.map(tr.changes);
-
-		const hasNewIssues = tr.effects.some(e => e.is(updateIssuesEffect));
-		const hasSelectionChange = tr.effects.some(e => e.is(setSelectedIssueEffect));
-		const issueState = tr.state.field(issueField);
-
-		if (hasNewIssues) {
-			// Rebuild all decorations when issues change
-			return buildDecorations(issueState.issues, issueState.selectedId);
-		}
-		
-		if (hasSelectionChange) {
-			// Update selection highlighting on existing (already mapped) decorations
-			return updateDecorationsForSelection(decorations, issueState.selectedId);
-		}
-
-		return decorations;
-	},
-	provide: f => EditorView.decorations.from(f),
-});
-
-function buildDecorations(issues: HarperIssue[], selectedId: string | null): DecorationSet {
-	const decorations: Array<{ from: number; to: number; decoration: Decoration }> = [];
-
-	for (const issue of issues) {
-		const span = issue.lint.span();
-		const isSelected = issue.id === selectedId;
-		const lintKind = issue.lint.lint_kind();
-		const color = lintKindColor(lintKind);
-		const bgColor = lintKindBackgroundColor(lintKind);
-		
-		const cssClass = 'cm-issue-underline' + (isSelected ? ' cm-issue-selected' : '');
-
-		// Use Decoration.mark with inline styles for colors
-		decorations.push({
-			from: span.start,
-			to: span.end,
-			decoration: Decoration.mark({
-				class: cssClass,
-				attributes: { 
-					'data-issue-id': issue.id,
-					'data-lint-kind': lintKind,
-					style: `text-decoration-color: ${color}; background-color: ${bgColor};`,
-				},
-			}),
-		});
-	}
-
-	// Sort by position to ensure proper decoration order
-	decorations.sort((a, b) => a.from - b.from);
-
-	return Decoration.set(decorations.map(d => d.decoration.range(d.from, d.to)));
-}
-
-function updateDecorationsForSelection(decorations: DecorationSet, selectedId: string | null): DecorationSet {
-	const updated: Array<{ from: number; to: number; decoration: Decoration }> = [];
-
-	// Iterate through existing decorations and rebuild them with updated selection class
-	decorations.between(0, Number.MAX_SAFE_INTEGER, (from, to, value) => {
-		if (value.spec.attributes && value.spec.attributes['data-issue-id']) {
-			const issueId = value.spec.attributes['data-issue-id'] as string;
-			const lintKind = value.spec.attributes['data-lint-kind'] as string;
-			const isSelected = issueId === selectedId;
-			
-			const cssClass = 'cm-issue-underline' + (isSelected ? ' cm-issue-selected' : '');
-			const color = lintKindColor(lintKind);
-			const bgColor = lintKindBackgroundColor(lintKind);
-			
-			updated.push({
-				from,
-				to,
-				decoration: Decoration.mark({
-					class: cssClass,
-					attributes: { 
-						'data-issue-id': issueId,
-						'data-lint-kind': lintKind,
-						style: `text-decoration-color: ${color}; background-color: ${bgColor};`,
-					},
-				}),
-			});
-		}
-	});
-
-	return Decoration.set(updated.map(d => d.decoration.range(d.from, d.to)));
-}
-
-// Actions interface for applying suggestions
-interface IssueActions {
-	onApplySuggestion: (issueId: string, suggestion: Suggestion) => void;
-	onAddToDictionary: (word: string) => void;
-	onIgnore: (issueId: string) => void;
-	onIssueSelect?: (issueId: string | null) => void;
-}
-
-let issueActions: IssueActions | null = null;
-
-export function setIssueActions(actions: IssueActions) {
-	issueActions = actions;
-}
-
-// Summon handler allows editor-level events to delegate to a centralized processor
-// Consumer (e.g., Editor component) should call `setSummonHandler` to receive events
-type SummonHandler = (event: SummonEvent, ctx: { view?: EditorView; issueId?: string; pos?: number }) => void | Promise<boolean | void>;
-
-let summonHandler: SummonHandler | null = null;
-
-export function setSummonHandler(handler: SummonHandler | null) {
-	summonHandler = handler;
-}
-
-// Helper to find issue at cursor position
-function findIssueAtPos(state: EditorState, pos: number): HarperIssue | null {
-	const issueState = state.field(issueField);
-	const decorations = state.field(issueDecorationsField);
-	
-	let foundIssueId: string | null = null;
-	decorations.between(pos, pos, (from, to, value) => {
-		if (value.spec.attributes && value.spec.attributes['data-issue-id']) {
-			foundIssueId = value.spec.attributes['data-issue-id'] as string;
-			return false;
-		}
-	});
-	
-	if (foundIssueId) {
-		return issueState.issues.find((i) => i.id === foundIssueId) || null;
-	}
-	
-	return null;
-}
-
-// Helper function to check if an issue would only show "Ignore" option
-export function wouldOnlyShowIgnore(issue: HarperIssue): boolean {
-	const suggestions = issue.lint.suggestions();
-	const isSpelling = issue.lint.lint_kind().toLowerCase().includes('spelling');
-	// If there are suggestions or it's a spelling issue (which gets "Add to Dictionary"), return false
-	return suggestions.length === 0 && !isSpelling;
-}
-
-// Custom autocomplete source for Harper issues
-function harperAutocomplete(context: CompletionContext): CompletionResult | null {
-	const issue = findIssueAtPos(context.state, context.pos);
-	
-	console.log('harperAutocomplete called:', {
-		pos: context.pos,
-		explicit: context.explicit,
-		hasIssue: !!issue,
-		hasActions: !!issueActions,
-	});
-	
-	if (!issue || !issueActions) return null;
-	
-	const suggestions = issue.lint.suggestions();
-	const span = issue.lint.span();
-	
-	// Debug logging
-	console.log('Issue found:', {
-		kind: issue.lint.lint_kind(),
-		message: issue.lint.message(),
-		problemText: issue.lint.get_problem_text(),
-		suggestionCount: suggestions.length,
-		suggestions: suggestions.map(s => s.get_replacement_text()),
-		span: { start: span.start, end: span.end },
-		contextPos: context.pos,
-	});
-	
-	const options: Completion[] = [];
-	
-	// Add suggestion completions
-	for (const suggestion of suggestions) {
-		const kind = suggestion.kind();
-		const isRemove = kind === SuggestionKind.Remove;
-		const replacementText = isRemove ? '' : suggestion.get_replacement_text();
-		const label = isRemove ? '(Remove)' : replacementText;
-		
-		options.push({
-			label,
-			// detail: isRemove ? 'Remove this text' : 'Replace',
-			apply: async (view) => {
-				// Use linter.applySuggestion() to properly handle all suggestion types,
-				// including insertions (comma rules), replacements, and removals.
-				const linter = getLinter();
-				const oldText = view.state.doc.toString();
-				const newText = await linter.applySuggestion(oldText, issue.lint, suggestion);
-				
-				// Find the minimal changed region by comparing from both ends
-				let changeStart = 0;
-				const minLen = Math.min(oldText.length, newText.length);
-				while (changeStart < minLen && oldText[changeStart] === newText[changeStart]) {
-					changeStart++;
-				}
-				
-				let changeEndOld = oldText.length;
-				let changeEndNew = newText.length;
-				while (changeEndOld > changeStart && changeEndNew > changeStart &&
-				       oldText[changeEndOld - 1] === newText[changeEndNew - 1]) {
-					changeEndOld--;
-					changeEndNew--;
-				}
-				
-				// Apply the minimal change and position cursor at the end of the inserted text
-				view.dispatch({
-					changes: { from: changeStart, to: changeEndOld, insert: newText.slice(changeStart, changeEndNew) },
-					selection: { anchor: changeEndNew }
-				});
-			},
-			type: 'text',
-			// info: 'Replace'
-		});
-	}
-	
-	// Always add ignore option first (before dictionary so it's always at the bottom)
-	options.push({
-		label: 'Ignore',
-		// detail: 'Ignore this issue',
-		apply: (view) => {
-			if (issueActions) {
-				issueActions.onIgnore(issue.id);
-			}
-			// Close the autocomplete popup
-			closeCompletion(view);
-		},
-		type: 'class',
-	});
-	
-	// Add dictionary option for spelling issues (will appear above Ignore)
-	const isSpelling = issue.lint.lint_kind().toLowerCase().includes('spelling');
-	if (isSpelling) {
-		options.push({
-			label: 'Add to Dictionary',
-			// detail: 'Add word to dictionary',
-			apply: (view) => {
-				if (issueActions) {
-					issueActions.onAddToDictionary(issue.lint.get_problem_text());
-				}
-				// Close the autocomplete popup
-				closeCompletion(view);
-			},
-			type: 'class',
-		});
-	}
-	
-	// Don't show autocomplete if there are no options (shouldn't happen, but just in case)
-	if (options.length === 0) {
-		console.log('No options generated!');
-		return null;
-	}
-	
-	console.log('Returning completion result:', {
-		from: span.start,
-		to: span.end,
-		optionCount: options.length,
-	});
-	
-	return {
-		from: span.start,
-		to: span.end,
-		options,
-		// Don't filter - these are action items, not text completions
-		filter: false,
-	};
-}
-
-// Helper to create tooltip from issue
-function createTooltipFromIssue(issue: HarperIssue): Tooltip {
-	const span = issue.lint.span();
-	const lintKind = issue.lint.lint_kind();
-	
-	// Check if ignore would be the only option
-	const suggestions = issue.lint.suggestions();
-	const isSpelling = lintKind.toLowerCase().includes('spelling');
-	const hasActions = suggestions.length > 0 || isSpelling;
-	const showIgnoreButton = !hasActions;
-	
-	return {
-		pos: span.start,
-		end: span.end,
-		create: (view: EditorView) => {
-			const container = view.dom.ownerDocument.createElement('div');
-			const dispose = render(() => IssueTooltipWrapper({ 
-				issue, 
-				lintKind,
-				showIgnoreButton,
-				onIgnore: (showIgnoreButton && issueActions) 
-					? () => {
-						if (issueActions) {
-							issueActions.onIgnore(issue.id);
-						}
-					}
-					: undefined
-			}), container);
-			
-			return {
-				dom: container,
-				destroy: () => dispose(),
-			};
-		},
-		above: true,
-		arrow: false
-	};
-}
-
-// Track last notified issue ID to avoid duplicate notifications
-let lastNotifiedIssueId: string | null = null;
-
-// StateField to track current tooltip based on cursor position
-const cursorTooltipField = StateField.define<readonly Tooltip[]>({
-	create(state) {
-		const cursorPos = state.selection.main.head;
-		const issue = findIssueAtPos(state, cursorPos);
-		
-		// Notify parent about initial issue selection
-		const issueId = issue?.id ?? null;
-		if (issueActions?.onIssueSelect) {
-			issueActions.onIssueSelect(issueId);
-			lastNotifiedIssueId = issueId;
-		}
-		
-		if (!issue) return [];
-		
-		return [createTooltipFromIssue(issue)];
-	},
-	update(tooltips, tr) {
-		// Check if issues were updated (e.g., issue was ignored/removed)
-		const issuesUpdated = tr.effects.some(e => e.is(updateIssuesEffect));
-		
-		// If issues were updated, check if current tooltip's issue still exists
-		if (issuesUpdated && tooltips.length > 0) {
-			const cursorPos = tr.state.selection.main.head;
-			const issue = findIssueAtPos(tr.state, cursorPos);
-			
-			// Notify parent about issue change
-			const issueId = issue?.id ?? null;
-			if (issueId !== lastNotifiedIssueId && issueActions?.onIssueSelect) {
-				issueActions.onIssueSelect(issueId);
-				lastNotifiedIssueId = issueId;
-			}
-			
-			// If the issue no longer exists at cursor position, clear the tooltip
-			if (!issue) {
-				return [];
-			}
-			
-			// If a different issue is now at cursor position, show new tooltip
-			return [createTooltipFromIssue(issue)];
-		}
-		
-		// Only recalculate if document changed or selection changed
-		if (!tr.docChanged && !tr.selection) {
-			return tooltips;
-		}
-		
-		const cursorPos = tr.state.selection.main.head;
-		const issue = findIssueAtPos(tr.state, cursorPos);
-		
-		// Notify parent about issue change (only if it actually changed)
-		const issueId = issue?.id ?? null;
-		if (issueId !== lastNotifiedIssueId && issueActions?.onIssueSelect) {
-			issueActions.onIssueSelect(issueId);
-			lastNotifiedIssueId = issueId;
-		}
-		
-		// If there's an issue at cursor, show tooltip
-		if (issue) {
-			return [createTooltipFromIssue(issue)];
-		}
-		
-		return [];
-	},
-	provide: f => showTooltip.computeN([f], state => state.field(f)),
-});
-
-// Export the autocomplete extension
-export const harperAutocompletion = autocompletion({
-	override: [harperAutocomplete],
-	activateOnTyping: false,  // Only activate on Ctrl+Space
-	closeOnBlur: true,
-	aboveCursor: false,
-});
-
-// Export the cursor-based tooltip extension
-export const harperCursorTooltip = cursorTooltipField;
-
-// Track last clicked issue in editor to avoid re-triggering autocomplete
-let lastClickedIssueInEditor: string | null = null;
-
-// Helper function to trigger autocomplete for an issue (returns true if triggered, false if skipped)
-export function triggerAutocompleteForIssue(view: EditorView, issue: HarperIssue, explicit = false): boolean {
-	// For explicit triggers (Ctrl+Space), always trigger
-	if (explicit) {
-		setTimeout(() => startCompletion(view), 0);
-		return true;
-	}
-	
-	// For implicit triggers (click/sidebar), check if only Ignore would be shown
-	if (wouldOnlyShowIgnore(issue)) {
-		return false;
-	}
-	
-	setTimeout(() => startCompletion(view), 0);
-	return true;
-}
-
-// Click handler to trigger autocomplete when clicking on issues
-export const issueClickAutocomplete = EditorView.domEventHandlers({
-	mousedown(event, view) {
-		const pos = view.posAtCoords({ x: event.clientX, y: event.clientY });
-		if (pos === null) return false;
-
-		const issue = findIssueAtPos(view.state, pos);
-		
-		if (issue) {
-			// Only trigger autocomplete if it's a different issue than last clicked
-			if (issue.id !== lastClickedIssueInEditor) {
-				lastClickedIssueInEditor = issue.id;
-				// Delegate to summon handler when available; fallback to direct trigger
-				if (summonHandler) {
-					// Fire and forget
-					void summonHandler(SummonEvent.ClickedInEditor, { view, issueId: issue.id, pos });
-				} else {
-					triggerAutocompleteForIssue(view, issue);
-				}
-			}
-		} else {
-			// Clicking off an issue resets the tracking
-			lastClickedIssueInEditor = null;
-		}
-		
-		return false; // Don't prevent default behavior
-	},
-});
-
-// Update listener to sync issue selection highlighting with cursor position
-export const issueSyncExtension = EditorView.updateListener.of((update) => {
-	// Only process if selection changed (cursor moved)
-	if (!update.selectionSet) return;
-	
-	// Skip if this update already has a setSelectedIssueEffect (from keyboard nav or sidebar)
-	if (update.transactions.some(tr => tr.effects.some(e => e.is(setSelectedIssueEffect)))) {
-		return;
-	}
-	
-	const cursorPos = update.state.selection.main.head;
-	const issue = findIssueAtPos(update.state, cursorPos);
-	const issueId = issue?.id ?? null;
-	
-	// Get current selected issue
-	const currentSelectedId = update.state.field(issueField).selectedId;
-	
-	// Only dispatch if the issue changed
-	if (issueId !== currentSelectedId) {
-		// Always dispatch selection update to keep decorations in sync
-		update.view.dispatch({
-			effects: setSelectedIssueEffect.of(issueId),
-		});
-
-		// Do not forward cursor-only movements to the centralized summon handler.
-		// Cursor movements are already handled by `cursorTooltipField` and
-		// dispatching `setSelectedIssueEffect` above; calling the centralized
-		// processor here caused the editor to reset the selection to the
-		// start of the issue span, producing a jumpy cursor experience.
-	}
-	
-	// Reset editor click tracking when cursor moves away from the last clicked issue
-	// This allows clicking the same issue again to trigger autocomplete
-	if (issueId !== lastClickedIssueInEditor) {
-		lastClickedIssueInEditor = null;
-	}
+// Single state field to track issues and selection
+export const issueStateField = StateField.define<{
+  issues: HarperIssue[];
+  selectedId: string | null;
+}>({
+  create: () => ({ issues: [], selectedId: null }),
+  update(value, tr) {
+    let updated = { ...value };
+    for (const effect of tr.effects) {
+      if (effect.is(updateIssuesEffect)) {
+        updated = { ...updated, issues: effect.value };
+      } else if (effect.is(setSelectedIssueEffect)) {
+        updated = { ...updated, selectedId: effect.value };
+      }
+    }
+    return updated;
+  }
 });
 
 // Dark editor theme with Flexoki colors
-const darkEditorTheme = EditorView.theme({
+export const darkEditorTheme = EditorView.theme({
 	'&': {
 		color: '#CECDC3', // flexoki-tx
 		backgroundColor: '#100F0F', // flexoki-bg
@@ -563,149 +61,193 @@ const darkEditorTheme = EditorView.theme({
 	},
 }, { dark: true });
 
-// Navigation functions for next/previous issue
+// Effect definitions
+export const updateIssuesEffect = StateEffect.define<HarperIssue[]>();
+export const setSelectedIssueEffect = StateEffect.define<string | null>();
+
+// Decoration field - much simpler implementation
+export const issueDecorations = StateField.define<DecorationSet>({
+  create() {
+    return Decoration.none;
+  },
+  update(decorations, tr) {
+    decorations = decorations.map(tr.changes);
+    const issueState = tr.state.field(issueStateField);
+    
+    // Rebuild all decorations when needed
+    if (tr.docChanged || tr.selection || tr.effects.size > 0) {
+      return buildDecorations(issueState.issues, issueState.selectedId);
+    }
+    
+    return decorations;
+  },
+  provide: f => EditorView.decorations.from(f)
+});
+
+function buildDecorations(issues: HarperIssue[], selectedId: string | null): DecorationSet {
+  const builders = [];
+  
+  for (const issue of issues) {
+    const span = issue.lint.span();
+    const isSelected = issue.id === selectedId;
+    const lintKind = issue.lint.lint_kind();
+    
+    builders.push(
+      Decoration.mark({
+        class: `cm-issue-underline ${isSelected ? 'cm-issue-selected' : ''}`,
+        attributes: {
+          'data-issue-id': issue.id,
+          style: `text-decoration-color: ${lintKindColor(lintKind)}; 
+                  background-color: ${isSelected ? lintKindBackgroundColor(lintKind) : 'transparent'};`
+        }
+      }).range(span.start, span.end)
+    );
+  }
+  
+  return Decoration.set(builders);
+}
+
+// Unified tooltip and autocomplete handler
+export function handleIssueInteraction(view: EditorView, pos: number, explicit = false) {
+  const issueState = view.state.field(issueStateField);
+  const issue = findIssueAtPosition(issueState.issues, pos);
+  
+  if (!issue) return false;
+  
+  // Update selection
+  view.dispatch({ effects: setSelectedIssueEffect.of(issue.id) });
+  
+  // Don't show autocomplete if only "Ignore" would be available
+  if (!explicit && wouldOnlyShowIgnore(issue)) {
+    return true;
+  }
+  
+  // Show autocomplete
+  setTimeout(() => startCompletion(view), 0);
+  return true;
+}
+
+// Simplified autocomplete source
+function harperAutocomplete(context: CompletionContext) {
+  const issueState = context.state.field(issueStateField);
+  const pos = context.pos;
+  const issue = findIssueAtPosition(issueState.issues, pos);
+  
+  if (!issue) return null;
+  
+  const span = issue.lint.span();
+  const options = getSuggestionActions(issue, {
+    onApply: (suggestion) => {
+      if (context.editor) {
+        // Apply suggestion directly
+        applySuggestionInEditor(context.editor.contentDOM, issue, suggestion);
+      }
+    },
+    onIgnore: () => {
+      if (context.editor) {
+        // Handle ignore
+        ignoreIssueInEditor(context.editor.contentDOM, issue.id);
+      }
+    },
+    onAddToDictionary: (word) => {
+      if (context.editor) {
+        // Handle add to dictionary
+        addToDictionaryInEditor(context.editor.contentDOM, word);
+      }
+    }
+  });
+  
+  if (options.length === 0) return null;
+  
+  return {
+    from: span.start,
+    to: span.end,
+    options,
+    filter: false
+  };
+}
+
+// Simplified keyboard navigation
+export const issueNavigationKeymap = keymap.of([
+  { key: "Ctrl-Space", run: (view) => {
+    const pos = view.state.selection.main.head;
+    return handleIssueInteraction(view, pos, true);
+  }},
+  { key: "Tab", run: (view) => {
+    const pos = view.state.selection.main.head;
+    return handleIssueInteraction(view, pos, false);
+  }},
+  { key: "Ctrl-j", run: (view) => navigateToNextIssue(view) },
+  { key: "Ctrl-k", run: (view) => navigateToPreviousIssue(view) }
+]);
+
+// Helper functions
+function findIssueAtPosition(issues: HarperIssue[], pos: number): HarperIssue | null {
+  return issues.find(issue => {
+    const span = issue.lint.span();
+    return pos >= span.start && pos <= span.end;
+  }) || null;
+}
+
 function navigateToNextIssue(view: EditorView): boolean {
-	const issueState = view.state.field(issueField);
-	const issues = issueState.issues;
-	
-	if (issues.length === 0) return false;
-	
-	const currentPos = view.state.selection.main.head;
-	
-	// Find the next issue after current position
-	let nextIssue = issues.find(issue => issue.lint.span().start > currentPos);
-	
-	// If no issue after current position, wrap to first issue
-	if (!nextIssue) {
-		nextIssue = issues[0];
-	}
-	
-	if (nextIssue) {
-		const span = nextIssue.lint.span();
-		view.dispatch({
-			selection: { anchor: span.start },
-			effects: [
-				EditorView.scrollIntoView(span.start, { y: 'center' }),
-				setSelectedIssueEffect.of(nextIssue.id),
-			],
-		});
-		view.focus();
-		// Notify summon handler that navigation occurred
-		if (summonHandler) {
-			void summonHandler(SummonEvent.NavigateNext, { view, issueId: nextIssue.id, pos: span.start });
-		}
-		return true;
-	}
-	
-	return false;
+  const issueState = view.state.field(issueStateField);
+  if (issueState.issues.length === 0) return false;
+  
+  const currentPos = view.state.selection.main.head;
+  let nextIssue = issueState.issues.find(issue => issue.lint.span().start > currentPos);
+  
+  if (!nextIssue) nextIssue = issueState.issues[0];
+  if (!nextIssue) return false;
+  
+  const span = nextIssue.lint.span();
+  view.dispatch({
+    selection: { anchor: span.start },
+    effects: [
+      EditorView.scrollIntoView(span.start, { y: "center" }),
+      setSelectedIssueEffect.of(nextIssue.id)
+    ]
+  });
+  
+  view.focus();
+  return true;
 }
 
 function navigateToPreviousIssue(view: EditorView): boolean {
-	const issueState = view.state.field(issueField);
-	const issues = issueState.issues;
-	
-	if (issues.length === 0) return false;
-	
-	const currentPos = view.state.selection.main.head;
-	
-	// Find the previous issue before current position (search in reverse)
-	let prevIssue = issues.slice().reverse().find(issue => issue.lint.span().start < currentPos);
-	
-	// If no issue before current position, wrap to last issue
-	if (!prevIssue) {
-		prevIssue = issues[issues.length - 1];
-	}
-	
-	if (prevIssue) {
-		const span = prevIssue.lint.span();
-		view.dispatch({
-			selection: { anchor: span.start },
-			effects: [
-				EditorView.scrollIntoView(span.start, { y: 'center' }),
-				setSelectedIssueEffect.of(prevIssue.id),
-			],
-		});
-		view.focus();
-		// Notify summon handler that navigation occurred
-		if (summonHandler) {
-			void summonHandler(SummonEvent.NavigatePrevious, { view, issueId: prevIssue.id, pos: span.start });
-		}
-		return true;
-	}
-	
-	return false;
+  const issueState = view.state.field(issueStateField);
+  if (issueState.issues.length === 0) return false;
+  
+  const currentPos = view.state.selection.main.head;
+  let prevIssue = [...issueState.issues].reverse().find(issue => issue.lint.span().start < currentPos);
+  
+  if (!prevIssue) prevIssue = issueState.issues[issueState.issues.length - 1];
+  if (!prevIssue) return false;
+  
+  const span = prevIssue.lint.span();
+  view.dispatch({
+    selection: { anchor: span.start },
+    effects: [
+      EditorView.scrollIntoView(span.start, { y: "center" }),
+      setSelectedIssueEffect.of(prevIssue.id)
+    ]
+  });
+  
+  view.focus();
+  return true;
 }
 
-// Handler for Tab key to trigger autocomplete on issues
-function handleTabOnIssue(view: EditorView): boolean {
-	const cursorPos = view.state.selection.main.head;
-	const issue = findIssueAtPos(view.state, cursorPos);
-	
-	// If cursor is on an issue, trigger autocomplete
-	if (issue) {
-		if (summonHandler) {
-			void summonHandler(SummonEvent.TabPressed, { view, issueId: issue.id, pos: cursorPos });
-		} else {
-			startCompletion(view);
-		}
-		return true;
-	}
-	
-	// Otherwise, let Tab behave normally (indentation)
-	return false;
-}
-
-// Keymap for issue navigation and Tab trigger
-export const issueNavigationKeymap = keymap.of([
-	{
-		key: 'Ctrl-Space',
-		run: (view: EditorView) => {
-			const cursorPos = view.state.selection.main.head;
-			const issue = findIssueAtPos(view.state, cursorPos);
-			if (summonHandler) {
-				void summonHandler(SummonEvent.ExplicitAutocomplete, { view, issueId: issue?.id, pos: cursorPos });
-				return true;
-			}
-			// Fallback to default completion
-			startCompletion(view);
-			return true;
-		}
-	},
-	{
-		key: 'Tab',
-		run: handleTabOnIssue,
-	},
-	{
-		key: 'Ctrl-j',
-		run: navigateToNextIssue,
-	},
-	{
-		key: 'Ctrl-k',
-		run: navigateToPreviousIssue,
-	},
-]);
-
-// Helper: focus editor at a specific issue id (select & scroll)
-export function focusCMIssue(view: EditorView, issueId: string): boolean {
-	const issueState = view.state.field(issueField);
-	const issue = issueState.issues.find(i => i.id === issueId);
-	if (!issue) return false;
-
-	const span = issue.lint.span();
-	view.dispatch({
-		selection: { anchor: span.start },
-		effects: [
-			EditorView.scrollIntoView(span.start, { y: 'center' }),
-			setSelectedIssueEffect.of(issueId),
-		],
-	});
-	view.focus();
-	return true;
-}
-
-// Helper: show popup for issue by focusing selection (cursor tooltip is driven by selection)
-export function showPopupForIssue(view: EditorView, issueId: string): boolean {
-	return focusCMIssue(view, issueId);
-}
-
-export { issueTheme, darkEditorTheme };
+// Export simplified extensions
+export const harperExtensions = [
+  issueStateField,
+  issueDecorations,
+  autocompletion({ override: [harperAutocomplete] }),
+  issueNavigationKeymap,
+  EditorView.domEventHandlers({
+    mousedown(event, view) {
+      const pos = view.posAtCoords({ x: event.clientX, y: event.clientY });
+      if (pos !== null) {
+        handleIssueInteraction(view, pos);
+      }
+      return false;
+    }
+  })
+];
