@@ -1,17 +1,15 @@
-import { Component, createSignal, onMount, createEffect, batch, Show } from 'solid-js';
+import { Component, createSignal, onMount, createEffect, Show } from 'solid-js';
 import TopBar from './components/TopBar';
 import Editor from './components/Editor';
 import Sidebar from './components/Sidebar';
 import RuleManager from './components/RuleManager';
-import { initHarper, analyzeText, transformLints, getLinter, addWordToDictionary, updateSingleRule, getLintConfig } from './services/harper-service';
-import type { HarperIssue, Suggestion, LintConfig } from './types';
+import { initHarper, analyzeText, transformLints, updateSingleRule, getLintConfig } from './services/harper-service';
+import type { LintConfig } from './types';
+import { content, setContent, issues, setIssues, selectedIssueId, setSelectedIssueId, scrollToIssue } from './state/app-store';
+import editorManager from './services/editor-manager';
 
 const App: Component = () => {
-	const [content, setContent] = createSignal('');
-	const [issues, setIssues] = createSignal<HarperIssue[]>([]);
-	const [selectedIssueId, setSelectedIssueId] = createSignal<string | null>(null);
 	const [isInitialized, setIsInitialized] = createSignal(false);
-	const [scrollToIssue, setScrollToIssue] = createSignal<string | null>(null);
 	const [isAnalyzing, setIsAnalyzing] = createSignal(false);
 	const [isRuleManagerOpen, setIsRuleManagerOpen] = createSignal(false);
 	const [currentLintConfig, setCurrentLintConfig] = createSignal<LintConfig | null>(null);
@@ -83,9 +81,8 @@ const App: Component = () => {
 	// Watch content changes and trigger analysis
 	createEffect(() => {
 		const text = content();
-		if (isInitialized()) {
-			scheduleAnalysis(text);
-		}
+		// Best-effort: schedule analysis when initialized flag flips true
+		scheduleAnalysis(text);
 	});
 
 	const handleCopy = async () => {
@@ -96,49 +93,9 @@ const App: Component = () => {
 		}
 	};
 
-	const handleApplySuggestion = async (issueId: string, suggestion: Suggestion) => {
-		const issue = issues().find(i => i.id === issueId);
-		if (!issue) return;
+	// suggestion/dictionary actions are handled by editorManager now
 
-		try {
-			const linter = getLinter();
-			const newText = await linter.applySuggestion(content(), issue.lint, suggestion);
-
-			// Immediately analyze the new text
-			const lints = await analyzeText(newText);
-			const harperIssues = transformLints(lints);
-
-			// Batch both updates together so they happen atomically
-			batch(() => {
-				setSelectedIssueId(null);
-				setContent(newText);
-				setIssues(harperIssues);
-			});
-		} catch (error) {
-			console.error('Failed to apply suggestion:', error);
-		}
-	};
-
-	const handleAddToDictionary = async (word: string) => {
-		try {
-			await addWordToDictionary(word);
-			// Re-analyze to update issues
-			const lints = await analyzeText(content());
-			const harperIssues = transformLints(lints);
-			const filteredIssues = harperIssues.filter(issue => !ignoredIssues.has(issue.id));
-			setIssues(filteredIssues);
-		} catch (error) {
-			console.error('Failed to add word to dictionary:', error);
-		}
-	};
-
-	const handleIgnore = (issueId: string) => {
-		// Add to ignored set
-		ignoredIssues.add(issueId);
-		// Remove from current issues
-		setIssues(issues().filter(i => i.id !== issueId));
-		setSelectedIssueId(null);
-	};
+	// ignore handled by editorManager.ignoreIssue now
 
 	const toggleRuleManager = () => {
 		setIsRuleManagerOpen(!isRuleManagerOpen());
@@ -177,7 +134,7 @@ const App: Component = () => {
 	};
 
 	return (
-		<div class="h-screen flex flex-col bg-[var(--flexoki-bg)]">
+		<div class="h-screen flex flex-col bg-(--flexoki-bg)">
 			<TopBar 
 				onCopy={handleCopy} 
 				isAnalyzing={isAnalyzing()} 
@@ -198,25 +155,7 @@ const App: Component = () => {
 							'hidden-on-mobile': isRuleManagerOpen()
 						}}
 					>
-						<Sidebar
-							issues={issues()}
-							selectedIssueId={selectedIssueId()}
-							onIssueSelect={(issueId) => {
-								// Only trigger scroll/autocomplete if it's a different issue than last clicked
-								const shouldTrigger = issueId !== lastClickedIssueFromSidebar;
-								lastClickedIssueFromSidebar = issueId;
-								
-								setSelectedIssueId(issueId);
-								
-								if (shouldTrigger) {
-									setScrollToIssue(issueId);
-									// Reset scroll trigger after a short delay
-									setTimeout(() => setScrollToIssue(null), 100);
-								}
-							}}
-							onApplySuggestion={handleApplySuggestion}
-							onAddToDictionary={handleAddToDictionary}
-						/>
+						<Sidebar />
 					</div>
 					
 					{/* Editor - centered area */}
@@ -234,9 +173,9 @@ const App: Component = () => {
 								}
 								setSelectedIssueId(issueId);
 							}}
-							onApplySuggestion={handleApplySuggestion}
-							onAddToDictionary={handleAddToDictionary}
-							onIgnore={handleIgnore}
+							onApplySuggestion={(issueId, suggestion) => void editorManager.applySuggestion(issueId, suggestion)}
+							onAddToDictionary={(word) => void editorManager.addWordToDictionary(word)}
+							onIgnore={(issueId) => void editorManager.ignoreIssue(issueId)}
 							scrollToIssue={scrollToIssue()}
 						/>
 					</div>
@@ -266,10 +205,10 @@ const App: Component = () => {
 
 function LoadingFallback() {
 	return (
-		<div class="flex-1 flex items-center justify-center bg-[var(--flexoki-bg)]">
+		<div class="flex-1 flex items-center justify-center bg-(--flexoki-bg)">
 			<div class="text-center">
-				<div class="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[var(--flexoki-cyan)] border-r-transparent mb-4" />
-				<p class="text-[var(--flexoki-tx-2)]">Initializing Harper.js...</p>
+				<div class="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-(--flexoki-cyan) border-r-transparent mb-4" />
+				<p class="text-(--flexoki-tx-2)">Initializing Harper.js...</p>
 			</div>
 		</div>
 	);

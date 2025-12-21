@@ -42,7 +42,7 @@ export function FormattedMessage(props: { message: string }): JSX.Element {
 						when={part.type === 'code'}
 						fallback={<>{part.content}</>}
 					>
-						<code class="px-1 py-0.5 bg-[var(--flexoki-ui-2)] rounded text-xs font-mono">
+						<code class="px-1 py-0.5 bg-(--flexoki-ui-2) rounded text-xs font-mono">
 							{part.content}
 						</code>
 					</Show>

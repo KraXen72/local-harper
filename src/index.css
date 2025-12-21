@@ -116,7 +116,7 @@ body {
 	background-color: color-mix(in oklab, var(--flexoki-cyan) 20%, transparent);
 	border-color: color-mix(in oklab, var(--flexoki-cyan) 60%, transparent);
 
-	@apply shadow-md shadow-[var(--flexoki-cyan)]/10;
+	@apply shadow-md shadow-(--flexoki-cyan)/10;
 }
 
 /* Harper Issue Tooltip Styles */

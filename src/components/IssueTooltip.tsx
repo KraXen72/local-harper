@@ -44,7 +44,7 @@ const IssueTooltip: Component<IssueTooltipProps> = (props) => {
 			
 			<Show when={props.showIgnoreButton && props.onIgnore}>
 				<button 
-					class="px-3 py-1 bg-[var(--flexoki-ui)] text-[var(--flexoki-tx)] border border-[var(--flexoki-ui-3)] rounded text-xs font-medium cursor-pointer transition-all duration-[120ms] w-full hover:bg-[var(--flexoki-ui-2)] hover:border-[var(--flexoki-tx-3)] active:scale-[0.98] col-span-full"
+					class="px-3 py-1 bg-(--flexoki-ui) text-(--flexoki-tx) border border-(--flexoki-ui-3) rounded text-xs font-medium cursor-pointer transition-all duration-120 w-full hover:bg-(--flexoki-ui-2) hover:border-(--flexoki-tx-3) active:scale-[0.98] col-span-full"
 					onClick={props.onIgnore}
 					type="button"
 				>

@@ -1,7 +1,8 @@
 import { Component, For, Show, createEffect } from 'solid-js';
 import type { ParentComponent } from 'solid-js';
-import type { SidebarProps } from '../types';
 import IssueItem from './IssueItem';
+import { issues, selectedIssueId, setSelectedIssueId } from '../state/app-store';
+import editorManager from '../services/editor-manager';
 
 
 const Kbd: ParentComponent = (props) => (
@@ -10,21 +11,23 @@ const Kbd: ParentComponent = (props) => (
 	</kbd>
 );
 
-const Sidebar: Component<SidebarProps> = (props) => {
+const Sidebar: Component = () => {
 	// oxlint-disable-next-line no-unassigned-vars
 	let containerRef!: HTMLDivElement;
 	const issueRefs = new Map<string, HTMLDivElement>();
 
-	// Scroll to selected issue in sidebar
-	createEffect(() => {
-		const selectedId = props.selectedIssueId;
-		if (selectedId) {
-			const element = issueRefs.get(selectedId);
-			if (element) {
-				element.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-			}
+// Scroll to selected issue in sidebar (use store's selectedIssueId for consistency)
+createEffect(() => {
+	const selectedId = selectedIssueId();
+	if (selectedId) {
+		const element = issueRefs.get(selectedId);
+		if (element) {
+			element.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 		}
-	});
+	}
+});
+
+// Sidebar delegates apply/add/ignore actions to the centralized editorManager
 
 	return (
 		<div ref={containerRef} class="grid h-full border-l border-(--flexoki-ui-2) bg-(--flexoki-bg)/95 backdrop-blur-md shadow-2xl max-w-100" style={{
@@ -33,16 +36,16 @@ const Sidebar: Component<SidebarProps> = (props) => {
 			<div class="flex items-center justify-between px-4 py-3 bg-(--flexoki-bg)">
 				<div class="flex items-center gap-3">
 					<h2 class="text-base font-semibold text-(--flexoki-tx) tracking-tight">Issues</h2>
-					<Show when={props.issues.length > 0}>
+					<Show when={issues().length > 0}>
 						<span class="inline-flex items-center justify-center min-w-8 h-6 px-2 rounded-md border border-(--flexoki-red)/40 bg-(--flexoki-red)/15 text-(--flexoki-red) text-xs font-bold tracking-wide shadow-sm">
-							{props.issues.length}
+							{issues().length}
 						</span>
 					</Show>
 				</div>
 			</div>
 			<div class="w-full h-full overflow-auto">
 				<Show
-					when={props.issues.length > 0}
+					when={issues().length > 0}
 					fallback={
 						<div class="text-center py-12 px-4 mx-3">
 							<div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-(--flexoki-ui)/50 mb-3">
@@ -54,15 +57,18 @@ const Sidebar: Component<SidebarProps> = (props) => {
 					}
 				>
 					<div class="space-y-1.5 mx-3 mb-3">
-						<For each={props.issues}>
+						<For each={issues()}>
 							{(issue) => (
 								<div ref={(el) => issueRefs.set(issue.id, el)}>
 									<IssueItem
 										issue={issue}
-										isSelected={props.selectedIssueId === issue.id}
-										onSelect={props.onIssueSelect}
-										onApplySuggestion={(suggestion) => props.onApplySuggestion(issue.id, suggestion)}
-										onAddToDictionary={props.onAddToDictionary}
+										isSelected={selectedIssueId() === issue.id}
+										onSelect={(id: string) => {
+											setSelectedIssueId(id);
+											void editorManager.focusIssue(id).catch?.(console.error);
+										}}
+										onApplySuggestion={(suggestion) => void editorManager.applySuggestion(issue.id, suggestion).catch?.(console.error)}
+										onAddToDictionary={(word) => void editorManager.addWordToDictionary(word).catch?.(console.error)}
 									/>
 								</div>
 							)}
@@ -70,7 +76,7 @@ const Sidebar: Component<SidebarProps> = (props) => {
 					</div>
 				</Show>
 			</div>
-			<Show when={props.issues.length > 0}>
+			<Show when={issues().length > 0}>
 					<div class="py-3 border-t border-(--flexoki-ui-2) sticky bottom-0 bg-(--flexoki-bg) z-10">
 						<p class="text-xs text-(--flexoki-tx-3) text-center leading-6">
 							<Kbd>Ctrl+J</Kbd>

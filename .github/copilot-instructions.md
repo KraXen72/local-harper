@@ -31,3 +31,4 @@ applyTo: "**"
 ## typescript
 - always strive to use typescript's full potential, i.e. generics, utility types, etc. and available global/importable types to type everything properly. You MUST NEVER use the any type. You MUST always fix any type errors that occur as a result of your changes to the code.
 - Prefer explicitly defined object types using `type SomeObj = { ... }` or `interface` to using inline types.
+- Do not add explicit retur types to functions

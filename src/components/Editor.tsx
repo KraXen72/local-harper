@@ -4,46 +4,30 @@ import type { ViewUpdate } from '@codemirror/view';
 import { crosshairCursor, drawSelection, dropCursor, EditorView, highlightSpecialChars, keymap, placeholder, rectangularSelection } from '@codemirror/view';
 import { Component, createEffect, onCleanup, onMount } from 'solid-js';
 import type { EditorProps } from '../types';
-import { SummonEvent } from '../types';
+// import SummonEvent removed; editor manager handles summon routing
 import {
 	darkEditorTheme,
 	harperAutocompletion,
 	harperCursorTooltip,
 	issueClickAutocomplete,
-	setSummonHandler,
-	issueDecorationsField,
-	issueField,
-	issueNavigationKeymap,
-	issueSyncExtension,
-	issueTheme,
-	setIssueActions,
-	setSelectedIssueEffect,
-	updateIssuesEffect,
+ 	issueDecorationsField,
+ 	issueField,
+ 	issueNavigationKeymap,
+ 	issueSyncExtension,
+ 	issueTheme,
+ 	setSelectedIssueEffect,
+ 	updateIssuesEffect,
 } from '../utils/editor-extensions';
-import { processSummonEvent } from '../utils/summon-events';
+import editorManager from '../services/editor-manager';
 
 const Editor: Component<EditorProps> = (props) => {
-	let editorRef!: HTMLDivElement;
+	let editorRef: HTMLDivElement | undefined;
 	let view: EditorView | undefined;
 
 	onMount(() => {
 		if (!editorRef) return;
 
-		// Set up issue actions for autocomplete
-		setIssueActions({
-			onApplySuggestion: (issueId, suggestion) => {
-				props.onApplySuggestion(issueId, suggestion);
-			},
-			onAddToDictionary: (word) => {
-				props.onAddToDictionary(word);
-			},
-			onIgnore: (issueId) => {
-				props.onIgnore(issueId);
-			},
-			onIssueSelect: (issueId) => {
-				props.onIssueSelect(issueId);
-			},
-		});
+
 
 		const startState = EditorState.create({
 			doc: props.content,
@@ -80,19 +64,28 @@ const Editor: Component<EditorProps> = (props) => {
 			parent: editorRef,
 		});
 
-		// Register summon handler so editor-internal events can delegate to centralized processor
-		setSummonHandler((event: SummonEvent, ctx: { view?: EditorView; issueId?: string; pos?: number }) => {
-			return processSummonEvent(event, { view, issueId: ctx.issueId, pos: ctx.pos }).catch(console.error);
+		// Attach the created view to the centralized editor manager which wires
+		// callbacks into the editor extensions and summon processor.
+		editorManager.attachView(view, {
+			onApplySuggestion: (issueId, suggestion) => {
+				void editorManager.applySuggestion(issueId, suggestion).catch?.(console.error);
+			},
+			onAddToDictionary: (word) => {
+				void editorManager.addWordToDictionary(word).catch?.(console.error);
+			},
+			onIgnore: (issueId) => {
+				editorManager.ignoreIssue(issueId);
+			},
+			onIssueSelect: (issueId) => props.onIssueSelect(issueId),
 		});
 	});
 
-	onCleanup(() => {
-		if (view) {
-			// Clear summon handler before destroying view
-			setSummonHandler(null);
-			view.destroy();
-		}
-	});
+		onCleanup(() => {
+			if (view) {
+				editorManager.destroy();
+				view.destroy();
+			}
+		});
 
 	// Track previous values to detect real changes
 	let prevIssues = props.issues;
@@ -152,15 +145,15 @@ const Editor: Component<EditorProps> = (props) => {
 				// Focus the editor so user can immediately interact
 				view.focus();
 				
-				// Trigger autocomplete using the unified helper (will skip if only Ignore would be shown)
-					processSummonEvent(SummonEvent.SidebarClicked, { view, issueId: scrollTo }).catch(console.error);
+				// Trigger autocomplete/selection through the editor manager (will skip if only Ignore would be shown)
+				void editorManager.focusIssue(scrollTo).catch?.(console.error);
 			}
 		}
 	});
 
 	const handleContainerClick = (e: MouseEvent) => {
 		// If clicking in the empty space (not on the editor), focus the editor
-		if (view && e.target !== editorRef && !(editorRef.contains(e.target as Node))) {
+		if (view && editorRef && e.target !== editorRef && !(editorRef.contains(e.target as Node))) {
 			view.focus();
 		}
 	};
@@ -170,7 +163,7 @@ const Editor: Component<EditorProps> = (props) => {
 			{/* Top margin: 20vh (1/5 of screen) */}
 			<div class="pt-12 px-4 pb-12 flex justify-center">
 				<div class="bg-(--flexoki-bg) rounded-xl overflow-hidden shadow-2xl border border-(--flexoki-ui-2) max-w-[84ch] w-full">
-					<div ref={editorRef} class="text-base" />
+					<div ref={(el) => (editorRef = el!)} class="text-base" />
 				</div>
 			</div>
 		</div>
