@@ -2,6 +2,7 @@ import { StateField, StateEffect, type EditorState } from '@codemirror/state';
 import { Decoration, DecorationSet, EditorView, showTooltip, type Tooltip, keymap } from '@codemirror/view';
 import { autocompletion, closeCompletion, startCompletion, type CompletionContext, type CompletionResult, type Completion } from '@codemirror/autocomplete';
 import type { HarperIssue, Suggestion } from '../types';
+import { SummonEvent } from '../types';
 import { SuggestionKind } from '../types';
 import { render } from 'solid-js/web';
 import IssueTooltipWrapper from '../components/IssueTooltipWrapper';
@@ -154,6 +155,16 @@ let issueActions: IssueActions | null = null;
 
 export function setIssueActions(actions: IssueActions) {
 	issueActions = actions;
+}
+
+// Summon handler allows editor-level events to delegate to a centralized processor
+// Consumer (e.g., Editor component) should call `setSummonHandler` to receive events
+type SummonHandler = (event: SummonEvent, ctx: { view?: EditorView; issueId?: string; pos?: number }) => void | Promise<boolean | void>;
+
+let summonHandler: SummonHandler | null = null;
+
+export function setSummonHandler(handler: SummonHandler | null) {
+	summonHandler = handler;
 }
 
 // Helper to find issue at cursor position
@@ -460,7 +471,13 @@ export const issueClickAutocomplete = EditorView.domEventHandlers({
 			// Only trigger autocomplete if it's a different issue than last clicked
 			if (issue.id !== lastClickedIssueInEditor) {
 				lastClickedIssueInEditor = issue.id;
-				triggerAutocompleteForIssue(view, issue);
+				// Delegate to summon handler when available; fallback to direct trigger
+				if (summonHandler) {
+					// Fire and forget
+					void summonHandler(SummonEvent.ClickedInEditor, { view, issueId: issue.id, pos });
+				} else {
+					triggerAutocompleteForIssue(view, issue);
+				}
 			}
 		} else {
 			// Clicking off an issue resets the tracking
@@ -490,9 +507,16 @@ export const issueSyncExtension = EditorView.updateListener.of((update) => {
 	
 	// Only dispatch if the issue changed
 	if (issueId !== currentSelectedId) {
+		// Always dispatch selection update to keep decorations in sync
 		update.view.dispatch({
 			effects: setSelectedIssueEffect.of(issueId),
 		});
+
+		// Do not forward cursor-only movements to the centralized summon handler.
+		// Cursor movements are already handled by `cursorTooltipField` and
+		// dispatching `setSelectedIssueEffect` above; calling the centralized
+		// processor here caused the editor to reset the selection to the
+		// start of the issue span, producing a jumpy cursor experience.
 	}
 	
 	// Reset editor click tracking when cursor moves away from the last clicked issue
@@ -566,6 +590,10 @@ function navigateToNextIssue(view: EditorView): boolean {
 			],
 		});
 		view.focus();
+		// Notify summon handler that navigation occurred
+		if (summonHandler) {
+			void summonHandler(SummonEvent.NavigateNext, { view, issueId: nextIssue.id, pos: span.start });
+		}
 		return true;
 	}
 	
@@ -598,6 +626,10 @@ function navigateToPreviousIssue(view: EditorView): boolean {
 			],
 		});
 		view.focus();
+		// Notify summon handler that navigation occurred
+		if (summonHandler) {
+			void summonHandler(SummonEvent.NavigatePrevious, { view, issueId: prevIssue.id, pos: span.start });
+		}
 		return true;
 	}
 	
@@ -611,7 +643,11 @@ function handleTabOnIssue(view: EditorView): boolean {
 	
 	// If cursor is on an issue, trigger autocomplete
 	if (issue) {
-		startCompletion(view);
+		if (summonHandler) {
+			void summonHandler(SummonEvent.TabPressed, { view, issueId: issue.id, pos: cursorPos });
+		} else {
+			startCompletion(view);
+		}
 		return true;
 	}
 	
@@ -621,6 +657,20 @@ function handleTabOnIssue(view: EditorView): boolean {
 
 // Keymap for issue navigation and Tab trigger
 export const issueNavigationKeymap = keymap.of([
+	{
+		key: 'Ctrl-Space',
+		run: (view: EditorView) => {
+			const cursorPos = view.state.selection.main.head;
+			const issue = findIssueAtPos(view.state, cursorPos);
+			if (summonHandler) {
+				void summonHandler(SummonEvent.ExplicitAutocomplete, { view, issueId: issue?.id, pos: cursorPos });
+				return true;
+			}
+			// Fallback to default completion
+			startCompletion(view);
+			return true;
+		}
+	},
 	{
 		key: 'Tab',
 		run: handleTabOnIssue,
@@ -634,5 +684,28 @@ export const issueNavigationKeymap = keymap.of([
 		run: navigateToPreviousIssue,
 	},
 ]);
+
+// Helper: focus editor at a specific issue id (select & scroll)
+export function focusCMIssue(view: EditorView, issueId: string): boolean {
+	const issueState = view.state.field(issueField);
+	const issue = issueState.issues.find(i => i.id === issueId);
+	if (!issue) return false;
+
+	const span = issue.lint.span();
+	view.dispatch({
+		selection: { anchor: span.start },
+		effects: [
+			EditorView.scrollIntoView(span.start, { y: 'center' }),
+			setSelectedIssueEffect.of(issueId),
+		],
+	});
+	view.focus();
+	return true;
+}
+
+// Helper: show popup for issue by focusing selection (cursor tooltip is driven by selection)
+export function showPopupForIssue(view: EditorView, issueId: string): boolean {
+	return focusCMIssue(view, issueId);
+}
 
 export { issueTheme, darkEditorTheme };

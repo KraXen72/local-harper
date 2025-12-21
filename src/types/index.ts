@@ -1,16 +1,35 @@
 // Re-export Harper.js types directly
 import type {
 	Lint,
-	Span,
-	Suggestion,
 	LintConfig,
 	Linter,
 	LinterInit,
 	LintOptions,
+	Span,
+	Suggestion,
 } from 'harper.js';
 
-export type { Lint, Span, Suggestion, LintConfig, Linter, LinterInit, LintOptions };
 export { Dialect, SuggestionKind } from 'harper.js';
+export type { Lint, LintConfig, Linter, LinterInit, LintOptions, Span, Suggestion };
+
+// SummonEvent: centralized event names for tooltip/autocomplete invocation
+export enum SummonEvent {
+	CursorMoved = 'CursorMoved',
+	ClickedInEditor = 'ClickedInEditor',
+	SidebarClicked = 'SidebarClicked',
+	ExplicitAutocomplete = 'ExplicitAutocomplete',
+	TabPressed = 'TabPressed',
+	NavigateNext = 'NavigateNext',
+	NavigatePrevious = 'NavigatePrevious',
+	Programmatic = 'Programmatic',
+}
+
+export type SummonOptions = {
+	showPopup?: boolean;
+	showAutocomplete?: boolean;
+	focusEditor?: boolean;
+	explicit?: boolean; // treat as user-explicit (e.g., Ctrl+Space)
+};
 
 // Application-specific types
 

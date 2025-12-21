@@ -173,6 +173,7 @@ const App: Component = () => {
 		} catch (error) {
 			console.error('Failed to refresh config after import:', error);
 		}
+
 	};
 
 	return (

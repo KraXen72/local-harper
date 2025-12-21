@@ -1,24 +1,26 @@
-import { Component, onMount, onCleanup, createEffect } from 'solid-js';
-import { EditorView, keymap, highlightSpecialChars, drawSelection, dropCursor, rectangularSelection, crosshairCursor, placeholder } from '@codemirror/view';
-import { EditorState } from '@codemirror/state';
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
+import { EditorState } from '@codemirror/state';
 import type { ViewUpdate } from '@codemirror/view';
+import { crosshairCursor, drawSelection, dropCursor, EditorView, highlightSpecialChars, keymap, placeholder, rectangularSelection } from '@codemirror/view';
+import { Component, createEffect, onCleanup, onMount } from 'solid-js';
 import type { EditorProps } from '../types';
+import { SummonEvent } from '../types';
 import {
-	issueField,
-	issueDecorationsField,
-	issueTheme,
 	darkEditorTheme,
-	updateIssuesEffect,
-	setSelectedIssueEffect,
 	harperAutocompletion,
 	harperCursorTooltip,
-	setIssueActions,
+	issueClickAutocomplete,
+	setSummonHandler,
+	issueDecorationsField,
+	issueField,
 	issueNavigationKeymap,
 	issueSyncExtension,
-	issueClickAutocomplete,
-	triggerAutocompleteForIssue,
+	issueTheme,
+	setIssueActions,
+	setSelectedIssueEffect,
+	updateIssuesEffect,
 } from '../utils/editor-extensions';
+import { processSummonEvent } from '../utils/summon-events';
 
 const Editor: Component<EditorProps> = (props) => {
 	let editorRef!: HTMLDivElement;
@@ -77,10 +79,17 @@ const Editor: Component<EditorProps> = (props) => {
 			state: startState,
 			parent: editorRef,
 		});
+
+		// Register summon handler so editor-internal events can delegate to centralized processor
+		setSummonHandler((event: SummonEvent, ctx: { view?: EditorView; issueId?: string; pos?: number }) => {
+			return processSummonEvent(event, { view, issueId: ctx.issueId, pos: ctx.pos }).catch(console.error);
+		});
 	});
 
 	onCleanup(() => {
 		if (view) {
+			// Clear summon handler before destroying view
+			setSummonHandler(null);
 			view.destroy();
 		}
 	});
@@ -144,7 +153,7 @@ const Editor: Component<EditorProps> = (props) => {
 				view.focus();
 				
 				// Trigger autocomplete using the unified helper (will skip if only Ignore would be shown)
-				triggerAutocompleteForIssue(view, issue);
+					processSummonEvent(SummonEvent.SidebarClicked, { view, issueId: scrollTo }).catch(console.error);
 			}
 		}
 	});
@@ -157,10 +166,10 @@ const Editor: Component<EditorProps> = (props) => {
 	};
 
 	return (
-		<div class="h-full overflow-auto bg-[var(--flexoki-bg)]" onClick={handleContainerClick}>
+		<div class="h-full overflow-auto bg-(--flexoki-bg)" onClick={handleContainerClick}>
 			{/* Top margin: 20vh (1/5 of screen) */}
 			<div class="pt-12 px-4 pb-12 flex justify-center">
-				<div class="bg-[var(--flexoki-bg)] rounded-xl overflow-hidden shadow-2xl border border-[var(--flexoki-ui-2)] max-w-[84ch] w-full">
+				<div class="bg-(--flexoki-bg) rounded-xl overflow-hidden shadow-2xl border border-(--flexoki-ui-2) max-w-[84ch] w-full">
 					<div ref={editorRef} class="text-base" />
 				</div>
 			</div>
