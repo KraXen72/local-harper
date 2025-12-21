@@ -1,9 +1,7 @@
 import { StateField, StateEffect, type EditorState } from '@codemirror/state';
 import { Decoration, DecorationSet, EditorView, showTooltip, type Tooltip, keymap } from '@codemirror/view';
 import { autocompletion, closeCompletion, startCompletion, type CompletionContext, type CompletionResult, type Completion } from '@codemirror/autocomplete';
-import type { HarperIssue, Suggestion } from '../types';
-import { SummonEvent } from '../types';
-import { SuggestionKind } from '../types';
+import type { HarperIssue, Suggestion, SummonEvent, SuggestionKind } from '../types';
 import { render } from 'solid-js/web';
 import IssueTooltipWrapper from '../components/IssueTooltipWrapper';
 import { lintKindColor, lintKindBackgroundColor } from './lint-kind-colors';

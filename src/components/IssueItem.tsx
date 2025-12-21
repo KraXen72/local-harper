@@ -1,5 +1,5 @@
 import { Component } from 'solid-js';
-import type { IssueItemProps } from '../types';
+import type { IssueItemProps } from '..';
 import { FormattedMessage } from '../utils/message-formatter';
 import { lintKindColor } from '../utils/lint-kind-colors';
 

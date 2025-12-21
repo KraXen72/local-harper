@@ -1,94 +1,117 @@
-import { Component, For, Show, createEffect } from 'solid-js';
-import type { ParentComponent } from 'solid-js';
-import type { SidebarProps } from '../types';
-import IssueItem from './IssueItem';
+import { createSignal, For, Show } from 'solid-js';
+import { actions, store } from '../store';
+import { getLintColor, pascalToWords } from '../utils';
+import Toggle from './Toggle'; // Keeping Toggle as it's a generic UI element
 
+export default function Sidebar() {
+	const [activeTab, setActiveTab] = createSignal<'issues' | 'rules'>('issues');
 
-const Kbd: ParentComponent = (props) => (
-	<kbd class="px-2 py-1 bg-[var(--flexoki-ui)] border border-[var(--flexoki-ui-2)] rounded text-[10px] font-mono text-[var(--flexoki-tx-2)] shadow-sm">
-		{props.children}
-	</kbd>
-);
-
-const Sidebar: Component<SidebarProps> = (props) => {
-	// oxlint-disable-next-line no-unassigned-vars
-	let containerRef!: HTMLDivElement;
-	const issueRefs = new Map<string, HTMLDivElement>();
-
-	// Scroll to selected issue in sidebar
-	createEffect(() => {
-		const selectedId = props.selectedIssueId;
-		if (selectedId) {
-			const element = issueRefs.get(selectedId);
-			if (element) {
-				element.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-			}
-		}
-	});
+	// Helper to toggle rules in the store
+	const toggleRule = (key: string, currentVal: boolean) => {
+		actions.updateConfig(key as any, !currentVal);
+	};
 
 	return (
-		<div ref={containerRef} class="grid h-full border-l border-[var(--flexoki-ui-2)] bg-[var(--flexoki-bg)]/95 backdrop-blur-md shadow-2xl max-w-[400px]" style={{
-			"grid-template-rows": "min-content 1fr min-content",
-		}}>
-			<div class="flex items-center justify-between px-4 py-3 bg-[var(--flexoki-bg)]">
-				<div class="flex items-center gap-3">
-					<h2 class="text-base font-semibold text-[var(--flexoki-tx)] tracking-tight">Issues</h2>
-					<Show when={props.issues.length > 0}>
-						<span class="inline-flex items-center justify-center min-w-[2rem] h-6 px-2 rounded-md border border-[var(--flexoki-red)]/40 bg-[var(--flexoki-red)]/15 text-[var(--flexoki-red)] text-xs font-bold tracking-wide shadow-sm">
-							{props.issues.length}
-						</span>
-					</Show>
-				</div>
-			</div>
-			<div class="w-full h-full overflow-auto">
-				<Show
-					when={props.issues.length > 0}
-					fallback={
-						<div class="text-center py-12 px-4 mx-3">
-							<div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-[var(--flexoki-ui)]/50 mb-3">
-								<span class="text-2xl">✓</span>
-							</div>
-							<p class="text-sm text-[var(--flexoki-tx-2)] font-medium">No issues found</p>
-							<p class="text-xs text-[var(--flexoki-tx-3)] mt-1.5">Start typing to see suggestions</p>
-						</div>
-					}
+		<div class="flex flex-col h-full bg-[var(--flexoki-bg-2)] border-l border-[var(--flexoki-ui-2)]">
+			{/* --- Tabs --- */}
+			<div class="flex border-b border-[var(--flexoki-ui-2)]">
+				<button
+					onClick={() => setActiveTab('issues')}
+					class={`flex-1 p-3 text-sm font-medium transition-colors ${activeTab() === 'issues'
+							? 'bg-[var(--flexoki-bg)] text-[var(--flexoki-tx)] border-b-2 border-[var(--flexoki-cyan)]'
+							: 'text-[var(--flexoki-tx-2)] hover:bg-[var(--flexoki-ui-2)]'
+						}`}
 				>
-					<div class="space-y-1.5 mx-3 mb-3">
-						<For each={props.issues}>
+					Issues ({store.issues.length})
+				</button>
+				<button
+					onClick={() => setActiveTab('rules')}
+					class={`flex-1 p-3 text-sm font-medium transition-colors ${activeTab() === 'rules'
+							? 'bg-[var(--flexoki-bg)] text-[var(--flexoki-tx)] border-b-2 border-[var(--flexoki-cyan)]'
+							: 'text-[var(--flexoki-tx-2)] hover:bg-[var(--flexoki-ui-2)]'
+						}`}
+				>
+					Rules
+				</button>
+			</div>
+
+			{/* --- Content Area --- */}
+			<div class="flex-1 overflow-y-auto p-4">
+
+				{/* === ISSUES LIST (Inlined IssueItem) === */}
+				<Show when={activeTab() === 'issues'}>
+					<div class="flex flex-col gap-3">
+						<Show when={store.issues.length === 0}>
+							<div class="text-center text-[var(--flexoki-tx-3)] mt-10">
+								No issues found. Great job!
+							</div>
+						</Show>
+
+						<For each={store.issues}>
 							{(issue) => (
-								<div ref={(el) => issueRefs.set(issue.id, el)}>
-									<IssueItem
-										issue={issue}
-										isSelected={props.selectedIssueId === issue.id}
-										onSelect={props.onIssueSelect}
-										onApplySuggestion={(suggestion) => props.onApplySuggestion(issue.id, suggestion)}
-										onAddToDictionary={props.onAddToDictionary}
-									/>
+								<div
+									onClick={() => actions.setFocus(issue.id)}
+									class={`
+                    flex flex-col gap-1 p-3 rounded-md border cursor-pointer transition-all
+                    ${store.focusedIssueId === issue.id
+											? 'bg-[var(--flexoki-ui-2)] border-[var(--flexoki-cyan)] shadow-sm'
+											: 'bg-[var(--flexoki-bg)] border-[var(--flexoki-ui-2)] hover:border-[var(--flexoki-tx-3)]'
+										}
+                  `}
+								>
+									<div class="flex items-center justify-between">
+										<div class="flex items-center gap-2">
+											<div
+												class="w-2.5 h-2.5 rounded-full"
+												style={{ "background-color": getLintColor(issue.lint.kind) }}
+											/>
+											<span class="text-xs font-bold uppercase tracking-wide opacity-70">
+												{pascalToWords(issue.lint.kind)}
+											</span>
+										</div>
+									</div>
+									<p class="text-sm leading-snug opacity-90">
+										{issue.lint.message}
+									</p>
 								</div>
 							)}
 						</For>
 					</div>
 				</Show>
-			</div>
-			<Show when={props.issues.length > 0}>
-					<div class="py-3 border-t border-[var(--flexoki-ui-2)] sticky bottom-0 bg-[var(--flexoki-bg)] z-10">
-						<p class="text-xs text-[var(--flexoki-tx-3)] text-center leading-6">
-							<Kbd>Ctrl+J</Kbd>
-							&nbsp;&nbsp;/&nbsp;&nbsp;
-							<Kbd>Ctrl+K</Kbd>
-							&nbsp;to navigate
-							<br />
-							<Kbd>Ctrl+Space</Kbd>
-							&nbsp;&nbsp;/&nbsp;&nbsp;
-							<Kbd>Tab</Kbd>
-							&nbsp;&nbsp;/&nbsp;&nbsp;
-							<Kbd>Click</Kbd>
-							&nbsp;on issue to fix
+
+				{/* === RULES LIST (Inlined RuleCard) === */}
+				<Show when={activeTab() === 'rules'}>
+					<div class="flex flex-col gap-3">
+						<p class="text-xs text-[var(--flexoki-tx-2)] mb-2 uppercase font-bold tracking-wider">
+							Grammar Configuration
 						</p>
+						{/* 
+               We filter the config to show boolean flags that control rules.
+               You might want to maintain a specific list of keys to show 
+               if the config object contains other non-rule data.
+            */}
+						<For each={Object.entries(store.config)}>
+							{([key, value]) => (
+								<Show when={typeof value === 'boolean'}>
+									<div class="flex items-center justify-between p-3 rounded-md bg-[var(--flexoki-bg)] border border-[var(--flexoki-ui-2)]">
+										<div class="flex flex-col">
+											<span class="font-medium text-sm">{pascalToWords(key)}</span>
+											<span class="text-xs text-[var(--flexoki-tx-3)]">
+												{value ? 'Enabled' : 'Disabled'}
+											</span>
+										</div>
+										<Toggle
+											checked={value as boolean}
+											onChange={() => toggleRule(key, value as boolean)}
+										/>
+									</div>
+								</Show>
+							)}
+						</For>
 					</div>
 				</Show>
+
+			</div>
 		</div>
 	);
-};
-
-export default Sidebar;
+}

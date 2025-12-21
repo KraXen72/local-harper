@@ -1,180 +1,165 @@
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
-import { EditorState } from '@codemirror/state';
-import type { ViewUpdate } from '@codemirror/view';
-import { crosshairCursor, drawSelection, dropCursor, EditorView, highlightSpecialChars, keymap, placeholder, rectangularSelection } from '@codemirror/view';
-import { Component, createEffect, onCleanup, onMount } from 'solid-js';
-import type { EditorProps } from '../types';
-import { SummonEvent } from '../types';
-import {
-	darkEditorTheme,
-	harperAutocompletion,
-	harperCursorTooltip,
-	issueClickAutocomplete,
-	setSummonHandler,
-	issueDecorationsField,
-	issueField,
-	issueNavigationKeymap,
-	issueSyncExtension,
-	issueTheme,
-	setIssueActions,
-	setSelectedIssueEffect,
-	updateIssuesEffect,
-} from '../utils/editor-extensions';
-import { processSummonEvent } from '../utils/summon-events';
+import { EditorState, StateEffect, StateField } from '@codemirror/state';
+import { Decoration, DecorationSet, EditorView, ViewUpdate, keymap, showTooltip, Tooltip } from '@codemirror/view';
+import { createEffect, onCleanup, onMount } from 'solid-js';
+import { actions, store } from '../store';
+import { getLintColor } from '../utils';
 
-const Editor: Component<EditorProps> = (props) => {
-	let editorRef!: HTMLDivElement;
-	let view: EditorView | undefined;
+// Define the shape of our sanitized issue
+interface SafeIssue {
+  id: string;
+  lint: {
+    kind: string;       // Property, not function
+    message: string;    // Property
+    span: { start: number; end: number }; // Property
+    suggestions: any[];
+  };
+}
 
-	onMount(() => {
-		if (!editorRef) return;
+const setIssuesEffect = StateEffect.define<SafeIssue[]>();
 
-		// Set up issue actions for autocomplete
-		setIssueActions({
-			onApplySuggestion: (issueId, suggestion) => {
-				props.onApplySuggestion(issueId, suggestion);
-			},
-			onAddToDictionary: (word) => {
-				props.onAddToDictionary(word);
-			},
-			onIgnore: (issueId) => {
-				props.onIgnore(issueId);
-			},
-			onIssueSelect: (issueId) => {
-				props.onIssueSelect(issueId);
-			},
-		});
+interface IssueState {
+  issues: SafeIssue[];
+  decorations: DecorationSet;
+}
 
-		const startState = EditorState.create({
-			doc: props.content,
-			extensions: [
-				highlightSpecialChars(),
-				history(),
-				drawSelection(),
-				dropCursor(),
-				rectangularSelection(),
-				crosshairCursor(),
-				placeholder("Paste text or start typing..."),
-				EditorView.lineWrapping,
-				keymap.of([...defaultKeymap, ...historyKeymap]),
-				issueNavigationKeymap,
-				issueField,
-				issueDecorationsField,
-				issueTheme,
-				darkEditorTheme,
-				harperAutocompletion,
-				harperCursorTooltip,
-				issueSyncExtension,
-				issueClickAutocomplete,
-				EditorView.updateListener.of((update: ViewUpdate) => {
-					if (update.docChanged) {
-						const newContent = update.state.doc.toString();
-						props.onContentChange(newContent);
-					}
-				}),
-			],
-		});
+const issueField = StateField.define<IssueState>({
+  create: () => ({ issues: [], decorations: Decoration.none }),
+  update(value, tr) {
+    let { issues, decorations } = value;
+    decorations = decorations.map(tr.changes);
 
-		view = new EditorView({
-			state: startState,
-			parent: editorRef,
-		});
+    for (const effect of tr.effects) {
+      if (effect.is(setIssuesEffect)) {
+        issues = effect.value;
+        decorations = Decoration.set(
+          issues.map(issue => {
+            const span = issue.lint.span; // Property access
+            return Decoration.mark({
+              class: 'cm-lint-mark',
+              attributes: {
+                // Property access for kind
+                style: `text-decoration-color: ${getLintColor(issue.lint.kind)};` 
+              }
+            }).range(span.start, span.end);
+          }).sort((a, b) => a.from - b.from)
+        );
+      }
+    }
+    return { issues, decorations };
+  },
+  provide: f => EditorView.decorations.from(f, v => v.decorations)
+});
 
-		// Register summon handler so editor-internal events can delegate to centralized processor
-		setSummonHandler((event: SummonEvent, ctx: { view?: EditorView; issueId?: string; pos?: number }) => {
-			return processSummonEvent(event, { view, issueId: ctx.issueId, pos: ctx.pos }).catch(console.error);
-		});
-	});
+// --- Tooltip Extension ---
+const cursorTooltipBaseTheme = EditorView.baseTheme({
+  ".cm-tooltip.cm-cursor-tooltip": {
+    backgroundColor: "var(--flexoki-bg-2)",
+    border: "1px solid var(--flexoki-ui-2)",
+    padding: "8px",
+    borderRadius: "6px"
+  }
+});
 
-	onCleanup(() => {
-		if (view) {
-			// Clear summon handler before destroying view
-			setSummonHandler(null);
-			view.destroy();
-		}
-	});
+const cursorTooltipField = StateField.define<Tooltip | null>({
+  create: () => null,
+  update(tooltip, tr) {
+    const state = tr.state;
+    const pos = state.selection.main.head;
+    const { issues } = state.field(issueField);
+    
+    const activeIssue = issues.find(i => {
+      const s = i.lint.span;
+      return s.start <= pos && pos <= s.end;
+    });
 
-	// Track previous values to detect real changes
-	let prevIssues = props.issues;
-	let prevSelectedId = props.selectedIssueId;
+    if (!activeIssue) return null;
 
-	// Update editor content when prop changes
-	createEffect(() => {
-		if (view && view.state.doc.toString() !== props.content) {
-			view.dispatch({
-				changes: {
-					from: 0,
-					to: view.state.doc.length,
-					insert: props.content,
-				},
-			});
-		}
-	});
+    return {
+      pos,
+      above: true,
+      create: () => {
+        const dom = document.createElement("div");
+        dom.className = "cm-cursor-tooltip";
+        
+        const title = document.createElement("div");
+        title.style.fontWeight = "bold";
+        title.style.color = getLintColor(activeIssue.lint.kind);
+        title.textContent = activeIssue.lint.kind;
 
-	// Update issue decorations only when issues actually change
-	createEffect(() => {
-		const newIssues = props.issues;
-		if (view && newIssues !== prevIssues) {
-			prevIssues = newIssues;
-			view.dispatch({
-				effects: updateIssuesEffect.of(newIssues),
-			});
-		}
-	});
+        const msg = document.createElement("div");
+        msg.textContent = activeIssue.lint.message; 
 
-	// Update selected issue only when it actually changes
-	createEffect(() => {
-		const newSelectedId = props.selectedIssueId;
-		if (view && newSelectedId !== prevSelectedId) {
-			prevSelectedId = newSelectedId;
-			view.dispatch({
-				effects: setSelectedIssueEffect.of(newSelectedId),
-			});
-		}
-	});
+        dom.appendChild(title);
+        dom.appendChild(msg);
+        return { dom };
+      }
+    };
+  },
+  provide: f => showTooltip.from(f)
+});
 
-	// Scroll to issue and select it when requested from sidebar
-	createEffect(() => {
-		const scrollTo = props.scrollToIssue;
-		if (view && scrollTo) {
-			const issue = props.issues.find(i => i.id === scrollTo);
-			if (issue) {
-				const span = issue.lint.span();
-				
-				view.dispatch({
-					selection: { anchor: span.start },
-					effects: [
-						EditorView.scrollIntoView(span.start, { y: 'center' }),
-						setSelectedIssueEffect.of(scrollTo),
-					],
-				});
-				
-				// Focus the editor so user can immediately interact
-				view.focus();
-				
-				// Trigger autocomplete using the unified helper (will skip if only Ignore would be shown)
-					processSummonEvent(SummonEvent.SidebarClicked, { view, issueId: scrollTo }).catch(console.error);
-			}
-		}
-	});
+export default function Editor() {
+  let parent!: HTMLDivElement;
+  let view: EditorView;
 
-	const handleContainerClick = (e: MouseEvent) => {
-		// If clicking in the empty space (not on the editor), focus the editor
-		if (view && e.target !== editorRef && !(editorRef.contains(e.target as Node))) {
-			view.focus();
-		}
-	};
+  onMount(() => {
+    view = new EditorView({
+      parent,
+      state: EditorState.create({
+        doc: store.text,
+        extensions: [
+          history(),
+          keymap.of([...defaultKeymap, ...historyKeymap]),
+          EditorView.lineWrapping,
+          issueField,
+          cursorTooltipField,
+          cursorTooltipBaseTheme,
+          EditorView.updateListener.of((update: ViewUpdate) => {
+            if (update.docChanged) {
+              actions.setText(update.state.doc.toString());
+            }
+            if (update.selectionSet) {
+              const pos = update.state.selection.main.head;
+              const { issues } = update.state.field(issueField);
+              const issue = issues.find(i => {
+                const s = i.lint.span;
+                return s.start <= pos && pos <= s.end;
+              });
+              if (issue && issue.id !== store.focusedIssueId) {
+                actions.setFocus(issue.id);
+              } else if (!issue && store.focusedIssueId) {
+                actions.setFocus(null);
+              }
+            }
+          })
+        ]
+      })
+    });
 
-	return (
-		<div class="h-full overflow-auto bg-(--flexoki-bg)" onClick={handleContainerClick}>
-			{/* Top margin: 20vh (1/5 of screen) */}
-			<div class="pt-12 px-4 pb-12 flex justify-center">
-				<div class="bg-(--flexoki-bg) rounded-xl overflow-hidden shadow-2xl border border-(--flexoki-ui-2) max-w-[84ch] w-full">
-					<div ref={editorRef} class="text-base" />
-				</div>
-			</div>
-		</div>
-	);
-};
+    onCleanup(() => view.destroy());
+  });
 
-export default Editor;
+  createEffect(() => {
+    if (!view) return;
+    view.dispatch({ effects: setIssuesEffect.of(store.issues as SafeIssue[]) });
+  });
+
+  createEffect(() => {
+    const id = store.focusedIssueId;
+    if (!id || !view) return;
+
+    const { issues } = view.state.field(issueField);
+    const issue = issues.find(i => i.id === id);
+    if (issue) {
+      const span = issue.lint.span;
+      view.dispatch({
+        selection: { anchor: span.start },
+        effects: EditorView.scrollIntoView(span.start, { y: 'center' })
+      });
+      view.focus();
+    }
+  });
+
+  return <div ref={parent} class="h-full w-full overflow-hidden text-base" />;
+}

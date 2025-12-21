@@ -16,6 +16,9 @@ export default defineConfig({
   build: {
     target: 'esnext',
   },
+	worker: {
+		format: 'es'
+	},
   optimizeDeps: {
     exclude: ['harper.js'],
   },
