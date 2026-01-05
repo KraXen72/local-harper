@@ -5,7 +5,7 @@ import IssueItem from './IssueItem';
 
 
 const Kbd: ParentComponent = (props) => (
-	<kbd class="px-2 py-1 bg-[var(--flexoki-ui)] border border-[var(--flexoki-ui-2)] rounded text-[10px] font-mono text-[var(--flexoki-tx-2)] shadow-sm">
+	<kbd class="px-2 py-1 bg-(--flexoki-ui) border border-(--flexoki-ui-2) rounded text-[10px] font-mono text-(--flexoki-tx-2) shadow-sm">
 		{props.children}
 	</kbd>
 );
@@ -27,14 +27,14 @@ const Sidebar: Component<SidebarProps> = (props) => {
 	});
 
 	return (
-		<div ref={containerRef} class="grid h-full border-l border-[var(--flexoki-ui-2)] bg-[var(--flexoki-bg)]/95 backdrop-blur-md shadow-2xl max-w-[400px]" style={{
+		<div ref={containerRef} class="grid h-full border-l border-(--flexoki-ui-2) bg-(--flexoki-bg)/95 backdrop-blur-md max-w-100" style={{
 			"grid-template-rows": "min-content 1fr min-content",
 		}}>
-			<div class="flex items-center justify-between px-4 py-3 bg-[var(--flexoki-bg)]">
+			<div class="flex items-center justify-between px-4 py-3 bg-(--flexoki-bg)">
 				<div class="flex items-center gap-3">
-					<h2 class="text-base font-semibold text-[var(--flexoki-tx)] tracking-tight">Issues</h2>
+					<h2 class="text-base font-semibold text-(--flexoki-tx) tracking-tight">Issues</h2>
 					<Show when={props.issues.length > 0}>
-						<span class="inline-flex items-center justify-center min-w-[2rem] h-6 px-2 rounded-md border border-[var(--flexoki-red)]/40 bg-[var(--flexoki-red)]/15 text-[var(--flexoki-red)] text-xs font-bold tracking-wide shadow-sm">
+						<span class="inline-flex items-center justify-center min-w-8 h-6 px-2 rounded-md border border-(--flexoki-red)/40 bg-(--flexoki-red)/15 text-(--flexoki-red) text-xs font-bold tracking-wide shadow-sm">
 							{props.issues.length}
 						</span>
 					</Show>
@@ -45,11 +45,11 @@ const Sidebar: Component<SidebarProps> = (props) => {
 					when={props.issues.length > 0}
 					fallback={
 						<div class="text-center py-12 px-4 mx-3">
-							<div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-[var(--flexoki-ui)]/50 mb-3">
+							<div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-(--flexoki-ui)/50 mb-3">
 								<span class="text-2xl">✓</span>
 							</div>
-							<p class="text-sm text-[var(--flexoki-tx-2)] font-medium">No issues found</p>
-							<p class="text-xs text-[var(--flexoki-tx-3)] mt-1.5">Start typing to see suggestions</p>
+							<p class="text-sm text-(--flexoki-tx-2) font-medium">No issues found</p>
+							<p class="text-xs text-(--flexoki-tx-3) mt-1.5">Start typing to see suggestions</p>
 						</div>
 					}
 				>
@@ -71,8 +71,8 @@ const Sidebar: Component<SidebarProps> = (props) => {
 				</Show>
 			</div>
 			<Show when={props.issues.length > 0}>
-					<div class="py-3 border-t border-[var(--flexoki-ui-2)] sticky bottom-0 bg-[var(--flexoki-bg)] z-10">
-						<p class="text-xs text-[var(--flexoki-tx-3)] text-center leading-6">
+					<div class="py-3 border-t border-(--flexoki-ui-2) sticky bottom-0 bg-(--flexoki-bg) z-10">
+						<p class="text-xs text-(--flexoki-tx-3) text-center leading-6">
 							<Kbd>Ctrl+J</Kbd>
 							&nbsp;&nbsp;/&nbsp;&nbsp;
 							<Kbd>Ctrl+K</Kbd>
