@@ -1,167 +1,70 @@
-import { Component, onMount, onCleanup, createEffect } from 'solid-js';
-import { EditorView, keymap, highlightSpecialChars, drawSelection, dropCursor, rectangularSelection, crosshairCursor, placeholder } from '@codemirror/view';
-import { EditorState } from '@codemirror/state';
-import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
-import type { ViewUpdate } from '@codemirror/view';
+import { Component, createEffect, onMount, onCleanup } from 'solid-js';
+import { createTiptapEditor } from 'solid-tiptap';
+import StarterKit from '@tiptap/starter-kit';
 import type { EditorProps } from '../types';
-import {
-	issueField,
-	issueDecorationsField,
-	issueTheme,
-	darkEditorTheme,
-	updateIssuesEffect,
-	setSelectedIssueEffect,
-	harperAutocompletion,
-	harperCursorTooltip,
-	setIssueActions,
-	issueNavigationKeymap,
-	issueSyncExtension,
-	issueClickAutocomplete,
-	triggerAutocompleteForIssue,
-} from '../utils/editor-extensions';
+import { HarperDecoration } from '../extensions/harper-decoration';
+import { HarperSuggestion, HarperBubbleMenu } from '../extensions/harper-suggestion';
 
 const Editor: Component<EditorProps> = (props) => {
 	let editorRef!: HTMLDivElement;
-	let view: EditorView | undefined;
 
-	onMount(() => {
-		if (!editorRef) return;
+	const editor = createTiptapEditor(() => ({
+		extensions: [
+			StarterKit,
+			HarperDecoration,
+			HarperSuggestion,
+			HarperBubbleMenu,
+		],
+		content: `There are some cases where the the standard grammar
+checkers don't cut it. That;s where Harper comes in handy.
 
-		// Set up issue actions for autocomplete
-		setIssueActions({
-			onApplySuggestion: (issueId, suggestion) => {
-				props.onApplySuggestion(issueId, suggestion);
-			},
-			onAddToDictionary: (word) => {
-				props.onAddToDictionary(word);
-			},
-			onIgnore: (issueId) => {
-				props.onIgnore(issueId);
-			},
-			onIssueSelect: (issueId) => {
-				props.onIssueSelect(issueId);
-			},
-		});
+Harper is an language checker for developers. It can detect
+improper capitalization and misspellled words,
+as well as a number of other issues.
+Like if you break up words you shoul dn't.
+Harper can be an lifesaver when writing technical documents, 
+emails or other formal forms of communication.
 
-		const startState = EditorState.create({
-			doc: props.content,
-			extensions: [
-				highlightSpecialChars(),
-				history(),
-				drawSelection(),
-				dropCursor(),
-				rectangularSelection(),
-				crosshairCursor(),
-				placeholder("Paste text or start typing..."),
-				EditorView.lineWrapping,
-				keymap.of([...defaultKeymap, ...historyKeymap]),
-				issueNavigationKeymap,
-				issueField,
-				issueDecorationsField,
-				issueTheme,
-				darkEditorTheme,
-				harperAutocompletion,
-				harperCursorTooltip,
-				issueSyncExtension,
-				issueClickAutocomplete,
-				EditorView.updateListener.of((update: ViewUpdate) => {
-					if (update.docChanged) {
-						const newContent = update.state.doc.toString();
-						props.onContentChange(newContent);
-					}
-				}),
-			],
-		});
+Harper works everywhere, even when you're not online. Since your data
+never leaves your device, you don't ned too worry aout us
+selling it or using it to train large language models.
 
-		view = new EditorView({
-			state: startState,
-			parent: editorRef,
-		});
+The best part: Harper can give you feedback instantly.
+For most documents, Harper can serve up suggestions in
+under 10 ms, faster that Grammarly.
+
+The best part: Harper can give you feedback instantly,
+For most documents, Harper can serve up suggestions in
+under 10 ms, faster that Grammarly,
+The best part: Harper can give you feedback instantly,
+For most documents, Harper can serve up suggestions in
+under 10 ms, faster that Grammarly,
+The best part: Harper can give you feedback instantly,
+For most documents, Harper can serve up suggestions in
+under 10 ms, faster that Grammarly.`,
+		editable: true,
+		element: editorRef,
+	}));
+
+	createEffect(() => {
+		if (editor() && props.onEditorReady) {
+			props.onEditorReady(editor());
+		}
 	});
 
 	onCleanup(() => {
-		if (view) {
-			view.destroy();
+		const ed = editor();
+		if (ed) {
+			ed.destroy();
 		}
 	});
-
-	// Track previous values to detect real changes
-	let prevIssues = props.issues;
-	let prevSelectedId = props.selectedIssueId;
-
-	// Update editor content when prop changes
-	createEffect(() => {
-		if (view && view.state.doc.toString() !== props.content) {
-			view.dispatch({
-				changes: {
-					from: 0,
-					to: view.state.doc.length,
-					insert: props.content,
-				},
-			});
-		}
-	});
-
-	// Update issue decorations only when issues actually change
-	createEffect(() => {
-		const newIssues = props.issues;
-		if (view && newIssues !== prevIssues) {
-			prevIssues = newIssues;
-			view.dispatch({
-				effects: updateIssuesEffect.of(newIssues),
-			});
-		}
-	});
-
-	// Update selected issue only when it actually changes
-	createEffect(() => {
-		const newSelectedId = props.selectedIssueId;
-		if (view && newSelectedId !== prevSelectedId) {
-			prevSelectedId = newSelectedId;
-			view.dispatch({
-				effects: setSelectedIssueEffect.of(newSelectedId),
-			});
-		}
-	});
-
-	// Scroll to issue and select it when requested from sidebar
-	createEffect(() => {
-		const scrollTo = props.scrollToIssue;
-		if (view && scrollTo) {
-			const issue = props.issues.find(i => i.id === scrollTo);
-			if (issue) {
-				const span = issue.lint.span();
-				
-				view.dispatch({
-					selection: { anchor: span.start },
-					effects: [
-						EditorView.scrollIntoView(span.start, { y: 'center' }),
-						setSelectedIssueEffect.of(scrollTo),
-					],
-				});
-				
-				// Focus the editor so user can immediately interact
-				view.focus();
-				
-				// Trigger autocomplete using the unified helper (will skip if only Ignore would be shown)
-				triggerAutocompleteForIssue(view, issue);
-			}
-		}
-	});
-
-	const handleContainerClick = (e: MouseEvent) => {
-		// If clicking in the empty space (not on the editor), focus the editor
-		if (view && e.target !== editorRef && !(editorRef.contains(e.target as Node))) {
-			view.focus();
-		}
-	};
 
 	return (
-		<div class="h-full overflow-auto bg-[var(--flexoki-bg)]" onClick={handleContainerClick}>
+		<div class="h-full overflow-auto bg-[var(--flexoki-bg)]">
 			{/* Top margin: 20vh (1/5 of screen) */}
 			<div class="pt-12 px-4 pb-12 flex justify-center">
 				<div class="bg-[var(--flexoki-bg)] rounded-xl overflow-hidden shadow-2xl border border-[var(--flexoki-ui-2)] max-w-[84ch] w-full">
-					<div ref={editorRef} class="text-base" />
+					<div ref={editorRef} class="text-base" spellcheck="false" />
 				</div>
 			</div>
 		</div>

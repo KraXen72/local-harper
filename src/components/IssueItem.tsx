@@ -12,8 +12,8 @@ const IssueItem: Component<IssueItemProps> = (props) => {
 
 	return (
 		<div
-			class="shared-card cursor-pointer hover:translate-x-0.5"
-			classList={{ 'shared-card-selected translate-x-0.5': props.isSelected }}
+			class="shared-card cursor-pointer"
+			classList={{ 'shared-card-selected': props.isSelected }}
 			onClick={handleClick}
 			tabIndex={0}
 			onKeyDown={(e) => {

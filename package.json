@@ -7,7 +7,8 @@
     "start": "vite",
     "dev": "vite",
     "build": "vite build",
-    "serve": "vite preview"
+    "serve": "vite preview",
+	"lint": "tsc -noEmit -skipLibCheck"
   },
   "license": "MIT",
   "devDependencies": {
@@ -29,8 +30,16 @@
     "@codemirror/tooltip": "^0.19.16",
     "@codemirror/view": "^6.38.6",
     "@leeoniya/ufuzzy": "^1.0.19",
+    "@tiptap/core": "^3.14.0",
+    "@tiptap/extension-bubble-menu": "^3.14.0",
+    "@tiptap/extension-document": "^3.14.0",
+    "@tiptap/extension-paragraph": "^3.14.0",
+    "@tiptap/extension-text": "^3.14.0",
+    "@tiptap/pm": "^3.14.0",
+    "@tiptap/starter-kit": "^3.14.0",
     "harper.js": "^0.67.0",
     "solid-js": "^1.9.9",
+    "solid-tiptap": "^0.8.0",
     "valibot": "^1.1.0"
   }
 }

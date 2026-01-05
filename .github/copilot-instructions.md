@@ -27,6 +27,8 @@ applyTo: "**"
 
 ## tool use
 - use the current package manager tool, e.g. pnpm instead of the default (npm) if applicable.
+- use `pnpm lint` to check for typescript errors you should fix
+  - I will run the dev-serer. assume it's running. you do not need to `pnpm build` or `pnpm dev` after every change. simply use `pnpm lint` and if that has no errors, assume the dev-server re-built it for me for testing. i'll tell you if there are issues.
 
 ## typescript
 - always strive to use typescript's full potential, i.e. generics, utility types, etc. and available global/importable types to type everything properly. You MUST NEVER use the any type. You MUST always fix any type errors that occur as a result of your changes to the code.

@@ -1,20 +1,22 @@
 import { Component, createSignal, onMount, createEffect, batch, Show } from 'solid-js';
+import { useEditorJSON } from 'solid-tiptap';
+import StarterKit from '@tiptap/starter-kit';
 import TopBar from './components/TopBar';
 import Editor from './components/Editor';
 import Sidebar from './components/Sidebar';
 import RuleManager from './components/RuleManager';
 import { initHarper, analyzeText, transformLints, getLinter, addWordToDictionary, updateSingleRule, getLintConfig } from './services/harper-service';
+import { HarperDecoration } from './extensions/harper-decoration';
+import { HarperSuggestion, HarperBubbleMenu } from './extensions/harper-suggestion';
 import type { HarperIssue, Suggestion, LintConfig } from './types';
 
 const App: Component = () => {
-	const [content, setContent] = createSignal('');
 	const [issues, setIssues] = createSignal<HarperIssue[]>([]);
-	const [selectedIssueId, setSelectedIssueId] = createSignal<string | null>(null);
 	const [isInitialized, setIsInitialized] = createSignal(false);
-	const [scrollToIssue, setScrollToIssue] = createSignal<string | null>(null);
 	const [isAnalyzing, setIsAnalyzing] = createSignal(false);
 	const [isRuleManagerOpen, setIsRuleManagerOpen] = createSignal(false);
 	const [currentLintConfig, setCurrentLintConfig] = createSignal<LintConfig | null>(null);
+	const [editor, setEditor] = createSignal<any>(null);
 
 	// Debounce state - not reactive, just regular variables
 	let debounceTimeout: number | undefined;
@@ -22,9 +24,6 @@ const App: Component = () => {
 
 	// Set to store ignored issue IDs (persists until page refresh)
 	const ignoredIssues = new Set<string>();
-
-	// Track the last clicked issue from sidebar to avoid re-triggering autocomplete
-	let lastClickedIssueFromSidebar: string | null = null;
 
 	// Initialize Harper.js on mount
 	onMount(async () => {
@@ -67,6 +66,12 @@ const App: Component = () => {
 					// Filter out ignored issues
 					const filteredIssues = harperIssues.filter(issue => !ignoredIssues.has(issue.id));
 					setIssues(filteredIssues);
+
+					// Update Tiptap storage
+					const ed = editor();
+					if (ed) {
+						ed.commands.setHarperIssues(filteredIssues);
+					}
 				}
 			} catch (error) {
 				if (currentGeneration === analysisGeneration) {
@@ -81,20 +86,14 @@ const App: Component = () => {
 	};
 
 	// Watch content changes and trigger analysis
+	const json = useEditorJSON(() => editor());
 	createEffect(() => {
-		const text = content();
-		if (isInitialized()) {
+		const currentJson = json();
+		if (currentJson && isInitialized()) {
+			const text = editor()?.getText() || '';
 			scheduleAnalysis(text);
 		}
 	});
-
-	const handleCopy = async () => {
-		try {
-			await navigator.clipboard.writeText(content());
-		} catch (error) {
-			console.error('Failed to copy:', error);
-		}
-	};
 
 	const handleApplySuggestion = async (issueId: string, suggestion: Suggestion) => {
 		const issue = issues().find(i => i.id === issueId);
@@ -102,18 +101,20 @@ const App: Component = () => {
 
 		try {
 			const linter = getLinter();
-			const newText = await linter.applySuggestion(content(), issue.lint, suggestion);
+			const ed = editor();
+			if (!ed) return;
 
-			// Immediately analyze the new text
-			const lints = await analyzeText(newText);
-			const harperIssues = transformLints(lints);
+			const oldText = ed.getText();
+			const newText = await linter.applySuggestion(oldText, issue.lint, suggestion);
 
-			// Batch both updates together so they happen atomically
-			batch(() => {
-				setSelectedIssueId(null);
-				setContent(newText);
-				setIssues(harperIssues);
-			});
+			// Apply the change via Tiptap
+			const span = issue.lint.span();
+			ed.chain()
+				.setTextSelection({ from: span.start, to: span.end })
+				.insertContent(newText.slice(span.start, span.end - span.start))
+				.run();
+
+			// Re-analyze will happen automatically via content change effect
 		} catch (error) {
 			console.error('Failed to apply suggestion:', error);
 		}
@@ -122,11 +123,7 @@ const App: Component = () => {
 	const handleAddToDictionary = async (word: string) => {
 		try {
 			await addWordToDictionary(word);
-			// Re-analyze to update issues
-			const lints = await analyzeText(content());
-			const harperIssues = transformLints(lints);
-			const filteredIssues = harperIssues.filter(issue => !ignoredIssues.has(issue.id));
-			setIssues(filteredIssues);
+			// Re-analyze will happen automatically via content change effect
 		} catch (error) {
 			console.error('Failed to add word to dictionary:', error);
 		}
@@ -136,8 +133,14 @@ const App: Component = () => {
 		// Add to ignored set
 		ignoredIssues.add(issueId);
 		// Remove from current issues
-		setIssues(issues().filter(i => i.id !== issueId));
-		setSelectedIssueId(null);
+		const updatedIssues = issues().filter(i => i.id !== issueId);
+		setIssues(updatedIssues);
+
+		// Update Tiptap storage
+		const ed = editor();
+		if (ed) {
+			ed.commands.setHarperIssues(updatedIssues);
+		}
 	};
 
 	const toggleRuleManager = () => {
@@ -151,7 +154,8 @@ const App: Component = () => {
 			const newConfig = await getLintConfig();
 			setCurrentLintConfig(newConfig);
 			// Re-analyze current text
-			const lints = await analyzeText(content());
+			const text = editor()?.getText() || '';
+			const lints = await analyzeText(text);
 			const harperIssues = transformLints(lints);
 			const filteredIssues = harperIssues.filter(issue => !ignoredIssues.has(issue.id));
 			setIssues(filteredIssues);
@@ -166,7 +170,8 @@ const App: Component = () => {
 			const newConfig = await getLintConfig();
 			setCurrentLintConfig(newConfig);
 			// Re-analyze current text with new config
-			const lints = await analyzeText(content());
+			const text = editor()?.getText() || '';
+			const lints = await analyzeText(text);
 			const harperIssues = transformLints(lints);
 			const filteredIssues = harperIssues.filter(issue => !ignoredIssues.has(issue.id));
 			setIssues(filteredIssues);
@@ -177,12 +182,14 @@ const App: Component = () => {
 
 	return (
 		<div class="h-screen flex flex-col bg-[var(--flexoki-bg)]">
-			<TopBar 
-				onCopy={handleCopy} 
-				isAnalyzing={isAnalyzing()} 
-				isRuleManagerOpen={isRuleManagerOpen()}
-				onToggleRuleManager={toggleRuleManager}
-			/>
+			<Show when={editor()}>
+				<TopBar 
+					editor={editor()!}
+					isAnalyzing={isAnalyzing()} 
+					isRuleManagerOpen={isRuleManagerOpen()}
+					onToggleRuleManager={toggleRuleManager}
+				/>
+			</Show>
 
 			<Show when={isInitialized()} fallback={<LoadingFallback />}>
 				<div 
@@ -197,47 +204,18 @@ const App: Component = () => {
 							'hidden-on-mobile': isRuleManagerOpen()
 						}}
 					>
-						<Sidebar
-							issues={issues()}
-							selectedIssueId={selectedIssueId()}
-							onIssueSelect={(issueId) => {
-								// Only trigger scroll/autocomplete if it's a different issue than last clicked
-								const shouldTrigger = issueId !== lastClickedIssueFromSidebar;
-								lastClickedIssueFromSidebar = issueId;
-								
-								setSelectedIssueId(issueId);
-								
-								if (shouldTrigger) {
-									setScrollToIssue(issueId);
-									// Reset scroll trigger after a short delay
-									setTimeout(() => setScrollToIssue(null), 100);
-								}
-							}}
-							onApplySuggestion={handleApplySuggestion}
-							onAddToDictionary={handleAddToDictionary}
-						/>
+						<Show when={editor()}>
+							<Sidebar
+								editor={editor()!}
+								onApplySuggestion={handleApplySuggestion}
+								onAddToDictionary={handleAddToDictionary}
+							/>
+						</Show>
 					</div>
 					
 					{/* Editor - centered area */}
-					<div class="overflow-hidden editor-wrapper">
-						<Editor
-							content={content()}
-							onContentChange={setContent}
-							issues={issues()}
-							selectedIssueId={selectedIssueId()}
-							onIssueSelect={(issueId) => {
-								// When selecting an issue from editor (cursor movement), clear the last clicked sidebar issue
-								// This allows clicking the same issue again from sidebar to trigger autocomplete
-								if (issueId !== lastClickedIssueFromSidebar) {
-									lastClickedIssueFromSidebar = null;
-								}
-								setSelectedIssueId(issueId);
-							}}
-							onApplySuggestion={handleApplySuggestion}
-							onAddToDictionary={handleAddToDictionary}
-							onIgnore={handleIgnore}
-							scrollToIssue={scrollToIssue()}
-						/>
+					<div class="editor-wrapper">
+						<Editor onEditorReady={setEditor} />
 					</div>
 
 					{/* Right - Rule manager/nothing */}

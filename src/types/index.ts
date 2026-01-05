@@ -38,28 +38,18 @@ export interface EditorPosition {
 // Component Props Types
 
 export interface EditorProps {
-	content: string;
-	onContentChange: (content: string) => void;
-	issues: HarperIssue[];
-	selectedIssueId: string | null;
-	onIssueSelect: (issueId: string | null) => void;
-	onApplySuggestion: (issueId: string, suggestion: Suggestion) => void;
-	onAddToDictionary: (word: string) => void;
-	onIgnore: (issueId: string) => void;
-	scrollToIssue?: string | null; // Issue ID to scroll to and show context menu
+	onEditorReady?: (editor: any) => void; // Callback when editor is ready
 }
 
 export interface TopBarProps {
-	onCopy: () => void;
+	editor: any; // Tiptap Editor instance
 	isAnalyzing: boolean;
 	isRuleManagerOpen: boolean;
 	onToggleRuleManager: () => void;
 }
 
 export interface SidebarProps {
-	issues: HarperIssue[];
-	selectedIssueId: string | null;
-	onIssueSelect: (issueId: string) => void;
+	editor: any; // Tiptap Editor instance
 	onApplySuggestion: (issueId: string, suggestion: Suggestion) => void;
 	onAddToDictionary: (word: string) => void;
 }
