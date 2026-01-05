@@ -534,8 +534,7 @@ const darkEditorTheme = EditorView.theme({
 		backgroundColor: 'rgba(40, 39, 38, 0.5)', // flexoki-ui with transparency
 	},
 	'.cm-scroller': {
-		fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
-		lineHeight: '1.6',
+		lineHeight: '1.5',
 	},
 }, { dark: true });
 
@@ -566,6 +565,8 @@ function navigateToNextIssue(view: EditorView): boolean {
 			],
 		});
 		view.focus();
+		// Trigger autocomplete for the navigated-to issue
+		triggerAutocompleteForIssue(view, nextIssue);
 		return true;
 	}
 	
@@ -598,6 +599,8 @@ function navigateToPreviousIssue(view: EditorView): boolean {
 			],
 		});
 		view.focus();
+		// Trigger autocomplete for the navigated-to issue
+		triggerAutocompleteForIssue(view, prevIssue);
 		return true;
 	}
 	

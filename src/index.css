@@ -1,4 +1,5 @@
 @import 'tailwindcss';
+@import '@fontsource-variable/inter';
 
 @plugin "@iconify/tailwind4" {
 	prefixes: lucide;
@@ -91,8 +92,27 @@ body {
 .cm-tooltip {
 	border-radius: var(--br-small);
 }
+.cm-tooltip-autocomplete {
+	font-size: 1rem;
+}
 .cm-tooltip-arrow {
 	display: none;
+}
+.editor-wrapper {
+	width: 100%;
+}
+.editor-wrapper .cm-editor {
+	width: 100%;
+	/* max-width: 867px; */
+	box-sizing: border-box;
+	padding: 15px;
+}
+.editor-wrapper .cm-editor .cm-content {
+	box-sizing: border-box;
+	font-family: 'Inter Variable', sans-serif;
+	font-size: 16px;
+	font-weight: 445;
+	line-height: 1.5;
 }
 
 .shared-card {
@@ -151,7 +171,7 @@ body {
 
 /* App Layout - Responsive Grid */
 .app-layout {
-	grid-template-columns: minmax(300px, 1fr) minmax(72ch, 2fr) minmax(0, 1fr);
+	grid-template-columns: minmax(300px, 1fr) minmax(84ch, 2fr) minmax(0, 1fr);
 	grid-template-areas: "issues editor rulemanager";
 	max-height: calc(100vh - 3.5rem);
 }
@@ -189,10 +209,10 @@ body {
 /* Even smaller screens - always single sidebar */
 @media (max-width: 900px) {
 	.app-layout {
-		grid-template-columns: minmax(250px, 1fr) 1fr 0;
+		grid-template-columns: minmax(150px, 1fr) 2fr 0;
 	}
 	
 	.app-layout.rule-manager-open {
-		grid-template-columns: 0 1fr minmax(250px, 1fr);
+		grid-template-columns: 0 2fr minmax(150px, 1fr);
 	}
 }

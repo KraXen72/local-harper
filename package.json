@@ -11,26 +11,27 @@
   },
   "license": "MIT",
   "devDependencies": {
-    "@iconify-json/lucide": "^1.2.69",
-    "@iconify/tailwind4": "^1.0.6",
-    "@tailwindcss/vite": "^4.1.13",
-    "solid-devtools": "^0.34.3",
-    "tailwindcss": "^4.1.13",
-    "typescript": "^5.9.2",
-    "vite": "^7.1.4",
-    "vite-plugin-solid": "^2.11.8"
+    "@iconify-json/lucide": "^1.2.82",
+    "@iconify/tailwind4": "^1.2.0",
+    "@tailwindcss/vite": "^4.1.18",
+    "solid-devtools": "^0.34.4",
+    "tailwindcss": "^4.1.18",
+    "typescript": "^5.9.3",
+    "vite": "^7.3.0",
+    "vite-plugin-solid": "^2.11.10"
   },
   "dependencies": {
-    "@codemirror/autocomplete": "^6.19.0",
-    "@codemirror/commands": "^6.9.0",
-    "@codemirror/language": "^6.11.3",
-    "@codemirror/lint": "^6.9.0",
-    "@codemirror/state": "^6.5.2",
+    "@codemirror/autocomplete": "^6.20.0",
+    "@codemirror/commands": "^6.10.1",
+    "@codemirror/language": "^6.12.1",
+    "@codemirror/lint": "^6.9.2",
+    "@codemirror/state": "^6.5.3",
     "@codemirror/tooltip": "^0.19.16",
-    "@codemirror/view": "^6.38.6",
+    "@codemirror/view": "^6.39.8",
+    "@fontsource-variable/inter": "^5.2.8",
     "@leeoniya/ufuzzy": "^1.0.19",
-    "harper.js": "^0.67.0",
-    "solid-js": "^1.9.9",
-    "valibot": "^1.1.0"
+    "harper.js": "^1.2.0",
+    "solid-js": "^1.9.10",
+    "valibot": "^1.2.0"
   }
 }
