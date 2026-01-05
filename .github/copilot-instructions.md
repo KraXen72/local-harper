@@ -17,6 +17,9 @@ applyTo: "**"
 - NEVER create DOM elements manually (createElement, appendChild, etc.). ALWAYS create a proper .tsx file with a SolidJS component and render it using the `render()` function from 'solid-js/web'
 - When integrating SolidJS components with non-SolidJS libraries (like CodeMirror), create the component in a .tsx file and use `render()` to mount it
 - Use Iconify icons with Tailwind CSS classes instead of raw SVG elements. Example: `<span class="iconify lucide--settings w-4 h-4" />`. Note the double dash separator between icon set and icon name.
+- use the new tailwind v4 syntax for using custom css properties: 
+  - e.g.`bg-(--flexoki-cyan)` instead of `bg-[var(--flexoki-cyan)]`
+  - e.g. `focus:ring-offset-(--flexoki-bg-2)` instead of `focus:ring-offset-[var(--flexoki-bg-2)]`
 
 ## programming style
 - do not overcomplicate stuff. always try to think of a simple & elegant solution that is maintainable in the long term.
