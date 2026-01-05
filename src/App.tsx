@@ -11,6 +11,8 @@ const App: Component = () => {
 	const [issues, setIssues] = createSignal<HarperIssue[]>([]);
 	const [selectedIssueId, setSelectedIssueId] = createSignal<string | null>(null);
 	const [isInitialized, setIsInitialized] = createSignal(false);
+	const [isInitializing, setIsInitializing] = createSignal(false);
+
 	const [scrollToIssue, setScrollToIssue] = createSignal<string | null>(null);
 	const [isAnalyzing, setIsAnalyzing] = createSignal(false);
 	const [isRuleManagerOpen, setIsRuleManagerOpen] = createSignal(false);
@@ -26,8 +28,9 @@ const App: Component = () => {
 	// Track the last clicked issue from sidebar to avoid re-triggering autocomplete
 	let lastClickedIssueFromSidebar: string | null = null;
 
-	// Initialize Harper.js on mount
+	// Initialize Harper.js on mount (non-blocking UI)
 	onMount(async () => {
+		setIsInitializing(true);
 		try {
 			await initHarper();
 			const config = await getLintConfig();
@@ -35,6 +38,8 @@ const App: Component = () => {
 			setIsInitialized(true);
 		} catch (error) {
 			console.error('Failed to initialize Harper:', error);
+		} finally {
+			setIsInitializing(false);
 		}
 	});
 
@@ -176,15 +181,15 @@ const App: Component = () => {
 	};
 
 	return (
-		<div class="h-screen flex flex-col bg-[var(--flexoki-bg)]">
+		<div class="h-screen flex flex-col bg-(--flexoki-bg)">
 			<TopBar 
 				onCopy={handleCopy} 
 				isAnalyzing={isAnalyzing()} 
 				isRuleManagerOpen={isRuleManagerOpen()}
 				onToggleRuleManager={toggleRuleManager}
+				isInitializing={isInitializing()}
 			/>
 
-			<Show when={isInitialized()} fallback={<LoadingFallback />}>
 				<div 
 					class="flex-1 grid overflow-hidden app-layout"
 					classList={{
@@ -258,20 +263,9 @@ const App: Component = () => {
 						</Show>
 					</div>
 				</div>
-			</Show>
+			
 		</div>
 	);
 };
-
-function LoadingFallback() {
-	return (
-		<div class="flex-1 flex items-center justify-center bg-[var(--flexoki-bg)]">
-			<div class="text-center">
-				<div class="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[var(--flexoki-cyan)] border-r-transparent mb-4" />
-				<p class="text-[var(--flexoki-tx-2)]">Initializing Harper.js...</p>
-			</div>
-		</div>
-	);
-}
 
 export default App;
