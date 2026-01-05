@@ -54,6 +54,7 @@ export interface TopBarProps {
 	isAnalyzing: boolean;
 	isRuleManagerOpen: boolean;
 	onToggleRuleManager: () => void;
+	isInitializing?: boolean;
 }
 
 export interface SidebarProps {

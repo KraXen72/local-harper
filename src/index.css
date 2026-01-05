@@ -5,6 +5,44 @@
 	prefixes: lucide;
 }
 
+/* Matter-style linear progress (used in TopBar) */
+/* credit: https://github.com/finnhvman/matter */
+@keyframes matter-progress-linear {
+	0% {
+		background-position: 32% 0, 32% 0, 50% 0;
+	}
+	2% {
+		background-position: 32% 0, 32% 0, 50% 0;
+	}
+	21% {
+		background-position: 32% 0, -18% 0, 0 0;
+	}
+	42% {
+		background-position: 32% 0, -68% 0, -27% 0;
+	}
+	50% {
+		background-position: 32% 0, -93% 0, -46% 0;
+	}
+	56% {
+		background-position: 32% 0, -118% 0, -68% 0;
+	}
+	66% {
+		background-position: -11% 0, -200% 0, -100% 0;
+	}
+	71% {
+		background-position: -32% 0, -200% 0, -100% 0;
+	}
+	79% {
+		background-position: -54% 0, -242% 0, -100% 0;
+	}
+	86% {
+		background-position: -68% 0, -268% 0, -100% 0;
+	}
+	100% {
+		background-position: -100% 0, -300% 0, -100% 0;
+	}
+}
+
 :root {
 	/* Flexoki color scheme */
 	--flexoki-bg: #100F0F;
@@ -25,6 +63,7 @@
 	--flexoki-purple: #8B7EC8;
 	--flexoki-magenta: #CE5D97;
 
+	--flexoki-cyan-a: rgba(58, 169, 160, 0.12);
 	--text-selection-background-color: #3aa99f4c;
 	--br-mini: 3px;
 	--br-small: 5px;
@@ -56,6 +95,49 @@
 	--lint-kind-usage: 30 144 255; /* Dodger blue */
 	--lint-kind-word-choice: 34 139 34; /* Forest green */
 }
+
+/* credit: https://github.com/finnhvman/matter */
+.matter-progress-linear {
+	-webkit-appearance: none;
+	-moz-appearance: none;
+	appearance: none;
+	border: none;
+	width: 100%;
+	height: 4px;
+	vertical-align: middle;
+	color: var(--flexoki-cyan);
+	background-color: var(--flexoki-cyan-a);
+}
+.matter-progress-linear {
+	color: var(--flexoki-cyan);
+}
+.matter-progress-linear::-webkit-progress-bar {
+	background-color: var(--flexoki-cyan-a);
+}
+
+.matter-progress-linear:indeterminate {
+	background-size: 200% 100%;
+	background-image: linear-gradient(to right, currentColor 16%, transparent 16%),
+		linear-gradient(to right, currentColor 16%, transparent 16%),
+		linear-gradient(to right, currentColor 25%, transparent 25%);
+	animation: matter-progress-linear 1.8s infinite linear;
+}
+/* vendor-specific fallbacks */
+.matter-progress-linear::-webkit-progress-value {
+	background-size: 200% 100%;
+	background-image: linear-gradient(to right, currentColor 16%, transparent 16%),
+		linear-gradient(to right, currentColor 16%, transparent 16%),
+		linear-gradient(to right, currentColor 25%, transparent 25%);
+	animation: matter-progress-linear 1.8s infinite linear;
+}
+.matter-progress-linear::-moz-progress-bar {
+	background-size: 200% 100%;
+	background-image: linear-gradient(to right, currentColor 16%, transparent 16%),
+		linear-gradient(to right, currentColor 16%, transparent 16%),
+		linear-gradient(to right, currentColor 25%, transparent 25%);
+	animation: matter-progress-linear 1.8s infinite linear;
+}
+
 
 /* Dark mode with Flexoki colors */
 body {
