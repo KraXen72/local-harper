@@ -12,6 +12,7 @@ The main idea is that it uses Codemirror as the editor framework, since it's pre
 - initial dictionary support (localStorage)
 - sleek UI built with solid-js and tailwindcss@4
 - rule manager
+- word counter (words, characters, sentences, paragraphs)
 - planned: dictionary manager
 
 ## installation & try it out

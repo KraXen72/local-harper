@@ -1,4 +1,5 @@
-import { Component, onMount, onCleanup, createEffect } from 'solid-js';
+import { Component, onMount, onCleanup, createEffect, createSignal } from 'solid-js';
+import WordCounter from './WordCounter';
 import { EditorView, keymap, highlightSpecialChars, drawSelection, dropCursor, rectangularSelection, crosshairCursor, placeholder } from '@codemirror/view';
 import { EditorState } from '@codemirror/state';
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
@@ -23,6 +24,8 @@ import {
 const Editor: Component<EditorProps> = (props) => {
 	let editorRef!: HTMLDivElement;
 	let view: EditorView | undefined;
+
+	const [counterText, setCounterText] = createSignal(props.content);
 
 	onMount(() => {
 		if (!editorRef) return;
@@ -69,6 +72,17 @@ const Editor: Component<EditorProps> = (props) => {
 						const newContent = update.state.doc.toString();
 						props.onContentChange(newContent);
 					}
+
+					// Update word counter based on selection or whole document
+					if (update.selectionSet) {
+						const sel = update.state.selection.main;
+						if (!sel.empty) {
+							const selectedText = update.state.sliceDoc(sel.from, sel.to);
+							setCounterText(selectedText);
+						} else {
+							setCounterText(update.state.doc.toString());
+						}
+					}
 				}),
 			],
 		});
@@ -77,6 +91,9 @@ const Editor: Component<EditorProps> = (props) => {
 			state: startState,
 			parent: editorRef,
 		});
+
+		// ensure initial counter state reflects the full document
+		setCounterText(props.content);
 	});
 
 	onCleanup(() => {
@@ -162,6 +179,14 @@ const Editor: Component<EditorProps> = (props) => {
 				<div 
 					class="bg-(--flexoki-bg) rounded-xl overflow-hidden shadow-2xl border border-(--flexoki-ui-2) w-full max-w-216.75" 
 					ref={editorRef}>
+				</div>
+			</div>
+
+			{/* Sticky word counter at bottom of the scrolling container */}
+			<div class="sticky bottom-0 left-0 right-0 px-4">
+				<div class="w-full max-w-216.75 mx-auto bg-(--flexoki-bg)">
+					<hr class="border-(--flexoki-ui-2) my-2" />
+					<WordCounter text={counterText()} />
 				</div>
 			</div>
 		</div>

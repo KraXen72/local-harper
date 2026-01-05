@@ -32,6 +32,7 @@
     "@leeoniya/ufuzzy": "^1.0.19",
     "harper.js": "^1.2.0",
     "solid-js": "^1.9.10",
-    "valibot": "^1.2.0"
+    "valibot": "^1.2.0",
+    "@twocaretcat/tally-ts": "^1.0.0"
   }
 }

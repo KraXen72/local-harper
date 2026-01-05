@@ -35,6 +35,9 @@ importers:
       '@leeoniya/ufuzzy':
         specifier: ^1.0.19
         version: 1.0.19
+      '@twocaretcat/tally-ts':
+        specifier: ^1.0.0
+        version: 1.0.0
       harper.js:
         specifier: ^1.2.0
         version: 1.2.0
@@ -673,6 +676,9 @@ packages:
     resolution: {integrity: sha512-jVA+/UpKL1vRLg6Hkao5jldawNmRo7mQYrZtNHMIVpLfLhDml5nMRUo/8MwoX2vNXvnaXNNMedrMfMugAVX1nA==}
     peerDependencies:
       vite: ^5.2.0 || ^6 || ^7
+
+  '@twocaretcat/tally-ts@1.0.0':
+    resolution: {integrity: sha512-tZiccpEJPmp6IBwycjAfQVoYPuN2Aic0NJ7frGjMXrfGHXmtu2D4QS7AjxBswLCHZYWwJ021byZ1KEU6y3sI1A==}
 
   '@types/babel__core@7.20.5':
     resolution: {integrity: sha512-qoQprZvz5wQFJwMDqeseRXWv3rqMvhgpbXFfVyWhbx9X47POIA6i/+dXefEmZKoAgOaTdaIgNSMqMIU61yRyzA==}
@@ -1701,6 +1707,8 @@ snapshots:
       '@tailwindcss/oxide': 4.1.18
       tailwindcss: 4.1.18
       vite: 7.3.0(jiti@2.6.1)(lightningcss@1.30.2)(yaml@2.6.1)
+
+  '@twocaretcat/tally-ts@1.0.0': {}
 
   '@types/babel__core@7.20.5':
     dependencies:
