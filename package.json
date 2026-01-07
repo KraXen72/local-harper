@@ -28,11 +28,13 @@
     "@codemirror/state": "^6.5.3",
     "@codemirror/tooltip": "^0.19.16",
     "@codemirror/view": "^6.39.8",
+    "@doeixd/create-virtualized-list-solid": "^1.4.0",
     "@fontsource-variable/inter": "^5.2.8",
+    "@github/mini-throttle": "^2.1.1",
     "@leeoniya/ufuzzy": "^1.0.19",
+    "@twocaretcat/tally-ts": "^1.0.0",
     "harper.js": "^1.2.0",
     "solid-js": "^1.9.10",
-    "valibot": "^1.2.0",
-    "@twocaretcat/tally-ts": "^1.0.0"
+    "valibot": "^1.2.0"
   }
 }

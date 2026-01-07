@@ -5,6 +5,10 @@ import Sidebar from './components/Sidebar';
 import RuleManager from './components/RuleManager';
 import { initHarper, analyzeText, transformLints, getLinter, addWordToDictionary, updateSingleRule, getLintConfig } from './services/harper-service';
 import type { HarperIssue, Suggestion, LintConfig } from './types';
+import { throttle } from '@github/mini-throttle';
+
+// Throttle delay for grammar checking (in milliseconds)
+const GRAMMAR_CHECK_THROTTLE_MS = 100;
 
 const App: Component = () => {
 	const [content, setContent] = createSignal('');
@@ -18,8 +22,7 @@ const App: Component = () => {
 	const [isRuleManagerOpen, setIsRuleManagerOpen] = createSignal(false);
 	const [currentLintConfig, setCurrentLintConfig] = createSignal<LintConfig | null>(null);
 
-	// Debounce state - not reactive, just regular variables
-	let debounceTimeout: number | undefined;
+	// Analysis generation to invalidate in-flight analysis
 	let analysisGeneration = 0;
 
 	// Set to store ignored issue IDs (persists until page refresh)
@@ -43,13 +46,31 @@ const App: Component = () => {
 		}
 	});
 
-	// Manual debounced analysis function
-	const scheduleAnalysis = (text: string) => {
-		// Clear any pending analysis
-		if (debounceTimeout !== undefined) {
-			clearTimeout(debounceTimeout);
-		}
+	// Throttled analysis function
+	const performAnalysis = throttle(async (text: string, currentGeneration: number) => {
+		setIsAnalyzing(true);
+		try {
+			const lints = await analyzeText(text);
 
+			// Only update if this is still the latest analysis
+			if (currentGeneration === analysisGeneration) {
+				const harperIssues = transformLints(lints);
+				// Filter out ignored issues
+				const filteredIssues = harperIssues.filter(issue => !ignoredIssues.has(issue.id));
+				setIssues(filteredIssues);
+			}
+		} catch (error) {
+			if (currentGeneration === analysisGeneration) {
+				console.error('Failed to analyze text:', error);
+			}
+		} finally {
+			if (currentGeneration === analysisGeneration) {
+				setIsAnalyzing(false);
+			}
+		}
+	}, GRAMMAR_CHECK_THROTTLE_MS);
+
+	const scheduleAnalysis = (text: string) => {
 		// Handle empty text
 		if (!text.trim()) {
 			setIssues([]);
@@ -60,29 +81,8 @@ const App: Component = () => {
 		// Increment generation to invalidate any in-flight analysis
 		const currentGeneration = ++analysisGeneration;
 
-		// Schedule new analysis
-		debounceTimeout = window.setTimeout(async () => {
-			setIsAnalyzing(true);
-			try {
-				const lints = await analyzeText(text);
-
-				// Only update if this is still the latest analysis
-				if (currentGeneration === analysisGeneration) {
-					const harperIssues = transformLints(lints);
-					// Filter out ignored issues
-					const filteredIssues = harperIssues.filter(issue => !ignoredIssues.has(issue.id));
-					setIssues(filteredIssues);
-				}
-			} catch (error) {
-				if (currentGeneration === analysisGeneration) {
-					console.error('Failed to analyze text:', error);
-				}
-			} finally {
-				if (currentGeneration === analysisGeneration) {
-					setIsAnalyzing(false);
-				}
-			}
-		}, 200);
+		// Trigger throttled analysis
+		performAnalysis(text, currentGeneration);
 	};
 
 	// Watch content changes and trigger analysis

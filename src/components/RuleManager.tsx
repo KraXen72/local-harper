@@ -4,6 +4,7 @@ import { pascalCaseToWords } from '../utils/pascal-case';
 import { exportRuleConfig, importRuleConfig, getLintDescriptions } from '../services/harper-service';
 import RuleCard from './RuleCard';
 import uFuzzy from '@leeoniya/ufuzzy';
+import { createVirtualizedList } from '@doeixd/create-virtualized-list-solid';
 
 const RuleManager: Component<RuleManagerProps> = (props) => {
 	const [filterText, setFilterText] = createSignal('');
@@ -79,8 +80,14 @@ const RuleManager: Component<RuleManagerProps> = (props) => {
 		}
 	}
 
-	return results.slice(0, 20);
+	return results;
 });
+
+	// Create virtualized list
+	const virtualList = createVirtualizedList({
+		data: filteredRules,
+		estimateSize: () => 80, // Approximate height of each RuleCard
+	});
 	
 	const handleExport = () => {
 		try {
@@ -193,17 +200,23 @@ const RuleManager: Component<RuleManagerProps> = (props) => {
 								</div>
 							}
 						>
-							<For each={filteredRules()}>
-								{(rule) => (
-									<RuleCard
-										name={rule.name}
-										displayName={rule.displayName}
-										description={rule.description}
-										enabled={rule.enabled}
-										onToggle={(enabled) => props.onRuleToggle(rule.name, enabled)}
-									/>
-								)}
-							</For>
+							<div {...virtualList.root}>
+								<div {...virtualList.container}>
+									<For each={virtualList.item}>
+										{virtualList.items((item) => (
+											<div {...item.props}>
+												<RuleCard
+													name={item.data.name}
+													displayName={item.data.displayName}
+													description={item.data.description}
+													enabled={item.data.enabled}
+													onToggle={(enabled) => props.onRuleToggle(item.data.name, enabled)}
+												/>
+											</div>
+										))}
+									</For>
+								</div>
+							</div>
 						</Show>
 				</div>
 			</div>
