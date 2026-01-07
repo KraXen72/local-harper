@@ -16,13 +16,13 @@ const IssueTooltip: Component<IssueTooltipProps> = (props) => {
 	const bgColor = () => lintKindColorWithAlpha(props.lintKind, 0.2);
 
 	// Icon from Lucide by Lucide Contributors - https://github.com/lucide-icons/lucide/blob/main/LICENSE
-	
+
 	return (
 		<div class="grid gap-x-1 gap-y-1" style={{
 			"grid-template-rows": "min-content 1fr min-content",
 			"grid-template-columns": "min-content 1fr min-content"
 		}}>
-			<span 
+			<span
 				class="cm-issue-tooltip-severity whitespace-nowrap"
 				style={{
 					"background-color": bgColor(),
@@ -41,10 +41,10 @@ const IssueTooltip: Component<IssueTooltipProps> = (props) => {
 					<FormattedMessage message={props.issue.lint.message()} />
 				</span>
 			</div>
-			
+
 			<Show when={props.showIgnoreButton && props.onIgnore}>
-				<button 
-					class="px-3 py-1 bg-[var(--flexoki-ui)] text-[var(--flexoki-tx)] border border-[var(--flexoki-ui-3)] rounded text-xs font-medium cursor-pointer transition-all duration-[120ms] w-full hover:bg-[var(--flexoki-ui-2)] hover:border-[var(--flexoki-tx-3)] active:scale-[0.98] col-span-full"
+				<button
+					class="px-3 py-1 bg-(--flexoki-ui) text-(--flexoki-tx) border border-(--flexoki-ui-3) rounded text-xs font-medium cursor-pointer transition-all duration-120 w-full hover:bg-(--flexoki-ui-2) hover:border-(--flexoki-tx-3) active:scale-[0.98] col-span-full"
 					onClick={props.onIgnore}
 					type="button"
 				>

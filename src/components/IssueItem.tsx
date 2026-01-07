@@ -25,11 +25,11 @@ const IssueItem: Component<IssueItemProps> = (props) => {
 		>
 			<div class="flex items-center gap-2.5">
 				<span
-					class="inline-block w-2 h-2 rounded-full flex-shrink-0 transition-all duration-200"
+					class="inline-block w-2 h-2 rounded-full shrink-0 transition-all duration-200"
 					style={{ "background-color": lintColor() }}
 				/>
 				<div class="flex-1 min-w-0">
-					<p class="text-sm text-[var(--flexoki-tx)] leading-snug">
+					<p class="text-sm text-(--flexoki-tx) leading-snug">
 						<FormattedMessage message={props.issue.lint.message()} />
 					</p>
 				</div>

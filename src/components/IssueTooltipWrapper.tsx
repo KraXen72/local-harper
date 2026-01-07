@@ -12,8 +12,8 @@ interface IssueTooltipWrapperProps {
 const IssueTooltipWrapper: Component<IssueTooltipWrapperProps> = (props) => {
 	return (
 		<div class="cm-issue-tooltip">
-			<IssueTooltip 
-				issue={props.issue} 
+			<IssueTooltip
+				issue={props.issue}
 				lintKind={props.lintKind}
 				rule={props.issue.rule}
 				showIgnoreButton={props.showIgnoreButton}

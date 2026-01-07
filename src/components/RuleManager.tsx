@@ -8,10 +8,10 @@ import uFuzzy from '@leeoniya/ufuzzy';
 const RuleManager: Component<RuleManagerProps> = (props) => {
 	const [filterText, setFilterText] = createSignal('');
 	const [importError, setImportError] = createSignal<string | null>(null);
-	
+
 	// Fetch rule descriptions
 	const [descriptions] = createResource(getLintDescriptions);
-	
+
 	// Create fuzzy search instance with SingleError mode for typo tolerance
 	// intraMode: 1 allows single errors (substitution, transposition, insertion, deletion)
 	// This makes the search more forgiving of typos
@@ -22,12 +22,12 @@ const RuleManager: Component<RuleManagerProps> = (props) => {
 		intraTrn: 1,
 		intraDel: 1
 	});
-	
+
 	// Convert config to RuleInfo array
 	const allRules = createMemo((): RuleInfo[] => {
 		const descs = descriptions();
 		if (!descs) return [];
-		
+
 		const rules: RuleInfo[] = [];
 		for (const [name, enabled] of Object.entries(props.currentConfig)) {
 			rules.push({
@@ -40,48 +40,48 @@ const RuleManager: Component<RuleManagerProps> = (props) => {
 		// Sort alphabetically by display name
 		return rules.sort((a, b) => a.displayName.localeCompare(b.displayName));
 	});
-	
+
 	// Apply fuzzy search filtering
 	const filteredRules = createMemo(() => {
-	const filter = filterText().trim();
-	if (!filter) {
-		return allRules();
-	}
-
-	const rules = allRules();
-
-	// Search display names (high priority)
-	const nameHaystack = rules.map(r => r.displayName);
-	const [nameIdxs, nameInfo, nameOrder] = fuzzy.search(nameHaystack, filter);
-
-	// Search descriptions (fallback)
-	const descHaystack = rules.map(r => r.description);
-	const [descIdxs, descInfo, descOrder] = fuzzy.search(descHaystack, filter);
-
-	const matchedByName = new Set(nameIdxs || []);
-	const results: RuleInfo[] = [];
-
-	// Add name matches (already sorted)
-	if (nameOrder && nameInfo) {
-		for (let i = 0; i < nameOrder.length; i++) {
-			const idx = nameInfo.idx[nameOrder[i]];
-			results.push(rules[idx]);
+		const filter = filterText().trim();
+		if (!filter) {
+			return allRules();
 		}
-	}
 
-	// Add description-only matches (already sorted)
-	if (descOrder && descInfo) {
-		for (let i = 0; i < descOrder.length; i++) {
-			const idx = descInfo.idx[descOrder[i]];
-			if (!matchedByName.has(idx)) {
+		const rules = allRules();
+
+		// Search display names (high priority)
+		const nameHaystack = rules.map(r => r.displayName);
+		const [nameIdxs, nameInfo, nameOrder] = fuzzy.search(nameHaystack, filter);
+
+		// Search descriptions (fallback)
+		const descHaystack = rules.map(r => r.description);
+		const [descIdxs, descInfo, descOrder] = fuzzy.search(descHaystack, filter);
+
+		const matchedByName = new Set(nameIdxs || []);
+		const results: RuleInfo[] = [];
+
+		// Add name matches (already sorted)
+		if (nameOrder && nameInfo) {
+			for (let i = 0; i < nameOrder.length; i++) {
+				const idx = nameInfo.idx[nameOrder[i]];
 				results.push(rules[idx]);
 			}
 		}
-	}
 
-	return results.slice(0, 20);
-});
-	
+		// Add description-only matches (already sorted)
+		if (descOrder && descInfo) {
+			for (let i = 0; i < descOrder.length; i++) {
+				const idx = descInfo.idx[descOrder[i]];
+				if (!matchedByName.has(idx)) {
+					results.push(rules[idx]);
+				}
+			}
+		}
+
+		return results.slice(0, 20);
+	});
+
 	const handleExport = () => {
 		try {
 			const jsonString = exportRuleConfig();
@@ -99,7 +99,7 @@ const RuleManager: Component<RuleManagerProps> = (props) => {
 			setTimeout(() => setImportError(null), 3000);
 		}
 	};
-	
+
 	const handleImport = () => {
 		const input = document.createElement('input');
 		input.type = 'file';
@@ -107,7 +107,7 @@ const RuleManager: Component<RuleManagerProps> = (props) => {
 		input.onchange = async (e) => {
 			const file = (e.target as HTMLInputElement).files?.[0];
 			if (!file) return;
-			
+
 			try {
 				const text = await file.text();
 				await importRuleConfig(text);
@@ -121,26 +121,26 @@ const RuleManager: Component<RuleManagerProps> = (props) => {
 		};
 		input.click();
 	};
-	
+
 	return (
 		<Show when={props.isOpen}>
-			<div class="h-full bg-[var(--flexoki-bg)] grid" style={{
+			<div class="h-full bg-(--flexoki-bg) grid" style={{
 				"grid-template-rows": "min-content min-content 1fr",
 			}}>
 				{/* Header */}
-				<div class="flex items-center justify-between px-4 py-3 border-x border-[var(--flexoki-ui-2)]">
-					<h2 class="text-lg font-semibold text-[var(--flexoki-tx)]">Rule Manager</h2>
+				<div class="flex items-center justify-between px-4 py-3 border-x border-(--flexoki-ui-2)">
+					<h2 class="text-lg font-semibold text-(--flexoki-tx)">Rule Manager</h2>
 					<button
 						onClick={props.onClose}
-						class="p-1.5 hover:bg-[var(--flexoki-ui-3)] aspect-square rounded-md transition-colors duration-150 flex"
+						class="p-1.5 hover:bg-(--flexoki-ui-3) aspect-square rounded-md transition-colors duration-150 flex"
 						aria-label="Close rule manager"
 					>
-						<span class="iconify lucide--x w-5 h-5 text-[var(--flexoki-tx-2)]" />
+						<span class="iconify lucide--x w-5 h-5 text-(--flexoki-tx-2)" />
 					</button>
 				</div>
-				
+
 				{/* Controls */}
-				<div class="px-4 py-3 space-y-3 border-x border-b border-[var(--flexoki-ui-2)]">
+				<div class="px-4 py-3 space-y-3 border-x border-b border-(--flexoki-ui-2)">
 					{/* Search bar */}
 					<div class="relative">
 						<input
@@ -148,63 +148,63 @@ const RuleManager: Component<RuleManagerProps> = (props) => {
 							value={filterText()}
 							onInput={(e) => setFilterText(e.currentTarget.value)}
 							placeholder="filter rules..."
-							class="w-full px-3 py-2 bg-[var(--flexoki-bg)] border border-[var(--flexoki-ui-2)] rounded-md text-sm text-[var(--flexoki-tx)] placeholder-[var(--flexoki-tx-3)] focus:outline-none focus:ring-2 focus:ring-[var(--flexoki-cyan)] focus:border-transparent"
+							class="w-full px-3 py-2 bg-(--flexoki-bg) border border-(--flexoki-ui-2) rounded-md text-sm text-(--flexoki-tx) placeholder-(--flexoki-tx-3) focus:outline-none focus:ring-2 focus:ring-(--flexoki-cyan) focus:border-transparent"
 						/>
 						<Show when={filterText()}>
 							<button
 								onClick={() => setFilterText('')}
-								class="absolute right-2 top-1/2 -translate-y-1/2 hover:bg-[var(--flexoki-ui-3)] rounded transition-colors flex items-center"
+								class="absolute right-2 top-1/2 -translate-y-1/2 hover:bg-(--flexoki-ui-3) rounded transition-colors flex items-center"
 								aria-label="Clear filter"
 							>
-								<span class="iconify lucide--x text-lg text-[var(--flexoki-tx-3)]" />
+								<span class="iconify lucide--x text-lg text-(--flexoki-tx-3)" />
 							</button>
 						</Show>
 					</div>
-					
-				{/* Import/Export buttons */}
-				<div class="flex gap-2">
-					<Button onClick={handleExport} icon="lucide--download" text="Export" />
-					<Button onClick={handleImport} icon="lucide--upload" text="Import" />
-				</div>
+
+					{/* Import/Export buttons */}
+					<div class="flex gap-2">
+						<Button onClick={handleExport} icon="lucide--download" text="Export" />
+						<Button onClick={handleImport} icon="lucide--upload" text="Import" />
+					</div>
 					<Show when={importError()}>
-						<div class="flex items-start gap-2 p-3 bg-[var(--flexoki-re)] bg-opacity-10 border border-[var(--flexoki-re)] rounded-md">
-							<span class="iconify lucide--alert-circle w-5 h-5 text-[var(--flexoki-re)] flex-shrink-0 mt-0.5" />
+						<div class="flex items-start gap-2 p-3 bg-(--flexoki-re) bg-opacity-10 border border-(--flexoki-re) rounded-md">
+							<span class="iconify lucide--alert-circle w-5 h-5 text-(--flexoki-re) shrink-0 mt-0.5" />
 							<div class="flex-1 min-w-0">
-								<p class="text-sm text-[var(--flexoki-re)] break-words">{importError()}</p>
+								<p class="text-sm text-(--flexoki-re) wrap-break-word">{importError()}</p>
 							</div>
 							<button
 								onClick={() => setImportError(null)}
-								class="p-0.5 hover:bg-[var(--flexoki-ui-3)] rounded transition-colors flex-shrink-0"
+								class="p-0.5 hover:bg-(--flexoki-ui-3) rounded transition-colors shrink-0"
 								aria-label="Dismiss error"
 							>
-								<span class="iconify lucide--x w-4 h-4 text-[var(--flexoki-re)]" />
+								<span class="iconify lucide--x w-4 h-4 text-(--flexoki-re)" />
 							</button>
 						</div>
 					</Show>
 				</div>
-				
+
 				{/* Rule list */}
-				<div class="overflow-y-auto p-2 border-x border-[var(--flexoki-ui-2)] min-h-0">
+				<div class="overflow-y-auto p-2 border-x border-(--flexoki-ui-2) min-h-0">
 					<Show
-							when={filteredRules().length > 0}
-							fallback={
-								<div class="text-center py-8 text-[var(--flexoki-tx-3)] text-sm">
-									No rules match your filter
-								</div>
-							}
-						>
-							<For each={filteredRules()}>
-								{(rule) => (
-									<RuleCard
-										name={rule.name}
-										displayName={rule.displayName}
-										description={rule.description}
-										enabled={rule.enabled}
-										onToggle={(enabled) => props.onRuleToggle(rule.name, enabled)}
-									/>
-								)}
-							</For>
-						</Show>
+						when={filteredRules().length > 0}
+						fallback={
+							<div class="text-center py-8 text-(--flexoki-tx-3) text-sm">
+								No rules match your filter
+							</div>
+						}
+					>
+						<For each={filteredRules()}>
+							{(rule) => (
+								<RuleCard
+									name={rule.name}
+									displayName={rule.displayName}
+									description={rule.description}
+									enabled={rule.enabled}
+									onToggle={(enabled) => props.onRuleToggle(rule.name, enabled)}
+								/>
+							)}
+						</For>
+					</Show>
 				</div>
 			</div>
 		</Show>
@@ -215,7 +215,7 @@ function Button(props: { onClick: () => void; icon: string; text: string; }) {
 	return (
 		<button
 			onClick={props.onClick}
-			class="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-[var(--flexoki-cyan)] hover:brightness-110 active:scale-95 text-white text-sm font-medium rounded-md shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[var(--flexoki-cyan)] focus:ring-offset-2 focus:ring-offset-[var(--flexoki-bg-2)]"
+			class="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-(--flexoki-cyan) hover:brightness-110 active:scale-95 text-white text-sm font-medium rounded-md shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-(--flexoki-cyan) focus:ring-offset-2 focus:ring-offset-(--flexoki-bg-2)"
 		>
 			<span class={`iconify ${props.icon} w-4 h-4`} />
 			{props.text}

@@ -71,22 +71,22 @@ const Sidebar: Component<SidebarProps> = (props) => {
 				</Show>
 			</div>
 			<Show when={props.issues.length > 0}>
-					<div class="py-3 border-t border-(--flexoki-ui-2) sticky bottom-0 bg-(--flexoki-bg) z-10">
-						<p class="text-xs text-(--flexoki-tx-3) text-center leading-6">
-							<Kbd>Ctrl+J</Kbd>
-							&nbsp;&nbsp;/&nbsp;&nbsp;
-							<Kbd>Ctrl+K</Kbd>
-							&nbsp;to navigate
-							<br />
-							<Kbd>Ctrl+Space</Kbd>
-							&nbsp;&nbsp;/&nbsp;&nbsp;
-							<Kbd>Tab</Kbd>
-							&nbsp;&nbsp;/&nbsp;&nbsp;
-							<Kbd>Click</Kbd>
-							&nbsp;on issue to fix
-						</p>
-					</div>
-				</Show>
+				<div class="py-3 border-t border-(--flexoki-ui-2) sticky bottom-0 bg-(--flexoki-bg) z-10">
+					<p class="text-xs text-(--flexoki-tx-3) text-center leading-6">
+						<Kbd>Ctrl+J</Kbd>
+						&nbsp;&nbsp;/&nbsp;&nbsp;
+						<Kbd>Ctrl+K</Kbd>
+						&nbsp;to navigate
+						<br />
+						<Kbd>Ctrl+Space</Kbd>
+						&nbsp;&nbsp;/&nbsp;&nbsp;
+						<Kbd>Tab</Kbd>
+						&nbsp;&nbsp;/&nbsp;&nbsp;
+						<Kbd>Click</Kbd>
+						&nbsp;on issue to fix
+					</p>
+				</div>
+			</Show>
 		</div>
 	);
 };
