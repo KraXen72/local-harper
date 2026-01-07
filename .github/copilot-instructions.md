@@ -28,8 +28,11 @@ applyTo: "**"
 - do not add superfulous comments, only comment code that's not immediatelly obvious what it does
 - keep the code's performance in mind at all times. implement solutions that are fast, yet readable
 
-## tool use
-- use the current package manager tool, e.g. pnpm instead of the default (npm) if applicable.
+## tool use / cli use
+- use `pnpm` instead of npm
+- always verify your work by running `pnpm lint` - if you encounter any errors/warnings, fix them
+- by default, assume that the dev server (`pnpm dev`) is running (i will try to always start it in the background. you may start a new dev server instance only if you go to the dev server url and it's not there.
+- you do not need to run `pnpm build` most of the time. this builds the package for production, which is not very useful. use `pnpm lint` to verify your work.
 
 ## typescript
 - always strive to use typescript's full potential, i.e. generics, utility types, etc. and available global/importable types to type everything properly. You MUST NEVER use the any type. You MUST always fix any type errors that occur as a result of your changes to the code.
