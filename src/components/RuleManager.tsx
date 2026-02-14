@@ -124,23 +124,23 @@ const RuleManager: Component<RuleManagerProps> = (props) => {
 
 	return (
 		<Show when={props.isOpen}>
-			<div class="h-full bg-(--flexoki-bg) grid" style={{
+			<div class="h-full bg-base-100 grid" style={{
 				"grid-template-rows": "min-content min-content 1fr",
 			}}>
 				{/* Header */}
-				<div class="flex items-center justify-between px-4 py-3 border-x border-(--flexoki-ui-2)">
-					<h2 class="text-lg font-semibold text-(--flexoki-tx)">Rule Manager</h2>
+				<div class="flex items-center justify-between px-4 py-3 border-x border-base-300">
+					<h2 class="text-lg font-semibold text-base-content">Rule Manager</h2>
 					<button
 						onClick={props.onClose}
-						class="p-1.5 hover:bg-(--flexoki-ui-3) aspect-square rounded-md transition-colors duration-150 flex"
+						class="btn btn-ghost btn-sm btn-square"
 						aria-label="Close rule manager"
 					>
-						<span class="iconify lucide--x w-5 h-5 text-(--flexoki-tx-2)" />
+						<span class="iconify lucide--x w-5 h-5" />
 					</button>
 				</div>
 
 				{/* Controls */}
-				<div class="px-4 py-3 space-y-3 border-x border-b border-(--flexoki-ui-2)">
+				<div class="px-4 py-3 space-y-3 border-x border-b border-base-300">
 					{/* Search bar */}
 					<div class="relative">
 						<input
@@ -148,15 +148,15 @@ const RuleManager: Component<RuleManagerProps> = (props) => {
 							value={filterText()}
 							onInput={(e) => setFilterText(e.currentTarget.value)}
 							placeholder="filter rules..."
-							class="w-full px-3 py-2 bg-(--flexoki-bg) border border-(--flexoki-ui-2) rounded-md text-sm text-(--flexoki-tx) placeholder-(--flexoki-tx-3) focus:outline-none focus:ring-2 focus:ring-(--flexoki-cyan) focus:border-transparent"
+							class="input input-sm w-full pr-8"
 						/>
 						<Show when={filterText()}>
 							<button
 								onClick={() => setFilterText('')}
-								class="absolute right-2 top-1/2 -translate-y-1/2 hover:bg-(--flexoki-ui-3) rounded transition-colors flex items-center"
+								class="absolute right-2 top-1/2 -translate-y-1/2 btn btn-ghost btn-xs btn-square"
 								aria-label="Clear filter"
 							>
-								<span class="iconify lucide--x text-lg text-(--flexoki-tx-3)" />
+								<span class="iconify lucide--x text-lg" />
 							</button>
 						</Show>
 					</div>
@@ -167,28 +167,28 @@ const RuleManager: Component<RuleManagerProps> = (props) => {
 						<Button onClick={handleImport} icon="lucide--upload" text="Import" />
 					</div>
 					<Show when={importError()}>
-						<div class="flex items-start gap-2 p-3 bg-(--flexoki-re) bg-opacity-10 border border-(--flexoki-re) rounded-md">
-							<span class="iconify lucide--alert-circle w-5 h-5 text-(--flexoki-re) shrink-0 mt-0.5" />
+						<div class="alert alert-error">
+							<span class="iconify lucide--alert-circle w-5 h-5" />
 							<div class="flex-1 min-w-0">
-								<p class="text-sm text-(--flexoki-re) wrap-break-word">{importError()}</p>
+								<p class="text-sm wrap-break-word">{importError()}</p>
 							</div>
 							<button
 								onClick={() => setImportError(null)}
-								class="p-0.5 hover:bg-(--flexoki-ui-3) rounded transition-colors shrink-0"
+								class="btn btn-ghost btn-xs btn-square"
 								aria-label="Dismiss error"
 							>
-								<span class="iconify lucide--x w-4 h-4 text-(--flexoki-re)" />
+								<span class="iconify lucide--x w-4 h-4" />
 							</button>
 						</div>
 					</Show>
 				</div>
 
 				{/* Rule list */}
-				<div class="overflow-y-auto p-2 border-x border-(--flexoki-ui-2) min-h-0">
+				<div class="overflow-y-auto p-2 border-x border-base-300 min-h-0">
 					<Show
 						when={filteredRules().length > 0}
 						fallback={
-							<div class="text-center py-8 text-(--flexoki-tx-3) text-sm">
+							<div class="text-center py-8 text-base-content/50 text-sm">
 								No rules match your filter
 							</div>
 						}
@@ -215,7 +215,7 @@ function Button(props: { onClick: () => void; icon: string; text: string; }) {
 	return (
 		<button
 			onClick={props.onClick}
-			class="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-(--flexoki-cyan) hover:brightness-110 active:scale-95 text-white text-sm font-medium rounded-md shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-(--flexoki-cyan) focus:ring-offset-2 focus:ring-offset-(--flexoki-bg-2)"
+			class="btn btn-accent btn-sm flex-1"
 		>
 			<span class={`iconify ${props.icon} w-4 h-4`} />
 			{props.text}

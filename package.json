@@ -8,13 +8,14 @@
     "dev": "vite",
     "build": "vite build",
     "serve": "vite preview",
-	"lint": "tsc -noEmit -skipLibCheck"
+    "lint": "tsc -noEmit -skipLibCheck"
   },
   "license": "MIT",
   "devDependencies": {
     "@iconify-json/lucide": "^1.2.82",
     "@iconify/tailwind4": "^1.2.0",
     "@tailwindcss/vite": "^4.1.18",
+    "daisyui": "^5.5.18",
     "solid-devtools": "^0.34.4",
     "tailwindcss": "^4.1.18",
     "typescript": "^5.9.3",
@@ -31,9 +32,9 @@
     "@codemirror/view": "^6.39.8",
     "@fontsource-variable/inter": "^5.2.8",
     "@leeoniya/ufuzzy": "^1.0.19",
+    "@twocaretcat/tally-ts": "^1.0.0",
     "harper.js": "^1.2.0",
     "solid-js": "^1.9.10",
-    "valibot": "^1.2.0",
-    "@twocaretcat/tally-ts": "^1.0.0"
+    "valibot": "^1.2.0"
   }
 }

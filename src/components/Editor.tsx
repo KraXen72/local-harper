@@ -174,18 +174,18 @@ const Editor: Component<EditorProps> = (props) => {
 	};
 
 	return (
-		<div class="h-full overflow-auto bg-(--flexoki-bg)" onClick={handleContainerClick}>
+		<div class="h-full overflow-auto bg-base-100" onClick={handleContainerClick}>
 			<div class="pt-12 px-4 pb-12 flex justify-center">
 				<div
-					class="bg-(--flexoki-bg) rounded-xl overflow-hidden shadow-2xl border border-(--flexoki-ui-2) w-full max-w-216.75"
+					class="bg-base-100 rounded-xl overflow-hidden shadow-2xl border border-base-300 w-full max-w-216.75"
 					ref={editorRef}>
 				</div>
 			</div>
 
 			{/* Sticky word counter at bottom of the scrolling container */}
 			<div class="sticky bottom-0 left-0 right-0 px-4">
-				<div class="w-full max-w-216.75 mx-auto bg-(--flexoki-bg)">
-					<hr class="border-(--flexoki-ui-2) my-2" />
+				<div class="w-full max-w-216.75 mx-auto bg-base-100">
+					<hr class="border-base-300 my-2" />
 					<WordCounter text={counterText()} />
 				</div>
 			</div>

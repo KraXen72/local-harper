@@ -12,8 +12,8 @@ const IssueItem: Component<IssueItemProps> = (props) => {
 
 	return (
 		<div
-			class="shared-card cursor-pointer hover:translate-x-0.5"
-			classList={{ 'shared-card-selected translate-x-0.5': props.isSelected }}
+			class="card card-compact bg-base-200/50 border border-base-300 p-2.5 cursor-pointer hover:translate-x-1 hover:bg-base-300/50 hover:border-base-content/20 transition-all"
+			classList={{ 'bg-accent/10 border-accent/40 translate-x-1 shadow-md': props.isSelected }}
 			onClick={handleClick}
 			tabIndex={0}
 			onKeyDown={(e) => {
@@ -29,7 +29,7 @@ const IssueItem: Component<IssueItemProps> = (props) => {
 					style={{ "background-color": lintColor() }}
 				/>
 				<div class="flex-1 min-w-0">
-					<p class="text-sm text-(--flexoki-tx) leading-snug">
+					<p class="text-sm text-base-content leading-snug">
 						<FormattedMessage message={props.issue.lint.message()} />
 					</p>
 				</div>

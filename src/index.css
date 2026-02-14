@@ -5,6 +5,56 @@
 	prefixes: lucide;
 }
 
+@plugin "daisyui";
+
+@plugin "daisyui/theme" {
+	name: "flexoki";
+	default: true;
+	prefersdark: false;
+	color-scheme: dark;
+
+	/* Flexoki base colors */
+	--color-base-100: #100F0F;
+	--color-base-200: #1C1B1A;
+	--color-base-300: #282726;
+
+	--color-base-content: #CECDC3;
+	--color-info: #3AA99F;
+	--color-info-content: #100F0F;
+	--color-success: #879A39;
+	--color-success-content: #100F0F;
+	--color-warning: #D0A215;
+	--color-warning-content: #100F0F;
+	--color-error: #D14D41;
+	--color-error-content: #100F0F;
+
+	/* Flexoki brand colors */
+	--color-primary: #4385BE;
+	--color-primary-content: #100F0F;
+	--color-secondary: #8B7EC8;
+	--color-secondary-content: #100F0F;
+	--color-accent: #3AA99F;
+	--color-accent-content: #100F0F;
+	--color-neutral: #575653;
+	--color-neutral-content: #CECDC3;
+
+	/* Default border radii */
+	--radius-selector: 0.5rem;
+	--radius-field: 0.3125rem;
+	--radius-box: 0.5rem;
+
+	/* Default sizes */
+	--size-selector: 0.25rem;
+	--size-field: 0.25rem;
+
+	/* Default border */
+	--border: 1px;
+
+	/* Depth and noise */
+	--depth: 0;
+	--noise: 0;
+}
+
 /* Matter-style linear progress (used in TopBar) */
 /* credit: https://github.com/finnhvman/matter */
 @keyframes matter-progress-linear {
@@ -44,30 +94,10 @@
 }
 
 :root {
-	/* Flexoki color scheme */
-	--flexoki-bg: #100F0F;
-	--flexoki-bg-2: #1C1B1A;
-	--flexoki-ui: #282726;
-	--flexoki-ui-2: #343331;
-	--flexoki-ui-3: #403E3C;
-	--flexoki-tx-3: #575653;
-	--flexoki-tx-2: #878580;
-	--flexoki-tx: #CECDC3;
-
-	--flexoki-red: #D14D41;
-	--flexoki-orange: #DA702C;
-	--flexoki-yellow: #D0A215;
-	--flexoki-green: #879A39;
+	/* Flexoki color scheme - preserved for lint kind colors and editor extensions */
 	--flexoki-cyan: #3AA99F;
-	--flexoki-blue: #4385BE;
-	--flexoki-purple: #8B7EC8;
-	--flexoki-magenta: #CE5D97;
-
 	--flexoki-cyan-a: rgba(58, 169, 160, 0.12);
 	--text-selection-background-color: #3aa99f4c;
-	--br-mini: 3px;
-	--br-small: 5px;
-	--br-lg: 8px;
 
 	/* credit to the harper website repository */
 	/* some colors changed/swapped */
@@ -139,10 +169,10 @@
 }
 
 
-/* Dark mode with Flexoki colors */
+/* Dark mode with Flexoki colors - DaisyUI handles this via data-theme */
 body {
-	background-color: var(--flexoki-bg);
-	color: var(--flexoki-tx);
+	background-color: theme('colors.base-100');
+	color: theme('colors.base-content');
 	overflow: hidden;
 }
 
@@ -152,18 +182,18 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-	background: var(--flexoki-bg);
-	border-radius: var(--br-small);
+	background: theme('colors.base-100');
+	border-radius: 0.3125rem;
 }
 
 ::-webkit-scrollbar-thumb {
-	background-color: var(--flexoki-tx-3);
-	border-radius: var(--br-small);
-	border: 1px solid var(--flexoki-bg);
+	background-color: theme('colors.neutral');
+	border-radius: 0.3125rem;
+	border: 1px solid theme('colors.base-100');
 }
 
 ::-webkit-scrollbar-thumb:hover {
-	background-color: var(--flexoki-tx-2);
+	background-color: theme('colors.base-content/50');
 }
 
 /* Text selection */
@@ -172,7 +202,7 @@ body {
 }
 
 .cm-tooltip {
-	border-radius: var(--br-small);
+	border-radius: 0.3125rem;
 }
 .cm-tooltip-autocomplete {
 	font-size: 1rem;
@@ -185,7 +215,6 @@ body {
 }
 .editor-wrapper .cm-editor {
 	width: 100%;
-	/* max-width: 867px; */
 	box-sizing: border-box;
 	padding: 15px;
 }
@@ -195,60 +224,6 @@ body {
 	font-size: 16px;
 	font-weight: 445;
 	line-height: 1.5;
-}
-
-.shared-card {
-	padding: 10px;
-	border-radius: var(--radius-lg);
-	border-style: solid;
-	border-width: 1px;
-	transition: all 200ms cubic-bezier(0, 0, 0.2, 1);
-
-	background-color: color-mix(in oklab, var(--flexoki-ui) 20%, transparent);
-	border-color: var(--flexoki-ui-2);
-}
-.shared-card:not(.shared-card-selected):hover {
-	background-color: var(--flexoki-ui);
-	border-color: var(--flexoki-ui-3);
-
-	@apply shadow-sm;
-}
-
-.shared-card-selected {
-	background-color: color-mix(in oklab, var(--flexoki-cyan) 20%, transparent);
-	border-color: color-mix(in oklab, var(--flexoki-cyan) 60%, transparent);
-
-	@apply shadow-md shadow-[var(--flexoki-cyan)]/10;
-}
-
-/* Harper Issue Tooltip Styles */
-.cm-issue-tooltip {
-	/* margin-block: 4px; */
-	padding: 8px;
-	border-radius: var(--br-small);
-	background-color: var(--flexoki-bg-2);
-	border: 1px solid var(--flexoki-ui);
-	color: var(--flexoki-tx);
-	font-size: 13px;
-	max-width: 320px;
-	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
-}
-
-.cm-issue-tooltip-severity {
-	padding: 2px 6px;
-	border-radius: var(--br-small);
-	font-size: 11px;
-	font-weight: bold;
-	text-transform: uppercase;
-	line-height: 2;
-}
-
-.cm-issue-tooltip-rule {
-	font-size: 11px;
-	padding: 2px 0px;
-	color: var(--flexoki-tx-2);
-	font-style: italic;
-	/* font-weight: bold; */
 }
 
 /* App Layout - Responsive Grid */

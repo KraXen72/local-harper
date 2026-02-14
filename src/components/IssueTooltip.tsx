@@ -23,7 +23,7 @@ const IssueTooltip: Component<IssueTooltipProps> = (props) => {
 			"grid-template-columns": "min-content 1fr min-content"
 		}}>
 			<span
-				class="cm-issue-tooltip-severity whitespace-nowrap"
+				class="badge badge-sm whitespace-nowrap"
 				style={{
 					"background-color": bgColor(),
 					"color": color()
@@ -32,19 +32,19 @@ const IssueTooltip: Component<IssueTooltipProps> = (props) => {
 				{props.issue.lint.lint_kind_pretty()}
 			</span>
 			<span></span>
-			<div class="cm-issue-tooltip-rule cursor-help" title={props.rule}>
+			<div class="text-base-content/50 cursor-help" title={props.rule}>
 				<span class="iconify lucide--info w-4 h-4" />
 			</div>
 
 			<div class="flex gap-2 items-center mb-1 col-span-full">
-				<span class="flex-1">
+				<span class="flex-1 text-base-content">
 					<FormattedMessage message={props.issue.lint.message()} />
 				</span>
 			</div>
 
 			<Show when={props.showIgnoreButton && props.onIgnore}>
 				<button
-					class="px-3 py-1 bg-(--flexoki-ui) text-(--flexoki-tx) border border-(--flexoki-ui-3) rounded text-xs font-medium cursor-pointer transition-all duration-120 w-full hover:bg-(--flexoki-ui-2) hover:border-(--flexoki-tx-3) active:scale-[0.98] col-span-full"
+					class="btn btn-ghost btn-xs w-full col-span-full"
 					onClick={props.onIgnore}
 					type="button"
 				>

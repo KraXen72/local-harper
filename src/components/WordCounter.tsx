@@ -26,7 +26,7 @@ const WordCounter: Component<WordCounterProps> = (props) => {
     });
 
     return (
-        <div class="pt-1 pb-3 px-2 text-sm text-(--flexoki-text-muted)">
+        <div class="pt-1 pb-3 px-2 text-sm text-base-content/60">
             <div class="flex items-center justify-between">
                 <div class="text-sm font-medium">Words: {counts().words}</div>
                 <div class="text-sm">Characters: {counts().graphemes} &middot; Sentences: {counts().sentences} &middot; Lines: {counts().lines} &middot; Paragraphs: {counts().paragraphs}</div>

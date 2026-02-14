@@ -181,7 +181,7 @@ const App: Component = () => {
 	};
 
 	return (
-		<div class="h-screen flex flex-col bg-(--flexoki-bg)">
+		<div class="h-screen flex flex-col bg-base-100">
 			<TopBar 
 				onCopy={handleCopy} 
 				isAnalyzing={isAnalyzing()} 
