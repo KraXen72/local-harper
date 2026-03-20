@@ -40,7 +40,7 @@ importers:
         version: 1.9.11
     devDependencies:
       '@iconify-json/lucide':
-        specifier: ^1.2.82
+        specifier: ^1.2.98
         version: 1.2.98
       '@iconify/tailwind4':
         specifier: ^1.2.0
