@@ -5,6 +5,10 @@
   ],
   "packageRules": [
     {
+      "matchUpdateTypes": ["major"],
+      "enabled": false
+    },
+    {
       "matchPackageNames": ["harper.js"],
       "matchUpdateTypes": ["minor", "patch"],
       "automerge": true,
