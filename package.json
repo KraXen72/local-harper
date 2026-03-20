@@ -22,12 +22,12 @@
     "vite-plugin-solid": "^2.11.10"
   },
   "dependencies": {
-    "@codemirror/autocomplete": "^6.20.0",
-    "@codemirror/commands": "^6.10.1",
-    "@codemirror/language": "^6.12.1",
-    "@codemirror/lint": "^6.9.2",
-    "@codemirror/state": "^6.5.3",
-    "@codemirror/view": "^6.39.8",
+    "@codemirror/autocomplete": "^6.20.1",
+    "@codemirror/commands": "^6.10.3",
+    "@codemirror/language": "^6.12.2",
+    "@codemirror/lint": "^6.9.5",
+    "@codemirror/state": "^6.6.0",
+    "@codemirror/view": "^6.40.0",
     "@fontsource-variable/inter": "^5.2.8",
     "@twocaretcat/tally-ts": "^1.0.0",
     "harper.js": "^1.12.0",
