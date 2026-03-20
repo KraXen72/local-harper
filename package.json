@@ -30,7 +30,7 @@
     "@codemirror/view": "^6.39.8",
     "@fontsource-variable/inter": "^5.2.8",
     "@twocaretcat/tally-ts": "^1.0.0",
-    "harper.js": "^1.2.0",
+    "harper.js": "^1.12.0",
     "solid-js": "^1.9.11"
   }
 }

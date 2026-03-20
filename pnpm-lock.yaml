@@ -33,7 +33,7 @@ importers:
         specifier: ^1.0.0
         version: 1.0.0
       harper.js:
-        specifier: ^1.2.0
+        specifier: ^1.12.0
         version: 1.12.0
       solid-js:
         specifier: ^1.9.11
