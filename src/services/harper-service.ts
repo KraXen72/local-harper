@@ -18,18 +18,31 @@ export async function initHarper(): Promise<void> {
 
 		await linter.setup();
 
-		const customWords = loadCustomWords();
-		if (customWords.length > 0) {
-			await linter.importWords(customWords);
-		}
+	const customWords = loadCustomWords();
+	if (customWords.length > 0) {
+		await linter.importWords(customWords);
+	}
 
-		const defaultConfig = await linter.getDefaultLintConfig();
+	const defaultConfig = await linter.getDefaultLintConfig();
+	const savedConfigJson = localStorage.getItem('harper-lint-config');
+	let config = defaultConfig;
+	
+	if (savedConfigJson) {
+		try {
+			const savedConfig = JSON.parse(savedConfigJson);
+			config = { ...defaultConfig, ...savedConfig };
+		} catch (e) {
+			console.error('Failed to parse saved lint config:', e);
+		}
+	} else {
 		for (const rule of DEFAULT_DISABLED_RULES) {
-			if (rule in defaultConfig) {
-				defaultConfig[rule as keyof typeof defaultConfig] = false;
+			if (rule in config) {
+				config[rule as keyof typeof config] = false;
 			}
 		}
-		await linter.setLintConfig(defaultConfig);
+	}
+	
+	await linter.setLintConfig(config);
 	})();
 
 	return initPromise;

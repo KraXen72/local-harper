@@ -24,12 +24,17 @@ const App: Component = () => {
 	const ignoredIssues = new Set<string>();
 	let lastClickedIssueFromSidebar: string | null = null;
 
-	function getIssueSignature(issue: HarperIssue): string {
+	function getIssueSignature(issue: HarperIssue, text: string): string {
 		const span = issue.lint.span();
 		const problemText = issue.lint.get_problem_text();
 		const lintKind = issue.lint.lint_kind();
 		const message = issue.lint.message();
-		return `${lintKind}|${message}|${problemText}|${span.start}-${span.end}`;
+		
+		const contextSize = 50;
+		const contextBefore = text.slice(Math.max(0, span.start - contextSize), span.start);
+		const contextAfter = text.slice(span.end, Math.min(text.length, span.end + contextSize));
+		
+		return `${lintKind}|${message}|${problemText}|${contextBefore}|||${contextAfter}`;
 	}
 
 	onMount(async () => {
@@ -71,7 +76,7 @@ const App: Component = () => {
 				if (currentGeneration === analysisGeneration) {
 					const harperIssues = transformLints(lints);
 					const filteredIssues = harperIssues.filter(issue => {
-						const sig = getIssueSignature(issue);
+						const sig = getIssueSignature(issue, text);
 						return !ignoredIssues.has(sig);
 					});
 					setIssues(filteredIssues);
@@ -130,10 +135,11 @@ const App: Component = () => {
 	const handleAddToDictionary = async (word: string) => {
 		try {
 			await addWordToDictionary(word);
-			const lints = await analyzeText(content());
+			const currentText = content();
+			const lints = await analyzeText(currentText);
 			const harperIssues = transformLints(lints);
 			const filteredIssues = harperIssues.filter(issue => {
-				const sig = getIssueSignature(issue);
+				const sig = getIssueSignature(issue, currentText);
 				return !ignoredIssues.has(sig);
 			});
 			setIssues(filteredIssues);
@@ -145,7 +151,8 @@ const App: Component = () => {
 	const handleIgnore = (issueId: string) => {
 		const issue = issues().find(i => i.id === issueId);
 		if (issue) {
-			const sig = getIssueSignature(issue);
+			const currentText = content();
+			const sig = getIssueSignature(issue, currentText);
 			ignoredIssues.add(sig);
 			setIssues(issues().filter(i => i.id !== issueId));
 			setSelectedIssueId(null);
@@ -157,10 +164,11 @@ const App: Component = () => {
 			await toggleRule(ruleName, enabled);
 			const rulesList = await getRules();
 			setRules(rulesList);
-			const lints = await analyzeText(content());
+			const currentText = content();
+			const lints = await analyzeText(currentText);
 			const harperIssues = transformLints(lints);
 			const filteredIssues = harperIssues.filter(issue => {
-				const sig = getIssueSignature(issue);
+				const sig = getIssueSignature(issue, currentText);
 				return !ignoredIssues.has(sig);
 			});
 			setIssues(filteredIssues);
