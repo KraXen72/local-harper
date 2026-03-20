@@ -10,12 +10,14 @@ const Kbd: ParentComponent = (props) => (
 	</kbd>
 );
 
-const Sidebar: Component<SidebarProps> = (props) => {
-	// oxlint-disable-next-line no-unassigned-vars
+interface SidebarExtendedProps extends SidebarProps {
+	onClose?: () => void;
+}
+
+const Sidebar: Component<SidebarExtendedProps> = (props) => {
 	let containerRef!: HTMLDivElement;
 	const issueRefs = new Map<string, HTMLDivElement>();
 
-	// Scroll to selected issue in sidebar
 	createEffect(() => {
 		const selectedId = props.selectedIssueId;
 		if (selectedId) {
@@ -39,6 +41,15 @@ const Sidebar: Component<SidebarProps> = (props) => {
 						</span>
 					</Show>
 				</div>
+				<Show when={props.onClose}>
+					<button
+						onClick={props.onClose}
+						class="md:hidden p-1.5 hover:bg-(--flexoki-ui-3) aspect-square rounded-md transition-colors duration-150 flex"
+						aria-label="Close sidebar"
+					>
+						<span class="iconify lucide--x w-5 h-5 text-(--flexoki-tx-2)" />
+					</button>
+				</Show>
 			</div>
 			<div class="w-full h-full overflow-auto">
 				<Show

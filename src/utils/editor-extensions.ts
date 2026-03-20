@@ -4,7 +4,7 @@ import { autocompletion, closeCompletion, startCompletion, type CompletionContex
 import type { HarperIssue, Suggestion } from '../types';
 import { SuggestionKind } from '../types';
 import { render } from 'solid-js/web';
-import IssueTooltipWrapper from '../components/IssueTooltipWrapper';
+import IssueTooltip from '../components/IssueTooltip';
 import { lintKindColor, lintKindBackgroundColor } from './lint-kind-colors';
 import { getLinter } from '../services/harper-service';
 
@@ -184,32 +184,13 @@ export function wouldOnlyShowIgnore(issue: HarperIssue): boolean {
 	return suggestions.length === 0 && !isSpelling;
 }
 
-// Custom autocomplete source for Harper issues
 function harperAutocomplete(context: CompletionContext): CompletionResult | null {
 	const issue = findIssueAtPos(context.state, context.pos);
-	
-	console.log('harperAutocomplete called:', {
-		pos: context.pos,
-		explicit: context.explicit,
-		hasIssue: !!issue,
-		hasActions: !!issueActions,
-	});
 	
 	if (!issue || !issueActions) return null;
 	
 	const suggestions = issue.lint.suggestions();
 	const span = issue.lint.span();
-	
-	// Debug logging
-	console.log('Issue found:', {
-		kind: issue.lint.lint_kind(),
-		message: issue.lint.message(),
-		problemText: issue.lint.get_problem_text(),
-		suggestionCount: suggestions.length,
-		suggestions: suggestions.map(s => s.get_replacement_text()),
-		span: { start: span.start, end: span.end },
-		contextPos: context.pos,
-	});
 	
 	const options: Completion[] = [];
 	
@@ -287,17 +268,9 @@ function harperAutocomplete(context: CompletionContext): CompletionResult | null
 		});
 	}
 	
-	// Don't show autocomplete if there are no options (shouldn't happen, but just in case)
 	if (options.length === 0) {
-		console.log('No options generated!');
 		return null;
 	}
-	
-	console.log('Returning completion result:', {
-		from: span.start,
-		to: span.end,
-		optionCount: options.length,
-	});
 	
 	return {
 		from: span.start,
@@ -309,43 +282,41 @@ function harperAutocomplete(context: CompletionContext): CompletionResult | null
 }
 
 // Helper to create tooltip from issue
-function createTooltipFromIssue(issue: HarperIssue): Tooltip {
-	const span = issue.lint.span();
-	const lintKind = issue.lint.lint_kind();
-	
-	// Check if ignore would be the only option
-	const suggestions = issue.lint.suggestions();
-	const isSpelling = lintKind.toLowerCase().includes('spelling');
-	const hasActions = suggestions.length > 0 || isSpelling;
-	const showIgnoreButton = !hasActions;
-	
-	return {
-		pos: span.start,
-		end: span.end,
-		create: (view: EditorView) => {
-			const container = view.dom.ownerDocument.createElement('div');
-			const dispose = render(() => IssueTooltipWrapper({ 
-				issue, 
-				lintKind,
-				showIgnoreButton,
-				onIgnore: (showIgnoreButton && issueActions) 
-					? () => {
-						if (issueActions) {
-							issueActions.onIgnore(issue.id);
+	function createTooltipFromIssue(issue: HarperIssue): Tooltip {
+		const span = issue.lint.span();
+		const lintKind = issue.lint.lint_kind();
+		
+		const suggestions = issue.lint.suggestions();
+		const isSpelling = lintKind.toLowerCase().includes('spelling');
+		const hasActions = suggestions.length > 0 || isSpelling;
+		const showIgnoreButton = !hasActions;
+		
+		return {
+			pos: span.start,
+			end: span.end,
+			create: (view: EditorView) => {
+				const container = view.dom.ownerDocument.createElement('div');
+				const dispose = render(() => IssueTooltip({ 
+					issue,
+					showIgnoreButton,
+					onIgnore: (showIgnoreButton && issueActions) 
+						? () => {
+							if (issueActions) {
+								issueActions.onIgnore(issue.id);
+							}
 						}
-					}
-					: undefined
-			}), container);
-			
-			return {
-				dom: container,
-				destroy: () => dispose(),
-			};
-		},
-		above: true,
-		arrow: false
-	};
-}
+						: undefined
+				}), container);
+				
+				return {
+					dom: container,
+					destroy: () => dispose(),
+				};
+			},
+			above: true,
+			arrow: false
+		};
+	}
 
 // Track last notified issue ID to avoid duplicate notifications
 let lastNotifiedIssueId: string | null = null;

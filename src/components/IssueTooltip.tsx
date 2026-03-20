@@ -5,20 +5,17 @@ import { lintKindColor, lintKindColorWithAlpha } from '../utils/lint-kind-colors
 
 interface IssueTooltipProps {
 	issue: HarperIssue;
-	lintKind: string;
-	rule: string;
 	showIgnoreButton?: boolean;
 	onIgnore?: () => void;
 }
 
 const IssueTooltip: Component<IssueTooltipProps> = (props) => {
-	const color = () => lintKindColor(props.lintKind);
-	const bgColor = () => lintKindColorWithAlpha(props.lintKind, 0.2);
-
-	// Icon from Lucide by Lucide Contributors - https://github.com/lucide-icons/lucide/blob/main/LICENSE
+	const lintKind = props.issue.lint.lint_kind();
+	const color = () => lintKindColor(lintKind);
+	const bgColor = () => lintKindColorWithAlpha(lintKind, 0.2);
 
 	return (
-		<div class="grid gap-x-1 gap-y-1" style={{
+		<div class="cm-issue-tooltip grid gap-x-1 gap-y-1" style={{
 			"grid-template-rows": "min-content 1fr min-content",
 			"grid-template-columns": "min-content 1fr min-content"
 		}}>
@@ -32,7 +29,7 @@ const IssueTooltip: Component<IssueTooltipProps> = (props) => {
 				{props.issue.lint.lint_kind_pretty()}
 			</span>
 			<span></span>
-			<div class="cm-issue-tooltip-rule cursor-help" title={props.rule}>
+			<div class="cm-issue-tooltip-rule cursor-help" title={props.issue.rule}>
 				<span class="iconify lucide--info w-4 h-4" />
 			</div>
 

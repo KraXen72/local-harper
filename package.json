@@ -8,7 +8,7 @@
     "dev": "vite",
     "build": "vite build",
     "serve": "vite preview",
-	"lint": "tsc -noEmit -skipLibCheck"
+    "lint": "tsc -noEmit -skipLibCheck"
   },
   "license": "MIT",
   "devDependencies": {
@@ -27,13 +27,10 @@
     "@codemirror/language": "^6.12.1",
     "@codemirror/lint": "^6.9.2",
     "@codemirror/state": "^6.5.3",
-    "@codemirror/tooltip": "^0.19.16",
     "@codemirror/view": "^6.39.8",
     "@fontsource-variable/inter": "^5.2.8",
-    "@leeoniya/ufuzzy": "^1.0.19",
+    "@twocaretcat/tally-ts": "^1.0.0",
     "harper.js": "^1.2.0",
-    "solid-js": "^1.9.10",
-    "valibot": "^1.2.0",
-    "@twocaretcat/tally-ts": "^1.0.0"
+    "solid-js": "^1.9.11"
   }
 }

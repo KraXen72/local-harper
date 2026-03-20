@@ -3,8 +3,8 @@ import TopBar from './components/TopBar';
 import Editor from './components/Editor';
 import Sidebar from './components/Sidebar';
 import RuleManager from './components/RuleManager';
-import { initHarper, analyzeText, transformLints, getLinter, addWordToDictionary, updateSingleRule, getLintConfig } from './services/harper-service';
-import type { HarperIssue, Suggestion, LintConfig } from './types';
+import { initHarper, analyzeText, transformLints, getLinter, addWordToDictionary, getRules, toggleRule } from './services/harper-service';
+import type { HarperIssue, Suggestion, RuleInfo } from './types';
 
 const App: Component = () => {
 	const [content, setContent] = createSignal('');
@@ -16,25 +16,33 @@ const App: Component = () => {
 	const [scrollToIssue, setScrollToIssue] = createSignal<string | null>(null);
 	const [isAnalyzing, setIsAnalyzing] = createSignal(false);
 	const [isRuleManagerOpen, setIsRuleManagerOpen] = createSignal(false);
-	const [currentLintConfig, setCurrentLintConfig] = createSignal<LintConfig | null>(null);
+	const [rules, setRules] = createSignal<RuleInfo[]>([]);
 
-	// Debounce state - not reactive, just regular variables
 	let debounceTimeout: number | undefined;
 	let analysisGeneration = 0;
 
-	// Set to store ignored issue IDs (persists until page refresh)
 	const ignoredIssues = new Set<string>();
-
-	// Track the last clicked issue from sidebar to avoid re-triggering autocomplete
 	let lastClickedIssueFromSidebar: string | null = null;
 
-	// Initialize Harper.js on mount (non-blocking UI)
+	function getIssueSignature(issue: HarperIssue, text: string): string {
+		const span = issue.lint.span();
+		const problemText = issue.lint.get_problem_text();
+		const lintKind = issue.lint.lint_kind();
+		const message = issue.lint.message();
+		
+		const contextSize = 50;
+		const contextBefore = text.slice(Math.max(0, span.start - contextSize), span.start);
+		const contextAfter = text.slice(span.end, Math.min(text.length, span.end + contextSize));
+		
+		return `${lintKind}|${message}|${problemText}|${contextBefore}|||${contextAfter}`;
+	}
+
 	onMount(async () => {
 		setIsInitializing(true);
 		try {
 			await initHarper();
-			const config = await getLintConfig();
-			setCurrentLintConfig(config);
+			const rulesList = await getRules();
+			setRules(rulesList);
 			setIsInitialized(true);
 		} catch (error) {
 			console.error('Failed to initialize Harper:', error);
@@ -60,17 +68,17 @@ const App: Component = () => {
 		// Increment generation to invalidate any in-flight analysis
 		const currentGeneration = ++analysisGeneration;
 
-		// Schedule new analysis
 		debounceTimeout = window.setTimeout(async () => {
 			setIsAnalyzing(true);
 			try {
 				const lints = await analyzeText(text);
 
-				// Only update if this is still the latest analysis
 				if (currentGeneration === analysisGeneration) {
 					const harperIssues = transformLints(lints);
-					// Filter out ignored issues
-					const filteredIssues = harperIssues.filter(issue => !ignoredIssues.has(issue.id));
+					const filteredIssues = harperIssues.filter(issue => {
+						const sig = getIssueSignature(issue, text);
+						return !ignoredIssues.has(sig);
+					});
 					setIssues(filteredIssues);
 				}
 			} catch (error) {
@@ -127,10 +135,13 @@ const App: Component = () => {
 	const handleAddToDictionary = async (word: string) => {
 		try {
 			await addWordToDictionary(word);
-			// Re-analyze to update issues
-			const lints = await analyzeText(content());
+			const currentText = content();
+			const lints = await analyzeText(currentText);
 			const harperIssues = transformLints(lints);
-			const filteredIssues = harperIssues.filter(issue => !ignoredIssues.has(issue.id));
+			const filteredIssues = harperIssues.filter(issue => {
+				const sig = getIssueSignature(issue, currentText);
+				return !ignoredIssues.has(sig);
+			});
 			setIssues(filteredIssues);
 		} catch (error) {
 			console.error('Failed to add word to dictionary:', error);
@@ -138,45 +149,31 @@ const App: Component = () => {
 	};
 
 	const handleIgnore = (issueId: string) => {
-		// Add to ignored set
-		ignoredIssues.add(issueId);
-		// Remove from current issues
-		setIssues(issues().filter(i => i.id !== issueId));
-		setSelectedIssueId(null);
-	};
-
-	const toggleRuleManager = () => {
-		setIsRuleManagerOpen(!isRuleManagerOpen());
+		const issue = issues().find(i => i.id === issueId);
+		if (issue) {
+			const currentText = content();
+			const sig = getIssueSignature(issue, currentText);
+			ignoredIssues.add(sig);
+			setIssues(issues().filter(i => i.id !== issueId));
+			setSelectedIssueId(null);
+		}
 	};
 
 	const handleRuleToggle = async (ruleName: string, enabled: boolean) => {
 		try {
-			await updateSingleRule(ruleName, enabled);
-			// Update current config
-			const newConfig = await getLintConfig();
-			setCurrentLintConfig(newConfig);
-			// Re-analyze current text
-			const lints = await analyzeText(content());
+			await toggleRule(ruleName, enabled);
+			const rulesList = await getRules();
+			setRules(rulesList);
+			const currentText = content();
+			const lints = await analyzeText(currentText);
 			const harperIssues = transformLints(lints);
-			const filteredIssues = harperIssues.filter(issue => !ignoredIssues.has(issue.id));
+			const filteredIssues = harperIssues.filter(issue => {
+				const sig = getIssueSignature(issue, currentText);
+				return !ignoredIssues.has(sig);
+			});
 			setIssues(filteredIssues);
 		} catch (error) {
 			console.error('Failed to toggle rule:', error);
-		}
-	};
-
-	const handleConfigImported = async () => {
-		try {
-			// Refresh config from storage
-			const newConfig = await getLintConfig();
-			setCurrentLintConfig(newConfig);
-			// Re-analyze current text with new config
-			const lints = await analyzeText(content());
-			const harperIssues = transformLints(lints);
-			const filteredIssues = harperIssues.filter(issue => !ignoredIssues.has(issue.id));
-			setIssues(filteredIssues);
-		} catch (error) {
-			console.error('Failed to refresh config after import:', error);
 		}
 	};
 
@@ -186,84 +183,61 @@ const App: Component = () => {
 				onCopy={handleCopy} 
 				isAnalyzing={isAnalyzing()} 
 				isRuleManagerOpen={isRuleManagerOpen()}
-				onToggleRuleManager={toggleRuleManager}
+				onToggleRuleManager={() => setIsRuleManagerOpen(!isRuleManagerOpen())}
 				isInitializing={isInitializing()}
 			/>
 
-				<div 
-					class="flex-1 grid overflow-hidden app-layout"
-					classList={{
-						'rule-manager-open': isRuleManagerOpen()
-					}}
-				>
-					{/* Left - Issue Sidebar/Rule manager on small screens */}
-					<div class="overflow-hidden sidebar-left"
-						classList={{
-							'hidden-on-mobile': isRuleManagerOpen()
+			<div class="flex-1 grid overflow-hidden app-layout">
+				<div class="overflow-hidden sidebar-left">
+					<Sidebar
+						issues={issues()}
+						selectedIssueId={selectedIssueId()}
+						onIssueSelect={(issueId) => {
+							const shouldTrigger = issueId !== lastClickedIssueFromSidebar;
+							lastClickedIssueFromSidebar = issueId;
+							
+							setSelectedIssueId(issueId);
+							
+							if (shouldTrigger) {
+								setScrollToIssue(issueId);
+								setTimeout(() => setScrollToIssue(null), 100);
+							}
 						}}
-					>
-						<Sidebar
-							issues={issues()}
-							selectedIssueId={selectedIssueId()}
-							onIssueSelect={(issueId) => {
-								// Only trigger scroll/autocomplete if it's a different issue than last clicked
-								const shouldTrigger = issueId !== lastClickedIssueFromSidebar;
-								lastClickedIssueFromSidebar = issueId;
-								
-								setSelectedIssueId(issueId);
-								
-								if (shouldTrigger) {
-									setScrollToIssue(issueId);
-									// Reset scroll trigger after a short delay
-									setTimeout(() => setScrollToIssue(null), 100);
-								}
-							}}
-							onApplySuggestion={handleApplySuggestion}
-							onAddToDictionary={handleAddToDictionary}
-						/>
-					</div>
-					
-					{/* Editor - centered area */}
-					<div class="overflow-hidden editor-wrapper">
-						<Editor
-							content={content()}
-							onContentChange={setContent}
-							issues={issues()}
-							selectedIssueId={selectedIssueId()}
-							onIssueSelect={(issueId) => {
-								// When selecting an issue from editor (cursor movement), clear the last clicked sidebar issue
-								// This allows clicking the same issue again from sidebar to trigger autocomplete
-								if (issueId !== lastClickedIssueFromSidebar) {
-									lastClickedIssueFromSidebar = null;
-								}
-								setSelectedIssueId(issueId);
-							}}
-							onApplySuggestion={handleApplySuggestion}
-							onAddToDictionary={handleAddToDictionary}
-							onIgnore={handleIgnore}
-							scrollToIssue={scrollToIssue()}
-						/>
-					</div>
-
-					{/* Right - Rule manager/nothing */}
-					<div 
-						class="overflow-hidden sidebar-right"
-						classList={{
-							'visible-on-mobile': isRuleManagerOpen()
-						}}
-					>
-						<Show when={currentLintConfig()}>
-							<RuleManager
-								isOpen={isRuleManagerOpen()}
-								onClose={() => setIsRuleManagerOpen(false)}
-								onRuleToggle={handleRuleToggle}
-								onConfigImported={handleConfigImported}
-								currentConfig={currentLintConfig()!}
-							/>
-						</Show>
-					</div>
+						onApplySuggestion={handleApplySuggestion}
+						onAddToDictionary={handleAddToDictionary}
+						onClose={() => setIsRuleManagerOpen(false)}
+					/>
 				</div>
-			
+				
+				<div class="overflow-hidden editor-wrapper">
+					<Editor
+						content={content()}
+						onContentChange={setContent}
+						issues={issues()}
+						selectedIssueId={selectedIssueId()}
+						onIssueSelect={(issueId) => {
+							if (issueId !== lastClickedIssueFromSidebar) {
+								lastClickedIssueFromSidebar = null;
+							}
+							setSelectedIssueId(issueId);
+						}}
+						onApplySuggestion={handleApplySuggestion}
+						onAddToDictionary={handleAddToDictionary}
+						onIgnore={handleIgnore}
+						scrollToIssue={scrollToIssue()}
+					/>
+				</div>
+				
+				<div class="overflow-hidden sidebar-right">
+					<Show when={isRuleManagerOpen()}>
+						<RuleManager
+							onClose={() => setIsRuleManagerOpen(false)}
+							onRuleToggle={handleRuleToggle}
+							rules={rules()}
+						/>
+					</Show>
+				</div>
+			</div>
 		</div>
 	);
 };
