@@ -252,7 +252,7 @@ body {
 }
 
 .app-layout {
-	grid-template-columns: minmax(0, 1fr) 3fr minmax(0, 1fr);
+	grid-template-columns: minmax(300px, 1fr) minmax(84ch, 3fr) minmax(0, 1fr);
 	grid-template-areas: "issues editor rulemanager";
 	max-height: calc(100vh - 3.5rem);
 }
