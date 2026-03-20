@@ -2,5 +2,20 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "config:recommended"
+  ],
+  "packageRules": [
+    {
+      "matchPackageNames": ["harper.js"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "automerge": true,
+      "prPriority": 100,
+      "prHourlyLimit": 0,
+      "prConcurrentLimit": 0
+    },
+    {
+      "matchPackageNames": ["harper.js"],
+      "matchUpdateTypes": ["major"],
+      "enabled": false
+    }
   ]
 }
