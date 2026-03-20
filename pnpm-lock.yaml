@@ -43,7 +43,7 @@ importers:
         specifier: ^1.2.98
         version: 1.2.98
       '@iconify/tailwind4':
-        specifier: ^1.2.0
+        specifier: ^1.2.3
         version: 1.2.3(tailwindcss@4.2.2)
       '@tailwindcss/vite':
         specifier: ^4.2.2
