@@ -15,6 +15,8 @@ const App: Component = () => {
 
 	const [scrollToIssue, setScrollToIssue] = createSignal<string | null>(null);
 	const [isAnalyzing, setIsAnalyzing] = createSignal(false);
+	const [isRuleManagerOpen, setIsRuleManagerOpen] = createSignal(false);
+	const [rules, setRules] = createSignal<RuleInfo[]>([]);
 
 	let debounceTimeout: number | undefined;
 	let analysisGeneration = 0;
@@ -34,6 +36,8 @@ const App: Component = () => {
 		setIsInitializing(true);
 		try {
 			await initHarper();
+			const rulesList = await getRules();
+			setRules(rulesList);
 			setIsInitialized(true);
 		} catch (error) {
 			console.error('Failed to initialize Harper:', error);
@@ -148,11 +152,30 @@ const App: Component = () => {
 		}
 	};
 
+	const handleRuleToggle = async (ruleName: string, enabled: boolean) => {
+		try {
+			await toggleRule(ruleName, enabled);
+			const rulesList = await getRules();
+			setRules(rulesList);
+			const lints = await analyzeText(content());
+			const harperIssues = transformLints(lints);
+			const filteredIssues = harperIssues.filter(issue => {
+				const sig = getIssueSignature(issue);
+				return !ignoredIssues.has(sig);
+			});
+			setIssues(filteredIssues);
+		} catch (error) {
+			console.error('Failed to toggle rule:', error);
+		}
+	};
+
 	return (
 		<div class="h-screen flex flex-col bg-(--flexoki-bg)">
 			<TopBar 
 				onCopy={handleCopy} 
 				isAnalyzing={isAnalyzing()} 
+				isRuleManagerOpen={isRuleManagerOpen()}
+				onToggleRuleManager={() => setIsRuleManagerOpen(!isRuleManagerOpen())}
 				isInitializing={isInitializing()}
 			/>
 
@@ -174,6 +197,7 @@ const App: Component = () => {
 						}}
 						onApplySuggestion={handleApplySuggestion}
 						onAddToDictionary={handleAddToDictionary}
+						onClose={() => setIsRuleManagerOpen(false)}
 					/>
 				</div>
 				
@@ -196,7 +220,15 @@ const App: Component = () => {
 					/>
 				</div>
 				
-				<div class="sidebar-ghost" style={{ "min-width": "0" }} />
+				<div class="overflow-hidden sidebar-right">
+					<Show when={isRuleManagerOpen()}>
+						<RuleManager
+							onClose={() => setIsRuleManagerOpen(false)}
+							onRuleToggle={handleRuleToggle}
+							rules={rules()}
+						/>
+					</Show>
+				</div>
 			</div>
 		</div>
 	);

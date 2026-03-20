@@ -48,6 +48,7 @@ export interface SidebarProps {
 	onIssueSelect: (issueId: string) => void;
 	onApplySuggestion: (issueId: string, suggestion: Suggestion) => void;
 	onAddToDictionary: (word: string) => void;
+	onClose?: () => void;
 }
 
 export interface IssueItemProps {

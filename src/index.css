@@ -252,22 +252,52 @@ body {
 }
 
 .app-layout {
-	grid-template-columns: minmax(200px, 25%) minmax(80ch, 85ch) minmax(200px, 25%);
-	grid-template-areas: "issues editor ghost";
+	grid-template-columns: minmax(0, 1fr) 3fr minmax(0, 1fr);
+	grid-template-areas: "issues editor rulemanager";
 	max-height: calc(100vh - 3.5rem);
 }
 .sidebar-left { grid-area: issues }
-.editor-wrapper { grid-area: editor; }
-.sidebar-ghost { grid-area: ghost; }
+.editor-wrapper { 
+	grid-area: editor;
+	display: flex;
+	justify-content: center;
+}
+.sidebar-right { grid-area: rulemanager; }
 
-@media (max-width: 1200px) {
+@media (max-width: 1024px) {
 	.app-layout {
-		grid-template-columns: minmax(150px, 20%) minmax(70ch, 75ch) 0;
+		grid-template-columns: minmax(0, 1fr) 3fr;
+		grid-template-areas: "issues editor";
+	}
+	
+	.sidebar-right {
+		position: fixed;
+		right: 0;
+		top: 3.5rem;
+		bottom: 0;
+		width: min(400px, 85vw);
+		z-index: 50;
+		box-shadow: -4px 0 12px rgba(0, 0, 0, 0.3);
 	}
 }
 
-@media (max-width: 900px) {
+@media (max-width: 640px) {
 	.app-layout {
-		grid-template-columns: minmax(120px, 1fr) minmax(60ch, 65ch) 0;
+		grid-template-columns: 3fr;
+		grid-template-areas: "editor";
+	}
+	
+	.sidebar-left {
+		position: fixed;
+		left: 0;
+		top: 3.5rem;
+		bottom: 0;
+		width: min(300px, 85vw);
+		z-index: 50;
+		box-shadow: 4px 0 12px rgba(0, 0, 0, 0.3);
+	}
+	
+	.sidebar-right {
+		width: min(350px, 90vw);
 	}
 }
