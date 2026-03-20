@@ -1,205 +1,259 @@
-import { Component, createSignal, onMount, createEffect, batch, Show } from 'solid-js';
-import TopBar from './components/TopBar';
-import Editor from './components/Editor';
-import Sidebar from './components/Sidebar';
-import RuleManager from './components/RuleManager';
-import { initHarper, analyzeText, transformLints, getLinter, addWordToDictionary, getRules, toggleRule } from './services/harper-service';
-import type { HarperIssue, Suggestion, RuleInfo } from './types';
+/**
+ * App.tsx — root orchestrator
+ *
+ * Owns all application state:
+ *   text, issues, ignoredKeys, selectedIssueIndex, dictionary, harperReady, analyzing
+ *
+ * The only place where analysis runs. All child components are pure display.
+ */
+
+import {
+  createMemo,
+  createSignal,
+  onMount,
+  Show,
+  type Component,
+} from "solid-js";
+import { initHarper, type HarperAPI, type Issue } from "./harper";
+import { loadDictionary, saveDictionary } from "./dictionary";
+import Editor from "./Editor";
+import Sidebar from "./Sidebar";
+import WordCounter from "./WordCounter";
+
+// ── Debounce ───────────────────────────────────────────────────────────────
+
+function debounce<T extends unknown[]>(
+  fn: (...args: T) => void,
+  ms: number
+): (...args: T) => void {
+  let timer: ReturnType<typeof setTimeout>;
+  return (...args) => {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn(...args), ms);
+  };
+}
+
+// ── App ────────────────────────────────────────────────────────────────────
 
 const App: Component = () => {
-	const [content, setContent] = createSignal('');
-	const [issues, setIssues] = createSignal<HarperIssue[]>([]);
-	const [selectedIssueId, setSelectedIssueId] = createSignal<string | null>(null);
-	const [isInitialized, setIsInitialized] = createSignal(false);
-	const [isInitializing, setIsInitializing] = createSignal(false);
+  // ── State ──
+  const [text, setText] = createSignal("");
+  const [rawIssues, setRawIssues] = createSignal<Issue[]>([]);
+  const [ignoredKeys, setIgnoredKeys] = createSignal<Set<string>>(new Set());
+  const [selectedIssueIndex, setSelectedIssueIndex] = createSignal<number | null>(null);
+  const [harperReady, setHarperReady] = createSignal(false);
+  const [analyzing, setAnalyzing] = createSignal(false);
+  const [copied, setCopied] = createSignal(false);
+  const [selectedText, setSelectedText] = createSignal<string | null>(null);
+  /** Incrementing triggers autocomplete in Editor (from sidebar click). */
+  const [autocompleteTrigger, setAutocompleteTrigger] = createSignal(0);
 
-	const [scrollToIssue, setScrollToIssue] = createSignal<string | null>(null);
-	const [isAnalyzing, setIsAnalyzing] = createSignal(false);
+  let harper: HarperAPI | undefined;
+  let dictionary = loadDictionary();
 
-	let debounceTimeout: number | undefined;
-	let analysisGeneration = 0;
+  // issues after filtering ignored ones
+  const visibleIssues = createMemo(() => {
+    const ignored = ignoredKeys();
+    return rawIssues().filter((i) => !ignored.has(i.key));
+  });
 
-	const ignoredIssues = new Set<string>();
-	let lastClickedIssueFromSidebar: string | null = null;
+  // ── Analysis ──
 
-	function getIssueSignature(issue: HarperIssue): string {
-		const span = issue.lint.span();
-		const problemText = issue.lint.get_problem_text();
-		const lintKind = issue.lint.lint_kind();
-		const message = issue.lint.message();
-		return `${lintKind}|${message}|${problemText}|${span.start}-${span.end}`;
-	}
+  let generation = 0;
 
-	onMount(async () => {
-		setIsInitializing(true);
-		try {
-			await initHarper();
-			setIsInitialized(true);
-		} catch (error) {
-			console.error('Failed to initialize Harper:', error);
-		} finally {
-			setIsInitializing(false);
-		}
-	});
+  async function runAnalysis(currentText: string) {
+    if (!harper) return;
+    const gen = ++generation;
+    setAnalyzing(true);
+    try {
+      const issues = harper.analyze(currentText);
+      if (gen !== generation) return; // stale result
+      setRawIssues(issues);
+      // Recalibrate selectedIndex if it's now out of range
+      setSelectedIssueIndex((idx) => {
+        const visible = issues.filter((i) => !ignoredKeys().has(i.key));
+        if (idx === null || idx >= visible.length) return null;
+        return idx;
+      });
+    } finally {
+      if (gen === generation) setAnalyzing(false);
+    }
+  }
 
-	// Manual debounced analysis function
-	const scheduleAnalysis = (text: string) => {
-		// Clear any pending analysis
-		if (debounceTimeout !== undefined) {
-			clearTimeout(debounceTimeout);
-		}
+  const debouncedAnalysis = debounce(runAnalysis, 200);
 
-		// Handle empty text
-		if (!text.trim()) {
-			setIssues([]);
-			setIsAnalyzing(false);
-			return;
-		}
+  // ── Init ──
 
-		// Increment generation to invalidate any in-flight analysis
-		const currentGeneration = ++analysisGeneration;
+  onMount(async () => {
+    harper = await initHarper(dictionary);
+    setHarperReady(true);
+    // Analyze initial text (empty, but starts the reactive loop cleanly)
+    await runAnalysis(text());
+  });
 
-		debounceTimeout = window.setTimeout(async () => {
-			setIsAnalyzing(true);
-			try {
-				const lints = await analyzeText(text);
+  // ── Handlers ──
 
-				if (currentGeneration === analysisGeneration) {
-					const harperIssues = transformLints(lints);
-					const filteredIssues = harperIssues.filter(issue => {
-						const sig = getIssueSignature(issue);
-						return !ignoredIssues.has(sig);
-					});
-					setIssues(filteredIssues);
-				}
-			} catch (error) {
-				if (currentGeneration === analysisGeneration) {
-					console.error('Failed to analyze text:', error);
-				}
-			} finally {
-				if (currentGeneration === analysisGeneration) {
-					setIsAnalyzing(false);
-				}
-			}
-		}, 200);
-	};
+  function handleTextChange(newText: string) {
+    setText(newText);
+    if (harperReady()) debouncedAnalysis(newText);
+  }
 
-	// Watch content changes and trigger analysis
-	createEffect(() => {
-		const text = content();
-		if (isInitialized()) {
-			scheduleAnalysis(text);
-		}
-	});
+  function handleCursorIssueChange(index: number | null) {
+    setSelectedIssueIndex(index);
+  }
 
-	const handleCopy = async () => {
-		try {
-			await navigator.clipboard.writeText(content());
-		} catch (error) {
-			console.error('Failed to copy:', error);
-		}
-	};
+  function handleSidebarSelect(index: number) {
+    setSelectedIssueIndex(index);
+    setAutocompleteTrigger((c) => c + 1);
+  }
 
-	const handleApplySuggestion = async (issueId: string, suggestion: Suggestion) => {
-		const issue = issues().find(i => i.id === issueId);
-		if (!issue) return;
+  function handleNavigate(dir: "next" | "prev") {
+    const issues = visibleIssues();
+    if (issues.length === 0) return;
+    setSelectedIssueIndex((current) => {
+      if (current === null) return dir === "next" ? 0 : issues.length - 1;
+      if (dir === "next") return (current + 1) % issues.length;
+      return (current - 1 + issues.length) % issues.length;
+    });
+    setAutocompleteTrigger((c) => c + 1);
+  }
 
-		try {
-			const linter = getLinter();
-			const newText = await linter.applySuggestion(content(), issue.lint, suggestion);
+  function handleIgnore(key: string) {
+    setIgnoredKeys((prev) => new Set([...prev, key]));
+    setSelectedIssueIndex(null);
+  }
 
-			// Immediately analyze the new text
-			const lints = await analyzeText(newText);
-			const harperIssues = transformLints(lints);
+  function handleAddWord(word: string) {
+    if (!harper) return;
+    dictionary = [...dictionary, word];
+    saveDictionary(dictionary);
+    harper.addWord(word);
+    // Re-analyze to clear spelling issues for this word
+    runAnalysis(text());
+  }
 
-			// Batch both updates together so they happen atomically
-			batch(() => {
-				setSelectedIssueId(null);
-				setContent(newText);
-				setIssues(harperIssues);
-			});
-		} catch (error) {
-			console.error('Failed to apply suggestion:', error);
-		}
-	};
+  function handleApplySuggestion(_issue: Issue, _suggestion: string) {
+    // The CM dispatch in Editor fires onTextChange → handleTextChange → debouncedAnalysis.
+    // Nothing extra needed here except clearing the cursor selection state.
+    setSelectedIssueIndex(null);
+  }
 
-	const handleAddToDictionary = async (word: string) => {
-		try {
-			await addWordToDictionary(word);
-			const lints = await analyzeText(content());
-			const harperIssues = transformLints(lints);
-			const filteredIssues = harperIssues.filter(issue => {
-				const sig = getIssueSignature(issue);
-				return !ignoredIssues.has(sig);
-			});
-			setIssues(filteredIssues);
-		} catch (error) {
-			console.error('Failed to add word to dictionary:', error);
-		}
-	};
+  async function handleCopy() {
+    await navigator.clipboard.writeText(text());
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  }
 
-	const handleIgnore = (issueId: string) => {
-		const issue = issues().find(i => i.id === issueId);
-		if (issue) {
-			const sig = getIssueSignature(issue);
-			ignoredIssues.add(sig);
-			setIssues(issues().filter(i => i.id !== issueId));
-			setSelectedIssueId(null);
-		}
-	};
+  // ── Render ──
 
-	return (
-		<div class="h-screen flex flex-col bg-(--flexoki-bg)">
-			<TopBar 
-				onCopy={handleCopy} 
-				isAnalyzing={isAnalyzing()} 
-				isInitializing={isInitializing()}
-			/>
+  return (
+    <div
+      class="grid h-screen overflow-hidden"
+      style={{
+        "grid-template-columns": "280px 1fr",
+        "grid-template-rows": "auto 1fr auto",
+        background: "var(--color-base-black)",
+      }}
+    >
+      {/* ── Header ── */}
+      <header
+        class="col-span-2 flex items-center justify-between px-5 py-3 shrink-0"
+        style={{
+          background: "var(--color-base-950)",
+          "border-bottom": "1px solid var(--color-base-850)",
+        }}
+      >
+        <div class="flex items-center gap-2.5">
+          <span
+            class="font-semibold tracking-tight"
+            style={{ color: "var(--color-base-100)" }}
+          >
+            Harper
+          </span>
+          <Show when={!harperReady()}>
+            <span class="text-xs" style={{ color: "var(--color-base-600)" }}>
+              loading…
+            </span>
+          </Show>
+          <Show when={harperReady() && analyzing()}>
+            <span class="analyzing-dot" aria-hidden="true" />
+          </Show>
+        </div>
 
-			<div class="flex-1 grid overflow-hidden app-layout">
-				<div class="overflow-hidden sidebar-left">
-					<Sidebar
-						issues={issues()}
-						selectedIssueId={selectedIssueId()}
-						onIssueSelect={(issueId) => {
-							const shouldTrigger = issueId !== lastClickedIssueFromSidebar;
-							lastClickedIssueFromSidebar = issueId;
-							
-							setSelectedIssueId(issueId);
-							
-							if (shouldTrigger) {
-								setScrollToIssue(issueId);
-								setTimeout(() => setScrollToIssue(null), 100);
-							}
-						}}
-						onApplySuggestion={handleApplySuggestion}
-						onAddToDictionary={handleAddToDictionary}
-					/>
-				</div>
-				
-				<div class="overflow-hidden editor-wrapper">
-					<Editor
-						content={content()}
-						onContentChange={setContent}
-						issues={issues()}
-						selectedIssueId={selectedIssueId()}
-						onIssueSelect={(issueId) => {
-							if (issueId !== lastClickedIssueFromSidebar) {
-								lastClickedIssueFromSidebar = null;
-							}
-							setSelectedIssueId(issueId);
-						}}
-						onApplySuggestion={handleApplySuggestion}
-						onAddToDictionary={handleAddToDictionary}
-						onIgnore={handleIgnore}
-						scrollToIssue={scrollToIssue()}
-					/>
-				</div>
-				
-				<div class="sidebar-ghost" style={{ "min-width": "0" }} />
-			</div>
-		</div>
-	);
+        <button
+          class="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded transition-colors"
+          style={{
+            color: copied() ? "var(--color-green)" : "var(--color-base-400, var(--color-base-500))",
+            background: "transparent",
+            border: "1px solid var(--color-base-700)",
+          }}
+          onClick={handleCopy}
+          title="Copy text"
+        >
+          <Show
+            when={!copied()}
+            fallback={
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+            }
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+            </svg>
+          </Show>
+          {copied() ? "Copied!" : "Copy"}
+        </button>
+      </header>
+
+      {/* ── Loading bar ── */}
+      <Show when={!harperReady()}>
+        <div class="progress-bar col-span-2" style={{ "grid-row": "1", "align-self": "end" }} />
+      </Show>
+
+      {/* ── Sidebar ── */}
+      <div class="overflow-hidden" style={{ "grid-row": "2", "grid-column": "1" }}>
+        <Sidebar
+          issues={visibleIssues()}
+          selectedIndex={selectedIssueIndex()}
+          onSelect={handleSidebarSelect}
+          onIgnore={handleIgnore}
+        />
+      </div>
+
+      {/* ── Editor ── */}
+      <div
+        class="overflow-hidden"
+        style={{
+          "grid-row": "2",
+          "grid-column": "2",
+          background: "var(--color-base-900)",
+        }}
+      >
+        <Show when={harperReady()} fallback={<div class="h-full" />}>
+          <Editor
+            issues={visibleIssues()}
+            selectedIssueIndex={selectedIssueIndex()}
+            autocompleteTrigger={autocompleteTrigger()}
+            placeholder="Start writing…"
+            onTextChange={handleTextChange}
+            onCursorIssueChange={handleCursorIssueChange}
+            onNavigate={handleNavigate}
+            onIgnore={handleIgnore}
+            onAddWord={handleAddWord}
+            onApplySuggestion={handleApplySuggestion}
+            onSelectionChange={setSelectedText}
+          />
+        </Show>
+      </div>
+
+      {/* ── Word counter ── */}
+      <div class="col-span-2" style={{ "grid-row": "3" }}>
+        <WordCounter text={text()} selectedText={selectedText()} />
+      </div>
+    </div>
+  );
 };
 
 export default App;

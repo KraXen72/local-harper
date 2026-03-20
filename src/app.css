@@ -1,0 +1,221 @@
+@import "tailwindcss";
+
+/* ── Flexoki dark palette ─────────────────────────────────── */
+@theme {
+  --color-base-black:  #100F0F;
+  --color-base-950:    #1C1B1A;
+  --color-base-900:    #282726;
+  --color-base-850:    #343331;
+  --color-base-800:    #403E3C;
+  --color-base-700:    #575653;
+  --color-base-600:    #6F6E69;
+  --color-base-500:    #878580;
+  --color-base-300:    #B1ADA8;
+  --color-base-200:    #CECDC3;
+  --color-base-100:    #E6E4D9;
+
+  --color-red:         #D14D41;
+  --color-orange:      #DA702C;
+  --color-yellow:      #D0A215;
+  --color-green:       #879A39;
+  --color-cyan:        #3AA99F;
+  --color-blue:        #4385BE;
+  --color-purple:      #8B7EC8;
+  --color-magenta:     #CE5D97;
+
+  --font-family-sans: "Inter", sans-serif;
+  --font-family-mono: "JetBrains Mono", "Fira Code", monospace;
+}
+
+/* ── Reset / base ─────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--color-base-black);
+  color: var(--color-base-200);
+  font-family: var(--font-family-sans);
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--color-cyan) 35%, transparent);
+}
+
+/* ── Scrollbars ───────────────────────────────────────────── */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--color-base-700);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover { background: var(--color-base-600); }
+
+/* ── Loading progress bar ─────────────────────────────────── */
+@keyframes progress-slide {
+  0%   { left: -45%; width: 45%; }
+  100% { left: 100%; width: 45%; }
+}
+
+.progress-bar {
+  position: relative;
+  height: 2px;
+  background: var(--color-base-800);
+  overflow: hidden;
+}
+
+.progress-bar::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  height: 100%;
+  background: var(--color-cyan);
+  animation: progress-slide 1.2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* ── Analysis pulse ───────────────────────────────────────── */
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.25; }
+}
+
+.analyzing-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--color-green);
+  animation: pulse-dot 1.2s ease-in-out infinite;
+}
+
+/* ── CodeMirror reset ─────────────────────────────────────── */
+.cm-editor {
+  height: 100%;
+  background: transparent !important;
+  font-family: var(--font-family-sans);
+  font-size: 15px;
+  line-height: 1.65;
+}
+
+.cm-editor.cm-focused { outline: none !important; }
+
+.cm-scroller {
+  overflow: auto;
+  padding: 20px 24px;
+}
+
+.cm-content {
+  color: var(--color-base-100);
+  caret-color: var(--color-cyan);
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-width: 72ch;
+}
+
+.cm-line { padding: 0; }
+
+.cm-cursor, .cm-dropCursor {
+  border-left: 2px solid var(--color-cyan) !important;
+}
+
+.cm-selectionBackground,
+.cm-editor.cm-focused .cm-selectionBackground {
+  background: color-mix(in srgb, var(--color-cyan) 20%, transparent) !important;
+}
+
+.cm-placeholder { color: var(--color-base-600) !important; }
+
+/* ── Harper underlines ────────────────────────────────────── */
+.cm-harper-underline {
+  text-decoration-line: underline;
+  text-decoration-style: wavy;
+  text-decoration-skip-ink: none;
+  text-decoration-thickness: 2px;
+  /* color set inline via style attribute */
+}
+
+/* ── Harper tooltip ───────────────────────────────────────── */
+.cm-tooltip.harper-tooltip {
+  background: var(--color-base-900);
+  border: 1px solid var(--color-base-700);
+  border-radius: 8px;
+  padding: 10px 12px;
+  max-width: 300px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  font-family: var(--font-family-sans);
+  font-size: 13px;
+}
+
+.harper-tooltip-kind {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-bottom: 6px;
+  background: color-mix(in srgb, var(--harper-kind-color) 20%, transparent);
+  color: var(--harper-kind-color);
+  border: 1px solid color-mix(in srgb, var(--harper-kind-color) 40%, transparent);
+}
+
+.harper-tooltip-message {
+  color: var(--color-base-200);
+  line-height: 1.5;
+  margin-bottom: 8px;
+}
+
+.harper-tooltip-message code {
+  font-family: var(--font-family-mono);
+  font-size: 12px;
+  background: var(--color-base-800);
+  padding: 1px 4px;
+  border-radius: 3px;
+  color: var(--color-base-100);
+}
+
+.harper-tooltip-ignore {
+  font-size: 12px;
+  color: var(--color-base-500);
+  background: transparent;
+  border: 1px solid var(--color-base-700);
+  border-radius: 4px;
+  padding: 3px 8px;
+  cursor: pointer;
+  transition: color 0.1s, border-color 0.1s;
+}
+
+.harper-tooltip-ignore:hover {
+  color: var(--color-base-200);
+  border-color: var(--color-base-500);
+}
+
+/* ── Autocomplete ─────────────────────────────────────────── */
+.cm-tooltip.cm-tooltip-autocomplete {
+  background: var(--color-base-900) !important;
+  border: 1px solid var(--color-base-700) !important;
+  border-radius: 8px !important;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5) !important;
+  font-family: var(--font-family-sans) !important;
+}
+
+.cm-tooltip-autocomplete > ul {
+  font-family: var(--font-family-sans) !important;
+  font-size: 13px !important;
+}
+
+.cm-tooltip-autocomplete > ul > li {
+  padding: 6px 12px !important;
+  color: var(--color-base-200) !important;
+}
+
+.cm-tooltip-autocomplete > ul > li[aria-selected] {
+  background: var(--color-base-800) !important;
+  color: var(--color-base-100) !important;
+}

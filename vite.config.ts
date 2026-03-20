@@ -1,23 +1,21 @@
-import tailwindcss from '@tailwindcss/vite';
-import { defineConfig } from 'vite';
-import solidPlugin from 'vite-plugin-solid';
-import devtools from 'solid-devtools/vite';
+import { defineConfig } from "vite";
+import solidPlugin from "vite-plugin-solid";
+import tailwindcss from "@tailwindcss/vite";
 
 export default defineConfig({
-  base: '/local-harper/',
-  plugins: [devtools(), solidPlugin(), tailwindcss()],
+  plugins: [solidPlugin(), tailwindcss()],
+  base: "/local-harper/",
   server: {
-    port: 3000,
     headers: {
-      'Cross-Origin-Embedder-Policy': 'require-corp',
-      'Cross-Origin-Opener-Policy': 'same-origin',
+      // Required for SharedArrayBuffer (WASM threading in harper.js)
+      "Cross-Origin-Embedder-Policy": "require-corp",
+      "Cross-Origin-Opener-Policy": "same-origin",
     },
   },
-  build: {
-    target: 'esnext',
-  },
   optimizeDeps: {
-    exclude: ['harper.js'],
+    exclude: ["harper.js"],
   },
-  assetsInclude: ['**/*.wasm'],
+  build: {
+    target: "esnext",
+  },
 });
