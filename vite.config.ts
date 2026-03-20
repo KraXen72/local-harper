@@ -1,23 +1,25 @@
-import tailwindcss from '@tailwindcss/vite';
 import { defineConfig } from 'vite';
 import solidPlugin from 'vite-plugin-solid';
-import devtools from 'solid-devtools/vite';
+import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
-  base: '/local-harper/',
-  plugins: [devtools(), solidPlugin(), tailwindcss()],
+  plugins: [
+    tailwindcss(),
+                            solidPlugin(),
+  ],
+  optimizeDeps: {
+    // This is the crucial part: prevent Vite from pre-bundling Harper
+    exclude: ['harper.js']
+  },
   server: {
     port: 3000,
     headers: {
-      'Cross-Origin-Embedder-Policy': 'require-corp',
       'Cross-Origin-Opener-Policy': 'same-origin',
+      'Cross-Origin-Embedder-Policy': 'require-corp',
     },
   },
   build: {
     target: 'esnext',
   },
-  optimizeDeps: {
-    exclude: ['harper.js'],
-  },
-  assetsInclude: ['**/*.wasm'],
+  base: './',
 });

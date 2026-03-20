@@ -1,194 +1,81 @@
 import { Component, onMount, onCleanup, createEffect, createSignal } from 'solid-js';
-import WordCounter from './WordCounter';
-import { EditorView, keymap, highlightSpecialChars, drawSelection, dropCursor, rectangularSelection, crosshairCursor, placeholder } from '@codemirror/view';
+import { EditorView } from '@codemirror/view';
 import { EditorState } from '@codemirror/state';
-import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
-import type { ViewUpdate } from '@codemirror/view';
-import type { EditorProps } from '../types';
-import {
-	issueField,
-	issueDecorationsField,
-	issueTheme,
-	darkEditorTheme,
-	updateIssuesEffect,
-	setSelectedIssueEffect,
-	harperAutocompletion,
-	harperCursorTooltip,
-	setIssueActions,
-	issueNavigationKeymap,
-	issueSyncExtension,
-	issueClickAutocomplete,
-	triggerAutocompleteForIssue,
-} from '../utils/editor-extensions';
+import type { HarperIssue, Suggestion } from '../types';
+import { createHarperExtensions, updateIssuesEffect, setSelectedIssueEffect } from '../utils/editor-extensions';
+import WordCounter from './WordCounter';
+
+interface EditorProps {
+	content: string;
+	issues: HarperIssue[];
+	selectedIssueId: string | null;
+	onContentChange: (content: string) => void;
+	onIssueSelect: (id: string | null) => void;
+	onApplySuggestion: (issue: HarperIssue, suggestion: Suggestion) => void;
+	onIgnore: (signature: string) => void;
+	onAddToDictionary: (word: string) => void;
+}
 
 const Editor: Component<EditorProps> = (props) => {
 	let editorRef!: HTMLDivElement;
-	let view: EditorView | undefined;
-
+	let view: EditorView;
 	const [counterText, setCounterText] = createSignal(props.content);
 
 	onMount(() => {
-		if (!editorRef) return;
-
-		// Set up issue actions for autocomplete
-		setIssueActions({
-			onApplySuggestion: (issueId, suggestion) => {
-				props.onApplySuggestion(issueId, suggestion);
-			},
-			onAddToDictionary: (word) => {
-				props.onAddToDictionary(word);
-			},
-			onIgnore: (issueId) => {
-				props.onIgnore(issueId);
-			},
-			onIssueSelect: (issueId) => {
-				props.onIssueSelect(issueId);
-			},
-		});
-
-		const startState = EditorState.create({
+		const state = EditorState.create({
 			doc: props.content,
-			extensions: [
-				highlightSpecialChars(),
-				history(),
-				drawSelection(),
-				dropCursor(),
-				rectangularSelection(),
-				crosshairCursor(),
-				placeholder("Paste text or start typing..."),
-				EditorView.lineWrapping,
-				keymap.of([...defaultKeymap, ...historyKeymap]),
-				issueNavigationKeymap,
-				issueField,
-				issueDecorationsField,
-				issueTheme,
-				darkEditorTheme,
-				harperAutocompletion,
-				harperCursorTooltip,
-				issueSyncExtension,
-				issueClickAutocomplete,
-				EditorView.updateListener.of((update: ViewUpdate) => {
-					if (update.docChanged) {
-						const newContent = update.state.doc.toString();
-						props.onContentChange(newContent);
-					}
-
-					// Update word counter based on selection or whole document
-					if (update.selectionSet) {
-						const sel = update.state.selection.main;
-						if (!sel.empty) {
-							const selectedText = update.state.sliceDoc(sel.from, sel.to);
-							setCounterText(selectedText);
-						} else {
-							setCounterText(update.state.doc.toString());
-						}
-					}
-				}),
-			],
+			extensions: createHarperExtensions({
+				onChange: (text, selectedText) => {
+					props.onContentChange(text);
+					setCounterText(selectedText || text);
+				},
+				onSelectIssue: props.onIssueSelect,
+				onApply: props.onApplySuggestion,
+				onIgnore: props.onIgnore,
+				onAddDict: props.onAddToDictionary,
+			}),
 		});
 
-		view = new EditorView({
-			state: startState,
-			parent: editorRef,
-		});
-
-		// ensure initial counter state reflects the full document
-		setCounterText(props.content);
+		view = new EditorView({ state, parent: editorRef });
 	});
 
-	onCleanup(() => {
-		if (view) {
-			view.destroy();
-		}
-	});
+	onCleanup(() => view?.destroy());
 
-	// Track previous values to detect real changes
-	let prevIssues = props.issues;
-	let prevSelectedId = props.selectedIssueId;
-
-	// Update editor content when prop changes
+	// Sync content from outside (e.g. applying a suggestion)
 	createEffect(() => {
 		if (view && view.state.doc.toString() !== props.content) {
-			view.dispatch({
-				changes: {
-					from: 0,
-					to: view.state.doc.length,
-					insert: props.content,
-				},
-			});
+			view.dispatch({ changes: { from: 0, to: view.state.doc.length, insert: props.content } });
 		}
 	});
 
-	// Update issue decorations only when issues actually change
+	// Sync issues down to CodeMirror
 	createEffect(() => {
-		const newIssues = props.issues;
-		if (view && newIssues !== prevIssues) {
-			prevIssues = newIssues;
-			view.dispatch({
-				effects: updateIssuesEffect.of(newIssues),
-			});
-		}
+		if (view) view.dispatch({ effects: updateIssuesEffect.of(props.issues) });
 	});
 
-	// Update selected issue only when it actually changes
+	// Sync selected issue from Sidebar -> Editor (scrolls to it)
 	createEffect(() => {
-		const newSelectedId = props.selectedIssueId;
-		if (view && newSelectedId !== prevSelectedId) {
-			prevSelectedId = newSelectedId;
-			view.dispatch({
-				effects: setSelectedIssueEffect.of(newSelectedId),
-			});
-		}
-	});
-
-	// Scroll to issue and select it when requested from sidebar
-	createEffect(() => {
-		const scrollTo = props.scrollToIssue;
-		if (view && scrollTo) {
-			const issue = props.issues.find(i => i.id === scrollTo);
+		if (view && props.selectedIssueId) {
+			view.dispatch({ effects: setSelectedIssueEffect.of(props.selectedIssueId) });
+			const issue = props.issues.find(i => i.id === props.selectedIssueId);
 			if (issue) {
-				const span = issue.lint.span();
-
 				view.dispatch({
-					selection: { anchor: span.start },
-					effects: [
-						EditorView.scrollIntoView(span.start, { y: 'center' }),
-						setSelectedIssueEffect.of(scrollTo),
-					],
+					selection: { anchor: issue.lint.span().start },
+											effects: EditorView.scrollIntoView(issue.lint.span().start, { y: 'center' })
 				});
-
-				// Focus the editor so user can immediately interact
 				view.focus();
-
-				// Trigger autocomplete using the unified helper (will skip if only Ignore would be shown)
-				triggerAutocompleteForIssue(view, issue);
 			}
 		}
 	});
 
-	const handleContainerClick = (e: MouseEvent) => {
-		// If clicking in the empty space (not on the editor), focus the editor
-		if (view && e.target !== editorRef && !(editorRef.contains(e.target as Node))) {
-			view.focus();
-		}
-	};
-
 	return (
-		<div class="h-full overflow-auto bg-(--flexoki-bg)" onClick={handleContainerClick}>
-			<div class="pt-12 px-4 pb-12 flex justify-center">
-				<div
-					class="bg-(--flexoki-bg) rounded-xl overflow-hidden shadow-2xl border border-(--flexoki-ui-2) w-full max-w-216.75"
-					ref={editorRef}>
-				</div>
-			</div>
-
-			{/* Sticky word counter at bottom of the scrolling container */}
-			<div class="sticky bottom-0 left-0 right-0 px-4">
-				<div class="w-full max-w-216.75 mx-auto bg-(--flexoki-bg)">
-					<hr class="border-(--flexoki-ui-2) my-2" />
-					<WordCounter text={counterText()} />
-				</div>
-			</div>
+		<div class="h-full overflow-auto bg-(--flexoki-bg) flex flex-col" onClick={(e) => { if(e.target === e.currentTarget) view?.focus() }}>
+		<div class="flex-1 p-8 flex justify-center">
+		<div class="w-full max-w-3xl rounded-xl border border-(--flexoki-ui-2) bg-(--flexoki-bg) overflow-hidden" ref={editorRef} />
+		</div>
+		<div class="sticky bottom-0 bg-(--flexoki-bg) border-t border-(--flexoki-ui-2) px-4">
+		<div class="max-w-3xl mx-auto"><WordCounter text={counterText()} /></div>
+		</div>
 		</div>
 	);
 };

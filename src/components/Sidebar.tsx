@@ -1,92 +1,80 @@
 import { Component, For, Show, createEffect } from 'solid-js';
-import type { ParentComponent } from 'solid-js';
-import type { SidebarProps } from '../types';
-import IssueItem from './IssueItem';
+import type { HarperIssue } from '../types';
+import { lintKindColor } from '../utils/lint-kind-colors';
 
-
-const Kbd: ParentComponent = (props) => (
-	<kbd class="px-2 py-1 bg-(--flexoki-ui) border border-(--flexoki-ui-2) rounded text-[10px] font-mono text-(--flexoki-tx-2) shadow-sm">
-		{props.children}
-	</kbd>
-);
+interface SidebarProps {
+	issues: HarperIssue[];
+	selectedIssueId: string | null;
+	onIssueSelect: (id: string) => void;
+}
 
 const Sidebar: Component<SidebarProps> = (props) => {
-	// oxlint-disable-next-line no-unassigned-vars
-	let containerRef!: HTMLDivElement;
-	const issueRefs = new Map<string, HTMLDivElement>();
+	const itemRefs = new Map<string, HTMLDivElement>();
 
-	// Scroll to selected issue in sidebar
+	// Auto-scroll to selected issue
 	createEffect(() => {
-		const selectedId = props.selectedIssueId;
-		if (selectedId) {
-			const element = issueRefs.get(selectedId);
-			if (element) {
-				element.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-			}
+		if (props.selectedIssueId) {
+			const el = itemRefs.get(props.selectedIssueId);
+			if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 		}
 	});
 
 	return (
-		<div ref={containerRef} class="grid h-full border-l border-(--flexoki-ui-2) bg-(--flexoki-bg)/95 backdrop-blur-md max-w-100" style={{
-			"grid-template-rows": "min-content 1fr min-content",
-		}}>
-			<div class="flex items-center justify-between px-4 py-3 bg-(--flexoki-bg)">
-				<div class="flex items-center gap-3">
-					<h2 class="text-base font-semibold text-(--flexoki-tx) tracking-tight">Issues</h2>
-					<Show when={props.issues.length > 0}>
-						<span class="inline-flex items-center justify-center min-w-8 h-6 px-2 rounded-md border border-(--flexoki-red)/40 bg-(--flexoki-red)/15 text-(--flexoki-red) text-xs font-bold tracking-wide shadow-sm">
-							{props.issues.length}
-						</span>
-					</Show>
-				</div>
+		<div class="h-full flex flex-col border-r border-(--flexoki-ui-2) bg-(--flexoki-bg-2)/50 backdrop-blur">
+		{/* Header */}
+		<div class="p-4 border-b border-(--flexoki-ui-2) flex justify-between items-center bg-(--flexoki-bg)">
+		<h2 class="font-semibold text-(--flexoki-tx)">Issues</h2>
+		<Show when={props.issues.length > 0}>
+		<span class="px-2 py-0.5 rounded text-xs font-bold bg-(--flexoki-red)/20 text-(--flexoki-red) border border-(--flexoki-red)/30">
+		{props.issues.length}
+		</span>
+		</Show>
+		</div>
+
+		{/* Issue List */}
+		<div class="flex-1 overflow-y-auto p-3 space-y-2">
+		<Show
+		when={props.issues.length > 0}
+		fallback={
+			<div class="text-center p-8 mt-10">
+			<div class="w-10 h-10 mx-auto rounded-full bg-(--flexoki-ui)/50 flex items-center justify-center mb-3 text-lg">✓</div>
+			<p class="text-sm text-(--flexoki-tx-2) font-medium">No issues found</p>
+			<p class="text-xs text-(--flexoki-tx-3) mt-1">Start typing to see suggestions</p>
 			</div>
-			<div class="w-full h-full overflow-auto">
-				<Show
-					when={props.issues.length > 0}
-					fallback={
-						<div class="text-center py-12 px-4 mx-3">
-							<div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-(--flexoki-ui)/50 mb-3">
-								<span class="text-2xl">✓</span>
-							</div>
-							<p class="text-sm text-(--flexoki-tx-2) font-medium">No issues found</p>
-							<p class="text-xs text-(--flexoki-tx-3) mt-1.5">Start typing to see suggestions</p>
-						</div>
-					}
-				>
-					<div class="space-y-1.5 mx-3 mb-3">
-						<For each={props.issues}>
-							{(issue) => (
-								<div ref={(el) => issueRefs.set(issue.id, el)}>
-									<IssueItem
-										issue={issue}
-										isSelected={props.selectedIssueId === issue.id}
-										onSelect={props.onIssueSelect}
-										onApplySuggestion={(suggestion) => props.onApplySuggestion(issue.id, suggestion)}
-										onAddToDictionary={props.onAddToDictionary}
-									/>
-								</div>
-							)}
-						</For>
-					</div>
-				</Show>
+		}
+		>
+		<For each={props.issues}>{(issue) => (
+			<div
+			ref={(el) => itemRefs.set(issue.id, el)}
+			onClick={() => props.onIssueSelect(issue.id)}
+			class={`p-3 rounded-md cursor-pointer transition-all border ${
+				props.selectedIssueId === issue.id
+				? 'bg-(--flexoki-cyan)/10 border-(--flexoki-cyan)/30 shadow-sm translate-x-0.5'
+				: 'bg-(--flexoki-ui)/30 border-transparent hover:bg-(--flexoki-ui)'
+			}`}
+			>
+			<div class="flex items-center gap-2 mb-1.5">
+			<div class="w-2 h-2 rounded-full shrink-0" style={{ "background-color": lintKindColor(issue.lint.lint_kind()) }} />
+			<span class="text-[11px] uppercase tracking-wider text-(--flexoki-tx-2) font-medium truncate">
+			{issue.rule}
+			</span>
 			</div>
-			<Show when={props.issues.length > 0}>
-				<div class="py-3 border-t border-(--flexoki-ui-2) sticky bottom-0 bg-(--flexoki-bg) z-10">
-					<p class="text-xs text-(--flexoki-tx-3) text-center leading-6">
-						<Kbd>Ctrl+J</Kbd>
-						&nbsp;&nbsp;/&nbsp;&nbsp;
-						<Kbd>Ctrl+K</Kbd>
-						&nbsp;to navigate
-						<br />
-						<Kbd>Ctrl+Space</Kbd>
-						&nbsp;&nbsp;/&nbsp;&nbsp;
-						<Kbd>Tab</Kbd>
-						&nbsp;&nbsp;/&nbsp;&nbsp;
-						<Kbd>Click</Kbd>
-						&nbsp;on issue to fix
-					</p>
-				</div>
-			</Show>
+			<div class="text-sm text-(--flexoki-tx) leading-snug">
+			{issue.lint.message()}
+			</div>
+			</div>
+		)}</For>
+		</Show>
+		</div>
+
+		{/* Footer / Shortcuts */}
+		<Show when={props.issues.length > 0}>
+		<div class="p-3 border-t border-(--flexoki-ui-2) text-xs text-(--flexoki-tx-3) text-center bg-(--flexoki-bg)">
+		<kbd class="px-1.5 py-0.5 bg-(--flexoki-ui) rounded text-[10px] font-mono border border-(--flexoki-ui-2)">Ctrl+J/K</kbd> to navigate
+		<span class="mx-2">&middot;</span>
+		<kbd class="px-1.5 py-0.5 bg-(--flexoki-ui) rounded text-[10px] font-mono border border-(--flexoki-ui-2)">Tab</kbd> to fix
+		</div>
+		</Show>
 		</div>
 	);
 };
