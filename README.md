@@ -1,5 +1,5 @@
 # local-harper
-![screenshot](assets/screenshot1.png)
+![screenshot](assets/screenshot2.png)
 
 The main idea is that it uses Codemirror as the editor framework, since it's pretty lightweight and has a lot of plugins.  
 - The suggestions are handled using `@codemirror/autocomplete` and some custom handling, so you can use both your keyboard and mouse to accept them
