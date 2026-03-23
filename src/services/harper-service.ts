@@ -63,16 +63,8 @@ export async function analyzeText(text: string, abortSignal?: AbortSignal): Prom
 		throw new DOMException('Aborted', 'AbortError');
 	}
 
-	// Set up abort listener
-	if (abortSignal) {
-		abortSignal.addEventListener('abort', () => {
-			// Note: Harper.js WorkerLinter doesn't support native cancellation,
-			// but we can still reject the promise early
-		}, { once: true });
-	}
-
 	const result = await linter.organizedLints(text);
-
+	
 	// Check if aborted after completion
 	if (abortSignal?.aborted) {
 		throw new DOMException('Aborted', 'AbortError');

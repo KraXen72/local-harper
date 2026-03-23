@@ -33,7 +33,7 @@ const IssueTooltip: Component<IssueTooltipProps> = (props) => {
 				<span class="iconify lucide--info w-4 h-4" />
 			</div>
 
-			<div class="gap-2 items-center mb-1 col-span-full min-w-0 text-wrap break-all">
+			<div class="mb-1 col-span-full min-w-0 text-wrap break-all">
 				<FormattedMessage message={props.issue.lint.message()} />
 			</div>
 			<Show when={props.showIgnoreButton && props.onIgnore}>
