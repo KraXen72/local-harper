@@ -1,4 +1,4 @@
-import { Component, createSignal, onMount, createEffect, batch, Show } from 'solid-js';
+import { Component, createSignal, onMount, onCleanup, createEffect, batch, Show } from 'solid-js';
 import TopBar from './components/TopBar';
 import Editor from './components/Editor';
 import Sidebar from './components/Sidebar';
@@ -16,10 +16,12 @@ const App: Component = () => {
 	const [scrollToIssue, setScrollToIssue] = createSignal<string | null>(null);
 	const [isAnalyzing, setIsAnalyzing] = createSignal(false);
 	const [isRuleManagerOpen, setIsRuleManagerOpen] = createSignal(false);
+	const [isSidebarOpen, setIsSidebarOpen] = createSignal(false);
 	const [rules, setRules] = createSignal<RuleInfo[]>([]);
 
 	let debounceTimeout: number | undefined;
 	let analysisGeneration = 0;
+	let currentAbortController: AbortController | null = null;
 
 	const ignoredIssues = new Set<string>();
 	let lastClickedIssueFromSidebar: string | null = null;
@@ -29,11 +31,11 @@ const App: Component = () => {
 		const problemText = issue.lint.get_problem_text();
 		const lintKind = issue.lint.lint_kind();
 		const message = issue.lint.message();
-		
+
 		const contextSize = 50;
 		const contextBefore = text.slice(Math.max(0, span.start - contextSize), span.start);
 		const contextAfter = text.slice(span.end, Math.min(text.length, span.end + contextSize));
-		
+
 		return `${lintKind}|${message}|${problemText}|${contextBefore}|||${contextAfter}`;
 	}
 
@@ -51,9 +53,24 @@ const App: Component = () => {
 		}
 	});
 
-	// Manual debounced analysis function
+	onCleanup(() => {
+		// Abort any ongoing analysis when component unmounts
+		if (currentAbortController) {
+			currentAbortController.abort();
+		}
+		if (debounceTimeout !== undefined) {
+			clearTimeout(debounceTimeout);
+		}
+	});
+
+	// Manual debounced analysis function with proper cancellation
 	const scheduleAnalysis = (text: string) => {
-		// Clear any pending analysis
+		// Abort any ongoing analysis request
+		if (currentAbortController) {
+			currentAbortController.abort();
+		}
+
+		// Clear any pending debounce timeout
 		if (debounceTimeout !== undefined) {
 			clearTimeout(debounceTimeout);
 		}
@@ -68,12 +85,16 @@ const App: Component = () => {
 		// Increment generation to invalidate any in-flight analysis
 		const currentGeneration = ++analysisGeneration;
 
+		// Create new abort controller for this analysis
+		currentAbortController = new AbortController();
+
 		debounceTimeout = window.setTimeout(async () => {
 			setIsAnalyzing(true);
 			try {
-				const lints = await analyzeText(text);
+				const lints = await analyzeText(text, currentAbortController!.signal);
 
-				if (currentGeneration === analysisGeneration) {
+				// Only update if this is still the current generation and not aborted
+				if (currentGeneration === analysisGeneration && !currentAbortController!.signal.aborted) {
 					const harperIssues = transformLints(lints);
 					const filteredIssues = harperIssues.filter(issue => {
 						const sig = getIssueSignature(issue, text);
@@ -82,11 +103,16 @@ const App: Component = () => {
 					setIssues(filteredIssues);
 				}
 			} catch (error) {
-				if (currentGeneration === analysisGeneration) {
+				// Ignore abort errors, they're expected when text changes rapidly
+				if (error instanceof DOMException && error.name === 'AbortError') {
+					return;
+				}
+
+				if (currentGeneration === analysisGeneration && !currentAbortController!.signal.aborted) {
 					console.error('Failed to analyze text:', error);
 				}
 			} finally {
-				if (currentGeneration === analysisGeneration) {
+				if (currentGeneration === analysisGeneration && !currentAbortController!.signal.aborted) {
 					setIsAnalyzing(false);
 				}
 			}
@@ -179,25 +205,38 @@ const App: Component = () => {
 
 	return (
 		<div class="h-screen flex flex-col bg-(--flexoki-bg)">
-			<TopBar 
-				onCopy={handleCopy} 
-				isAnalyzing={isAnalyzing()} 
+			<TopBar
+				onCopy={handleCopy}
+				isAnalyzing={isAnalyzing()}
 				isRuleManagerOpen={isRuleManagerOpen()}
-				onToggleRuleManager={() => setIsRuleManagerOpen(!isRuleManagerOpen())}
+				onToggleRuleManager={() => {
+					if (!isRuleManagerOpen() && isSidebarOpen()) {
+						setIsSidebarOpen(false);
+					}
+					setIsRuleManagerOpen(!isRuleManagerOpen());
+				}}
 				isInitializing={isInitializing()}
+				isSidebarOpen={isSidebarOpen()}
+				onToggleSidebar={() => {
+					if (!isSidebarOpen() && isRuleManagerOpen()) {
+						setIsRuleManagerOpen(false);
+					}
+					setIsSidebarOpen(!isSidebarOpen());
+				}}
 			/>
 
 			<div class="flex-1 grid overflow-hidden app-layout">
-				<div class="overflow-hidden sidebar-left">
+				<div class="overflow-hidden sidebar-left" classList={{ 'sidebar-open': isSidebarOpen() }}>
 					<Sidebar
 						issues={issues()}
 						selectedIssueId={selectedIssueId()}
 						onIssueSelect={(issueId) => {
 							const shouldTrigger = issueId !== lastClickedIssueFromSidebar;
 							lastClickedIssueFromSidebar = issueId;
-							
+
+							setIsSidebarOpen(false);
 							setSelectedIssueId(issueId);
-							
+
 							if (shouldTrigger) {
 								setScrollToIssue(issueId);
 								setTimeout(() => setScrollToIssue(null), 100);
@@ -205,10 +244,12 @@ const App: Component = () => {
 						}}
 						onApplySuggestion={handleApplySuggestion}
 						onAddToDictionary={handleAddToDictionary}
-						onClose={() => setIsRuleManagerOpen(false)}
+						onClose={() => setIsSidebarOpen(false)}
+						isOpen={isSidebarOpen()}
+						onToggle={() => setIsSidebarOpen(!isSidebarOpen())}
 					/>
 				</div>
-				
+
 				<div class="overflow-hidden editor-wrapper">
 					<Editor
 						content={content()}
@@ -227,8 +268,11 @@ const App: Component = () => {
 						scrollToIssue={scrollToIssue()}
 					/>
 				</div>
-				
-				<div class="overflow-hidden sidebar-right">
+
+				<div class="overflow-hidden sidebar-right" classList={{ 'show-rule-manager': isRuleManagerOpen() }} style={{
+					"pointer-events": isRuleManagerOpen() ? "auto" : "none",
+					"box-shadow": isRuleManagerOpen() ? "-4px 0 12px rgba(0, 0, 0, 0.3)" : "none"
+				}}>
 					<Show when={isRuleManagerOpen()}>
 						<RuleManager
 							onClose={() => setIsRuleManagerOpen(false)}

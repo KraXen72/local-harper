@@ -18,31 +18,31 @@ export async function initHarper(): Promise<void> {
 
 		await linter.setup();
 
-	const customWords = loadCustomWords();
-	if (customWords.length > 0) {
-		await linter.importWords(customWords);
-	}
-
-	const defaultConfig = await linter.getDefaultLintConfig();
-	const savedConfigJson = localStorage.getItem('harper-lint-config');
-	let config = defaultConfig;
-	
-	if (savedConfigJson) {
-		try {
-			const savedConfig = JSON.parse(savedConfigJson);
-			config = { ...defaultConfig, ...savedConfig };
-		} catch (e) {
-			console.error('Failed to parse saved lint config:', e);
+		const customWords = loadCustomWords();
+		if (customWords.length > 0) {
+			await linter.importWords(customWords);
 		}
-	} else {
-		for (const rule of DEFAULT_DISABLED_RULES) {
-			if (rule in config) {
-				config[rule as keyof typeof config] = false;
+
+		const defaultConfig = await linter.getDefaultLintConfig();
+		const savedConfigJson = localStorage.getItem('harper-lint-config');
+		let config = defaultConfig;
+
+		if (savedConfigJson) {
+			try {
+				const savedConfig = JSON.parse(savedConfigJson);
+				config = { ...defaultConfig, ...savedConfig };
+			} catch (e) {
+				console.error('Failed to parse saved lint config:', e);
+			}
+		} else {
+			for (const rule of DEFAULT_DISABLED_RULES) {
+				if (rule in config) {
+					config[rule as keyof typeof config] = false;
+				}
 			}
 		}
-	}
-	
-	await linter.setLintConfig(config);
+
+		await linter.setLintConfig(config);
 	})();
 
 	return initPromise;
@@ -55,15 +55,36 @@ export function getLinter(): WorkerLinter {
 	return linter;
 }
 
-export async function analyzeText(text: string): Promise<Record<string, Lint[]>> {
+export async function analyzeText(text: string, abortSignal?: AbortSignal): Promise<Record<string, Lint[]>> {
 	const linter = getLinter();
-	return linter.organizedLints(text);
+
+	// Check if already aborted before starting
+	if (abortSignal?.aborted) {
+		throw new DOMException('Aborted', 'AbortError');
+	}
+
+	// Set up abort listener
+	if (abortSignal) {
+		abortSignal.addEventListener('abort', () => {
+			// Note: Harper.js WorkerLinter doesn't support native cancellation,
+			// but we can still reject the promise early
+		}, { once: true });
+	}
+
+	const result = await linter.organizedLints(text);
+
+	// Check if aborted after completion
+	if (abortSignal?.aborted) {
+		throw new DOMException('Aborted', 'AbortError');
+	}
+
+	return result;
 }
 
 export function transformLints(organizedLints: Record<string, Lint[]>): HarperIssue[] {
 	const issues: HarperIssue[] = [];
 	let index = 0;
-	
+
 	for (const [rule, lints] of Object.entries(organizedLints)) {
 		for (const lint of lints) {
 			issues.push({
@@ -74,13 +95,13 @@ export function transformLints(organizedLints: Record<string, Lint[]>): HarperIs
 			index++;
 		}
 	}
-	
+
 	issues.sort((a, b) => {
 		const spanA = a.lint.span();
 		const spanB = b.lint.span();
 		return spanA.start - spanB.start;
 	});
-	
+
 	return issues;
 }
 
@@ -111,7 +132,7 @@ export async function getRules(): Promise<Array<{ name: string; displayName: str
 		linter.getLintConfig(),
 		linter.getLintDescriptions()
 	]);
-	
+
 	return Object.entries(config).map(([name, enabled]) => ({
 		name,
 		displayName: pascalCaseToWords(name),

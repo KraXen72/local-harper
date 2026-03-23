@@ -29,7 +29,7 @@ const IssueItem: Component<IssueItemProps> = (props) => {
 					style={{ "background-color": lintColor() }}
 				/>
 				<div class="flex-1 min-w-0">
-					<p class="text-sm text-(--flexoki-tx) leading-snug">
+					<p class="text-sm text-(--flexoki-tx) leading-snug text-wrap break-all line-clamp-3">
 						<FormattedMessage message={props.issue.lint.message()} />
 					</p>
 				</div>

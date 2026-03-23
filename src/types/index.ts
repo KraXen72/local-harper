@@ -33,6 +33,8 @@ export interface TopBarProps {
 	isRuleManagerOpen: boolean;
 	onToggleRuleManager: () => void;
 	isInitializing?: boolean;
+	isSidebarOpen?: boolean;
+	onToggleSidebar?: () => void;
 }
 
 export interface RuleInfo {
@@ -49,6 +51,8 @@ export interface SidebarProps {
 	onApplySuggestion: (issueId: string, suggestion: Suggestion) => void;
 	onAddToDictionary: (word: string) => void;
 	onClose?: () => void;
+	isOpen?: boolean;
+	onToggle?: () => void;
 }
 
 export interface IssueItemProps {

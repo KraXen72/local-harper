@@ -24,6 +24,7 @@ import {
 const Editor: Component<EditorProps> = (props) => {
 	let editorRef!: HTMLDivElement;
 	let view: EditorView | undefined;
+	let editorInitialized = false;
 
 	const [counterText, setCounterText] = createSignal(props.content);
 
@@ -92,6 +93,11 @@ const Editor: Component<EditorProps> = (props) => {
 			parent: editorRef,
 		});
 
+		// Mark editor as initialized after a microtask to ensure it's fully ready
+		queueMicrotask(() => {
+			editorInitialized = true;
+		});
+
 		// ensure initial counter state reflects the full document
 		setCounterText(props.content);
 	});
@@ -106,9 +112,11 @@ const Editor: Component<EditorProps> = (props) => {
 	let prevIssues = props.issues;
 	let prevSelectedId = props.selectedIssueId;
 
-	// Update editor content when prop changes
+	// Update editor content when prop changes (but not on initial mount)
 	createEffect(() => {
-		if (view && view.state.doc.toString() !== props.content) {
+		if (!view || !editorInitialized) return;
+		
+		if (view.state.doc.toString() !== props.content) {
 			view.dispatch({
 				changes: {
 					from: 0,
@@ -174,8 +182,8 @@ const Editor: Component<EditorProps> = (props) => {
 	};
 
 	return (
-		<div class="h-full overflow-auto bg-(--flexoki-bg)" onClick={handleContainerClick}>
-			<div class="pt-12 px-4 pb-12 flex justify-center">
+		<div class="h-full overflow-auto bg-(--flexoki-bg) w-full" onClick={handleContainerClick}>
+			<div class="pt-12 w-full px-4 pb-12 flex justify-center">
 				<div
 					class="bg-(--flexoki-bg) rounded-xl overflow-hidden shadow-2xl border border-(--flexoki-ui-2) w-full max-w-216.75"
 					ref={editorRef}>
@@ -183,7 +191,7 @@ const Editor: Component<EditorProps> = (props) => {
 			</div>
 
 			{/* Sticky word counter at bottom of the scrolling container */}
-			<div class="sticky bottom-0 left-0 right-0 px-4">
+			<div class="w-full sticky bottom-0 left-0 right-0 px-4">
 				<div class="w-full max-w-216.75 mx-auto bg-(--flexoki-bg)">
 					<hr class="border-(--flexoki-ui-2) my-2" />
 					<WordCounter text={counterText()} />
