@@ -6,6 +6,7 @@ import RuleManager from './components/RuleManager';
 import { initHarper, analyzeText, transformLints, getLinter, addWordToDictionary, getRules, toggleRule } from './services/harper-service';
 import type { HarperIssue, Suggestion, RuleInfo } from './types';
 import { createStore } from 'solid-js/store';
+import { clearTooltip } from './utils/editor-extensions';
 
 const App: Component = () => {
 	const [content, setContent] = createSignal('');
@@ -217,6 +218,10 @@ const App: Component = () => {
 					if (!sidebarStore.isRuleManagerOpen && sidebarStore.isIssueSidebarOpen) {
 						setSidebarStore("isIssueSidebarOpen", false)
 					}
+					if (!sidebarStore.isRuleManagerOpen) {
+						setSelectedIssueId(null)
+						clearTooltip()
+					}
 					setSidebarStore("isRuleManagerOpen", open => !open)
 				}}
 				isInitializing={isInitializing()}
@@ -225,9 +230,13 @@ const App: Component = () => {
 					if (!sidebarStore.isIssueSidebarOpen && sidebarStore.isRuleManagerOpen) {
 						setSidebarStore("isRuleManagerOpen", false)
 					}
+					if (!sidebarStore.isIssueSidebarOpen) {
+						setSelectedIssueId(null)
+						clearTooltip()
+					}
 					setSidebarStore("isIssueSidebarOpen", open => !open)
 				}}
-			/>;
+			/>
 
 			<div class="flex-1 grid overflow-hidden app-layout">
 				<div class="overflow-hidden sidebar-left" classList={{ 'sidebar-open': sidebarStore.isIssueSidebarOpen }}>

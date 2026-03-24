@@ -15,6 +15,7 @@ import {
 	harperAutocompletion,
 	harperCursorTooltip,
 	setIssueActions,
+	setEditorView,
 	issueNavigationKeymap,
 	issueSyncExtension,
 	issueClickAutocomplete,
@@ -93,6 +94,8 @@ const Editor: Component<EditorProps> = (props) => {
 			parent: editorRef,
 		});
 
+		setEditorView(view);
+
 		// Mark editor as initialized after a microtask to ensure it's fully ready
 		queueMicrotask(() => {
 			editorInitialized = true;
@@ -106,6 +109,7 @@ const Editor: Component<EditorProps> = (props) => {
 		if (view) {
 			view.destroy();
 		}
+		setEditorView(null);
 	});
 
 	// Track previous values to detect real changes
