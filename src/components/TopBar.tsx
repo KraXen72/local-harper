@@ -51,6 +51,21 @@ const TopBar: Component<TopBarProps> = (props) => {
 				</Show>
 
 				<button
+					onClick={props.onToggleDictManager}
+					class="px-4 py-1.5 cursor-pointer hover:brightness-110 active:scale-95 text-white text-sm font-medium rounded-md shadow-md hover:shadow-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-(--flexoki-bg-2)"
+					classList={{
+						'bg-[var(--flexoki-cyan)] focus:ring-[var(--flexoki-cyan)]': props.isDictManagerOpen,
+						'bg-[var(--flexoki-ui-3)] text-[var(--flexoki-tx-2)] focus:ring-[var(--flexoki-ui-3)]': !props.isDictManagerOpen
+					}}
+					aria-label="Toggle dictionary manager"
+				>
+					<div class="flex items-center gap-2">
+						<span class="iconify lucide--book w-4 h-4" />
+						Dict
+					</div>
+				</button>
+
+				<button
 					onClick={props.onToggleRuleManager}
 					class="px-4 py-1.5 cursor-pointer hover:brightness-110 active:scale-95 text-white text-sm font-medium rounded-md shadow-md hover:shadow-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-(--flexoki-bg-2)"
 					classList={{

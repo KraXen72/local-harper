@@ -18,7 +18,7 @@ export async function initHarper(): Promise<void> {
 
 		await linter.setup();
 
-		const customWords = loadCustomWords();
+		const customWords = getCustomWords();
 		if (customWords.length > 0) {
 			await linter.importWords(customWords);
 		}
@@ -114,10 +114,9 @@ export function transformLints(organizedLints: Record<string, Lint[]>): HarperIs
 	return issues;
 }
 
-function loadCustomWords(): string[] {
+export function getCustomWords(): string[] {
 	const saved = localStorage.getItem('harper-custom-words');
 	if (!saved) return [];
-
 	try {
 		return JSON.parse(saved);
 	} catch (e) {
@@ -127,12 +126,26 @@ function loadCustomWords(): string[] {
 }
 
 export async function addWordToDictionary(word: string): Promise<void> {
-	const words = loadCustomWords();
+	const words = getCustomWords();
 	if (!words.includes(word)) {
 		words.push(word);
 		localStorage.setItem('harper-custom-words', JSON.stringify(words));
 		await getLinter().importWords(words);
 	}
+}
+
+export async function removeWordFromDictionary(word: string): Promise<void> {
+	const words = getCustomWords().filter(w => w !== word);
+	localStorage.setItem('harper-custom-words', JSON.stringify(words));
+	await getLinter().importWords(words);
+}
+
+export async function editWordInDictionary(oldWord: string, newWord: string): Promise<void> {
+	const trimmed = newWord.trim();
+	if (!trimmed || trimmed === oldWord) return;
+	const words = getCustomWords().map(w => w === oldWord ? trimmed : w);
+	localStorage.setItem('harper-custom-words', JSON.stringify(words));
+	await getLinter().importWords(words);
 }
 
 export async function getRules(): Promise<Array<{ name: string; displayName: string; description: string; enabled: boolean }>> {

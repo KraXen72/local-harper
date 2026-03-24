@@ -32,6 +32,8 @@ export interface TopBarProps {
 	isAnalyzing: boolean;
 	isRuleManagerOpen: boolean;
 	onToggleRuleManager: () => void;
+	isDictManagerOpen: boolean;
+	onToggleDictManager: () => void;
 	isInitializing?: boolean;
 	isSidebarOpen?: boolean;
 	onToggleSidebar?: () => void;

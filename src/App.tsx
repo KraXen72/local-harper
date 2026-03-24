@@ -3,10 +3,11 @@ import TopBar from './components/TopBar';
 import Editor from './components/Editor';
 import Sidebar from './components/Sidebar';
 import RuleManager from './components/RuleManager';
-import { initHarper, analyzeText, transformLints, getLinter, addWordToDictionary, getRules, toggleRule, getIssueSignature } from './services/harper-service';
+import DictManager from './components/DictManager';
+import { initHarper, analyzeText, transformLints, getLinter, addWordToDictionary, removeWordFromDictionary, editWordInDictionary, getCustomWords, getRules, toggleRule, getIssueSignature } from './services/harper-service';
 import type { HarperIssue, Suggestion, RuleInfo } from './types';
-import { createStore } from 'solid-js/store';
 import { clearTooltip } from './utils/editor-extensions';
+import { sidebarStore, setSidebarStore, toggleRightPanel } from './stores/sidebar';
 
 const App: Component = () => {
 	const [content, setContent] = createSignal('');
@@ -18,11 +19,7 @@ const App: Component = () => {
 	const [scrollToIssue, setScrollToIssue] = createSignal<string | null>(null);
 	const [isAnalyzing, setIsAnalyzing] = createSignal(false);
 	const [rules, setRules] = createSignal<RuleInfo[]>([]);
-
-	const [sidebarStore, setSidebarStore] = createStore({
-		isIssueSidebarOpen: false,
-		isRuleManagerOpen: false
-	})
+	const [words, setWords] = createSignal<string[]>([]);
 
 	let debounceTimeout: number | undefined;
 	let analysisGeneration = 0;
@@ -37,6 +34,7 @@ const App: Component = () => {
 			await initHarper();
 			const rulesList = await getRules();
 			setRules(rulesList);
+			setWords(getCustomWords());
 			setIsInitialized(true);
 		} catch (error) {
 			console.error('Failed to initialize Harper:', error);
@@ -157,6 +155,7 @@ const App: Component = () => {
 	const handleAddToDictionary = async (word: string) => {
 		try {
 			await addWordToDictionary(word);
+			setWords(getCustomWords());
 			const currentText = content();
 			const lints = await analyzeText(currentText);
 			const harperIssues = transformLints(lints);
@@ -167,6 +166,26 @@ const App: Component = () => {
 			setIssues(filteredIssues);
 		} catch (error) {
 			console.error('Failed to add word to dictionary:', error);
+		}
+	};
+
+	const handleRemoveFromDictionary = async (word: string) => {
+		try {
+			await removeWordFromDictionary(word);
+			setWords(getCustomWords());
+			scheduleAnalysis(content());
+		} catch (error) {
+			console.error('Failed to remove word from dictionary:', error);
+		}
+	};
+
+	const handleEditInDictionary = async (oldWord: string, newWord: string) => {
+		try {
+			await editWordInDictionary(oldWord, newWord);
+			setWords(getCustomWords());
+			scheduleAnalysis(content());
+		} catch (error) {
+			console.error('Failed to edit word in dictionary:', error);
 		}
 	};
 
@@ -198,33 +217,30 @@ const App: Component = () => {
 		}
 	};
 
+	const handleToggleRightPanel = (panel: 'rules' | 'dictionary') => {
+		if (sidebarStore.rightPanel !== panel) {
+			setSelectedIssueId(null);
+			clearTooltip();
+		}
+		toggleRightPanel(panel);
+	};
+
 	return (
 		<div class="h-screen flex flex-col bg-(--flexoki-bg)">
 			<TopBar
 				onCopy={handleCopy}
 				isAnalyzing={isAnalyzing()}
-				isRuleManagerOpen={sidebarStore.isRuleManagerOpen}
-				onToggleRuleManager={() => {
-					if (!sidebarStore.isRuleManagerOpen && sidebarStore.isIssueSidebarOpen) {
-						setSidebarStore("isIssueSidebarOpen", false)
-					}
-					if (!sidebarStore.isRuleManagerOpen) {
-						setSelectedIssueId(null)
-						clearTooltip()
-					}
-					setSidebarStore("isRuleManagerOpen", open => !open)
-				}}
+				isRuleManagerOpen={sidebarStore.rightPanel === 'rules'}
+				onToggleRuleManager={() => handleToggleRightPanel('rules')}
+				isDictManagerOpen={sidebarStore.rightPanel === 'dictionary'}
+				onToggleDictManager={() => handleToggleRightPanel('dictionary')}
 				isInitializing={isInitializing()}
 				isSidebarOpen={sidebarStore.isIssueSidebarOpen}
 				onToggleSidebar={() => {
-					if (!sidebarStore.isIssueSidebarOpen && sidebarStore.isRuleManagerOpen) {
-						setSidebarStore("isRuleManagerOpen", false)
+					if (!sidebarStore.isIssueSidebarOpen && sidebarStore.rightPanel !== null) {
+						setSidebarStore('rightPanel', null);
 					}
-					if (!sidebarStore.isIssueSidebarOpen) {
-						setSelectedIssueId(null)
-						clearTooltip()
-					}
-					setSidebarStore("isIssueSidebarOpen", open => !open)
+					setSidebarStore('isIssueSidebarOpen', open => !open);
 				}}
 			/>
 
@@ -237,7 +253,7 @@ const App: Component = () => {
 							const shouldTrigger = issueId !== lastClickedIssueFromSidebar;
 							lastClickedIssueFromSidebar = issueId;
 
-							setSidebarStore("isIssueSidebarOpen", false)
+							setSidebarStore('isIssueSidebarOpen', false);
 							setSelectedIssueId(issueId);
 
 							if (shouldTrigger) {
@@ -247,9 +263,9 @@ const App: Component = () => {
 						}}
 						onApplySuggestion={handleApplySuggestion}
 						onAddToDictionary={handleAddToDictionary}
-						onClose={() => setSidebarStore("isIssueSidebarOpen", false)}
+						onClose={() => setSidebarStore('isIssueSidebarOpen', false)}
 						isOpen={sidebarStore.isIssueSidebarOpen}
-						onToggle={() => setSidebarStore("isIssueSidebarOpen", open => !open)}
+						onToggle={() => setSidebarStore('isIssueSidebarOpen', open => !open)}
 					/>
 				</div>
 
@@ -272,15 +288,28 @@ const App: Component = () => {
 					/>
 				</div>
 
-				<div class="overflow-hidden sidebar-right" classList={{ 'show-rule-manager': sidebarStore.isRuleManagerOpen }} style={{
-					"pointer-events": sidebarStore.isRuleManagerOpen ? "auto" : "none",
-					"box-shadow": sidebarStore.isRuleManagerOpen ? "-4px 0 12px rgba(0, 0, 0, 0.3)" : "none"
-				}}>
-					<Show when={sidebarStore.isRuleManagerOpen}>
+				<div
+					class="overflow-hidden sidebar-right"
+					classList={{ 'show-rule-manager': sidebarStore.rightPanel !== null }}
+					style={{
+						"pointer-events": sidebarStore.rightPanel !== null ? "auto" : "none",
+						"box-shadow": sidebarStore.rightPanel !== null ? "-4px 0 12px rgba(0, 0, 0, 0.3)" : "none"
+					}}
+				>
+					<Show when={sidebarStore.rightPanel === 'rules'}>
 						<RuleManager
-							onClose={() => setSidebarStore("isRuleManagerOpen", false)}
+							onClose={() => setSidebarStore('rightPanel', null)}
 							onRuleToggle={handleRuleToggle}
 							rules={rules()}
+						/>
+					</Show>
+					<Show when={sidebarStore.rightPanel === 'dictionary'}>
+						<DictManager
+							onClose={() => setSidebarStore('rightPanel', null)}
+							words={words()}
+							onAdd={handleAddToDictionary}
+							onRemove={handleRemoveFromDictionary}
+							onEdit={handleEditInDictionary}
 						/>
 					</Show>
 				</div>
