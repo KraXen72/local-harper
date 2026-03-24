@@ -63,14 +63,31 @@ export async function analyzeText(text: string, abortSignal?: AbortSignal): Prom
 		throw new DOMException('Aborted', 'AbortError');
 	}
 
-	const result = await linter.organizedLints(text);
-	
-	// Check if aborted after completion
-	if (abortSignal?.aborted) {
-		throw new DOMException('Aborted', 'AbortError');
+	// If there's no abortSignal, just await the lint result normally
+	if (!abortSignal) {
+		return await linter.organizedLints(text);
 	}
 
-	return result;
+	// Race the linter promise against an abort promise so we can fail fast
+	const lintPromise = linter.organizedLints(text);
+
+	let removeListener: () => void = () => {};
+	const abortPromise = new Promise<never>((_, reject) => {
+		const onAbort = () => reject(new DOMException('Aborted', 'AbortError'));
+		abortSignal.addEventListener('abort', onAbort);
+		removeListener = () => abortSignal.removeEventListener('abort', onAbort);
+	});
+
+	try {
+		const result = await Promise.race([lintPromise, abortPromise]) as Record<string, Lint[]>;
+		removeListener();
+		// If the signal became aborted after the race resolved, treat as abort
+		if (abortSignal.aborted) throw new DOMException('Aborted', 'AbortError');
+		return result;
+	} catch (err) {
+		removeListener();
+		throw err;
+	}
 }
 
 export function transformLints(organizedLints: Record<string, Lint[]>): HarperIssue[] {

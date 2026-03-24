@@ -5,6 +5,7 @@ import Sidebar from './components/Sidebar';
 import RuleManager from './components/RuleManager';
 import { initHarper, analyzeText, transformLints, getLinter, addWordToDictionary, getRules, toggleRule } from './services/harper-service';
 import type { HarperIssue, Suggestion, RuleInfo } from './types';
+import { createStore } from 'solid-js/store';
 
 const App: Component = () => {
 	const [content, setContent] = createSignal('');
@@ -15,9 +16,12 @@ const App: Component = () => {
 
 	const [scrollToIssue, setScrollToIssue] = createSignal<string | null>(null);
 	const [isAnalyzing, setIsAnalyzing] = createSignal(false);
-	const [isRuleManagerOpen, setIsRuleManagerOpen] = createSignal(false);
-	const [isSidebarOpen, setIsSidebarOpen] = createSignal(false);
 	const [rules, setRules] = createSignal<RuleInfo[]>([]);
+
+	const [sidebarStore, setSidebarStore] = createStore({
+		isIssueSidebarOpen: false,
+		isRuleManagerOpen: false
+	})
 
 	let debounceTimeout: number | undefined;
 	let analysisGeneration = 0;
@@ -208,25 +212,25 @@ const App: Component = () => {
 			<TopBar
 				onCopy={handleCopy}
 				isAnalyzing={isAnalyzing()}
-				isRuleManagerOpen={isRuleManagerOpen()}
+				isRuleManagerOpen={sidebarStore.isRuleManagerOpen}
 				onToggleRuleManager={() => {
-					if (!isRuleManagerOpen() && isSidebarOpen()) {
-						setIsSidebarOpen(false);
+					if (!sidebarStore.isRuleManagerOpen && sidebarStore.isIssueSidebarOpen) {
+						setSidebarStore("isIssueSidebarOpen", false)
 					}
-					setIsRuleManagerOpen(!isRuleManagerOpen());
+					setSidebarStore("isRuleManagerOpen", open => !open)
 				}}
 				isInitializing={isInitializing()}
-				isSidebarOpen={isSidebarOpen()}
+				isSidebarOpen={sidebarStore.isIssueSidebarOpen}
 				onToggleSidebar={() => {
-					if (!isSidebarOpen() && isRuleManagerOpen()) {
-						setIsRuleManagerOpen(false);
+					if (!sidebarStore.isIssueSidebarOpen && sidebarStore.isRuleManagerOpen) {
+						setSidebarStore("isRuleManagerOpen", false)
 					}
-					setIsSidebarOpen(!isSidebarOpen());
+					setSidebarStore("isIssueSidebarOpen", open => !open)
 				}}
-			/>
+			/>;
 
 			<div class="flex-1 grid overflow-hidden app-layout">
-				<div class="overflow-hidden sidebar-left" classList={{ 'sidebar-open': isSidebarOpen() }}>
+				<div class="overflow-hidden sidebar-left" classList={{ 'sidebar-open': sidebarStore.isIssueSidebarOpen }}>
 					<Sidebar
 						issues={issues()}
 						selectedIssueId={selectedIssueId()}
@@ -234,7 +238,7 @@ const App: Component = () => {
 							const shouldTrigger = issueId !== lastClickedIssueFromSidebar;
 							lastClickedIssueFromSidebar = issueId;
 
-							setIsSidebarOpen(false);
+							setSidebarStore("isIssueSidebarOpen", false)
 							setSelectedIssueId(issueId);
 
 							if (shouldTrigger) {
@@ -244,9 +248,9 @@ const App: Component = () => {
 						}}
 						onApplySuggestion={handleApplySuggestion}
 						onAddToDictionary={handleAddToDictionary}
-						onClose={() => setIsSidebarOpen(false)}
-						isOpen={isSidebarOpen()}
-						onToggle={() => setIsSidebarOpen(!isSidebarOpen())}
+						onClose={() => setSidebarStore("isIssueSidebarOpen", false)}
+						isOpen={sidebarStore.isIssueSidebarOpen}
+						onToggle={() => setSidebarStore("isIssueSidebarOpen", open => !open)}
 					/>
 				</div>
 
@@ -269,13 +273,13 @@ const App: Component = () => {
 					/>
 				</div>
 
-				<div class="overflow-hidden sidebar-right" classList={{ 'show-rule-manager': isRuleManagerOpen() }} style={{
-					"pointer-events": isRuleManagerOpen() ? "auto" : "none",
-					"box-shadow": isRuleManagerOpen() ? "-4px 0 12px rgba(0, 0, 0, 0.3)" : "none"
+				<div class="overflow-hidden sidebar-right" classList={{ 'show-rule-manager': sidebarStore.isRuleManagerOpen }} style={{
+					"pointer-events": sidebarStore.isRuleManagerOpen ? "auto" : "none",
+					"box-shadow": sidebarStore.isRuleManagerOpen ? "-4px 0 12px rgba(0, 0, 0, 0.3)" : "none"
 				}}>
-					<Show when={isRuleManagerOpen()}>
+					<Show when={sidebarStore.isRuleManagerOpen}>
 						<RuleManager
-							onClose={() => setIsRuleManagerOpen(false)}
+							onClose={() => setSidebarStore("isRuleManagerOpen", false)}
 							onRuleToggle={handleRuleToggle}
 							rules={rules()}
 						/>
