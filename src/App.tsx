@@ -3,7 +3,7 @@ import TopBar from './components/TopBar';
 import Editor from './components/Editor';
 import Sidebar from './components/Sidebar';
 import RuleManager from './components/RuleManager';
-import { initHarper, analyzeText, transformLints, getLinter, addWordToDictionary, getRules, toggleRule } from './services/harper-service';
+import { initHarper, analyzeText, transformLints, getLinter, addWordToDictionary, getRules, toggleRule, getIssueSignature } from './services/harper-service';
 import type { HarperIssue, Suggestion, RuleInfo } from './types';
 import { createStore } from 'solid-js/store';
 import { clearTooltip } from './utils/editor-extensions';
@@ -30,19 +30,6 @@ const App: Component = () => {
 
 	const ignoredIssues = new Set<string>();
 	let lastClickedIssueFromSidebar: string | null = null;
-
-	function getIssueSignature(issue: HarperIssue, text: string): string {
-		const span = issue.lint.span();
-		const problemText = issue.lint.get_problem_text();
-		const lintKind = issue.lint.lint_kind();
-		const message = issue.lint.message();
-
-		const contextSize = 50;
-		const contextBefore = text.slice(Math.max(0, span.start - contextSize), span.start);
-		const contextAfter = text.slice(span.end, Math.min(text.length, span.end + contextSize));
-
-		return `${lintKind}|${message}|${problemText}|${contextBefore}|||${contextAfter}`;
-	}
 
 	onMount(async () => {
 		setIsInitializing(true);
@@ -102,7 +89,7 @@ const App: Component = () => {
 				if (currentGeneration === analysisGeneration && !currentAbortController!.signal.aborted) {
 					const harperIssues = transformLints(lints);
 					const filteredIssues = harperIssues.filter(issue => {
-						const sig = getIssueSignature(issue, text);
+						const sig = getIssueSignature(issue);
 						return !ignoredIssues.has(sig);
 					});
 					setIssues(filteredIssues);
@@ -151,12 +138,16 @@ const App: Component = () => {
 			// Immediately analyze the new text
 			const lints = await analyzeText(newText);
 			const harperIssues = transformLints(lints);
+			const filteredIssues = harperIssues.filter(issue => {
+				const sig = getIssueSignature(issue);
+				return !ignoredIssues.has(sig);
+			});
 
 			// Batch both updates together so they happen atomically
 			batch(() => {
 				setSelectedIssueId(null);
 				setContent(newText);
-				setIssues(harperIssues);
+				setIssues(filteredIssues);
 			});
 		} catch (error) {
 			console.error('Failed to apply suggestion:', error);
@@ -170,7 +161,7 @@ const App: Component = () => {
 			const lints = await analyzeText(currentText);
 			const harperIssues = transformLints(lints);
 			const filteredIssues = harperIssues.filter(issue => {
-				const sig = getIssueSignature(issue, currentText);
+				const sig = getIssueSignature(issue);
 				return !ignoredIssues.has(sig);
 			});
 			setIssues(filteredIssues);
@@ -182,8 +173,7 @@ const App: Component = () => {
 	const handleIgnore = (issueId: string) => {
 		const issue = issues().find(i => i.id === issueId);
 		if (issue) {
-			const currentText = content();
-			const sig = getIssueSignature(issue, currentText);
+			const sig = getIssueSignature(issue);
 			ignoredIssues.add(sig);
 			setIssues(issues().filter(i => i.id !== issueId));
 			setSelectedIssueId(null);
@@ -199,7 +189,7 @@ const App: Component = () => {
 			const lints = await analyzeText(currentText);
 			const harperIssues = transformLints(lints);
 			const filteredIssues = harperIssues.filter(issue => {
-				const sig = getIssueSignature(issue, currentText);
+				const sig = getIssueSignature(issue);
 				return !ignoredIssues.has(sig);
 			});
 			setIssues(filteredIssues);

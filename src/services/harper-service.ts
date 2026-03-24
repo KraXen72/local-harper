@@ -164,3 +164,7 @@ function pascalCaseToWords(str: string): string {
 		.replace(/([A-Z])([A-Z][a-z])/g, '$1 $2')
 		.trim();
 }
+
+export function getIssueSignature(issue: HarperIssue): string {
+	return `${issue.lint.lint_kind()}|${issue.lint.message()}|${issue.lint.get_problem_text()}`;
+}

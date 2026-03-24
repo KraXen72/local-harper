@@ -361,6 +361,10 @@ const cursorTooltipField = StateField.define<readonly Tooltip[]>({
 		
 		// Explicit tooltip clear request
 		if (tooltipCleared) {
+			if (issueActions?.onIssueSelect && lastNotifiedIssueId !== null) {
+				issueActions.onIssueSelect(null);
+				lastNotifiedIssueId = null;
+			}
 			return [];
 		}
 		
