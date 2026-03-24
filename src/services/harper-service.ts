@@ -48,6 +48,15 @@ export async function initHarper(): Promise<void> {
 	return initPromise;
 }
 
+// Tears down and recreates the linter so removed/edited words are no longer
+// in harper's internal dictionary. importWords() only appends — it doesn't
+// remove words that were previously imported.
+async function resetLinter(): Promise<void> {
+	linter = null;
+	initPromise = null;
+	await initHarper();
+}
+
 export function getLinter(): WorkerLinter {
 	if (!linter) {
 		throw new Error('Harper linter not initialized. Call initHarper() first.');
@@ -137,7 +146,8 @@ export async function addWordToDictionary(word: string): Promise<void> {
 export async function removeWordFromDictionary(word: string): Promise<void> {
 	const words = getCustomWords().filter(w => w !== word);
 	localStorage.setItem('harper-custom-words', JSON.stringify(words));
-	await getLinter().importWords(words);
+	// importWords() only adds — reset the linter so the old word is no longer valid
+	await resetLinter();
 }
 
 export async function editWordInDictionary(oldWord: string, newWord: string): Promise<void> {
@@ -145,7 +155,13 @@ export async function editWordInDictionary(oldWord: string, newWord: string): Pr
 	if (!trimmed || trimmed === oldWord) return;
 	const words = getCustomWords().map(w => w === oldWord ? trimmed : w);
 	localStorage.setItem('harper-custom-words', JSON.stringify(words));
-	await getLinter().importWords(words);
+	// importWords() only adds — reset the linter so the old word is no longer valid
+	await resetLinter();
+}
+
+export async function clearAllCustomWords(): Promise<void> {
+	localStorage.setItem('harper-custom-words', JSON.stringify([]));
+	await resetLinter();
 }
 
 export async function getRules(): Promise<Array<{ name: string; displayName: string; description: string; enabled: boolean }>> {

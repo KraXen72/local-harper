@@ -4,7 +4,7 @@ import Editor from './components/Editor';
 import Sidebar from './components/Sidebar';
 import RuleManager from './components/RuleManager';
 import DictManager from './components/DictManager';
-import { initHarper, analyzeText, transformLints, getLinter, addWordToDictionary, removeWordFromDictionary, editWordInDictionary, getCustomWords, getRules, toggleRule, getIssueSignature } from './services/harper-service';
+import { initHarper, analyzeText, transformLints, getLinter, addWordToDictionary, removeWordFromDictionary, editWordInDictionary, clearAllCustomWords, getCustomWords, getRules, toggleRule, getIssueSignature } from './services/harper-service';
 import type { HarperIssue, Suggestion, RuleInfo } from './types';
 import { clearTooltip } from './utils/editor-extensions';
 import { sidebarStore, setSidebarStore, toggleRightPanel } from './stores/sidebar';
@@ -189,6 +189,16 @@ const App: Component = () => {
 		}
 	};
 
+	const handleClearAllDictionary = async () => {
+		try {
+			await clearAllCustomWords();
+			setWords(getCustomWords());
+			scheduleAnalysis(content());
+		} catch (error) {
+			console.error('Failed to clear dictionary:', error);
+		}
+	};
+
 	const handleIgnore = (issueId: string) => {
 		const issue = issues().find(i => i.id === issueId);
 		if (issue) {
@@ -237,10 +247,14 @@ const App: Component = () => {
 				isInitializing={isInitializing()}
 				isSidebarOpen={sidebarStore.isIssueSidebarOpen}
 				onToggleSidebar={() => {
-					if (!sidebarStore.isIssueSidebarOpen && sidebarStore.rightPanel !== null) {
+					if (sidebarStore.rightPanel !== null) {
+						// When a right panel is open, always close it and open issues —
+						// don't toggle, so we never need a double-click to get here.
 						setSidebarStore('rightPanel', null);
+						setSidebarStore('isIssueSidebarOpen', true);
+					} else {
+						setSidebarStore('isIssueSidebarOpen', open => !open);
 					}
-					setSidebarStore('isIssueSidebarOpen', open => !open);
 				}}
 			/>
 
@@ -310,6 +324,7 @@ const App: Component = () => {
 							onAdd={handleAddToDictionary}
 							onRemove={handleRemoveFromDictionary}
 							onEdit={handleEditInDictionary}
+							onClearAll={handleClearAllDictionary}
 						/>
 					</Show>
 				</div>
