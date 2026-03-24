@@ -14,6 +14,9 @@ export const updateIssuesEffect = StateEffect.define<HarperIssue[]>();
 // Effect to update selected issue (kept for sidebar highlighting)
 export const setSelectedIssueEffect = StateEffect.define<string | null>();
 
+// Effect to clear tooltip without moving cursor
+export const clearTooltipEffect = StateEffect.define<void>();
+
 // Custom theme for issue decorations using CodeMirror's baseTheme
 // Only contains base styles, actual colors are applied inline via decorations
 const issueTheme = EditorView.baseTheme({
@@ -151,9 +154,22 @@ interface IssueActions {
 }
 
 let issueActions: IssueActions | null = null;
+let editorView: EditorView | null = null;
 
 export function setIssueActions(actions: IssueActions) {
 	issueActions = actions;
+}
+
+export function setEditorView(view: EditorView | null) {
+	editorView = view;
+}
+
+export function clearTooltip() {
+	if (editorView) {
+		editorView.dispatch({
+			effects: clearTooltipEffect.of(),
+		});
+	}
 }
 
 // Helper to find issue at cursor position
@@ -341,6 +357,16 @@ const cursorTooltipField = StateField.define<readonly Tooltip[]>({
 	update(tooltips, tr) {
 		// Check if issues were updated (e.g., issue was ignored/removed)
 		const issuesUpdated = tr.effects.some(e => e.is(updateIssuesEffect));
+		const tooltipCleared = tr.effects.some(e => e.is(clearTooltipEffect));
+		
+		// Explicit tooltip clear request
+		if (tooltipCleared) {
+			if (issueActions?.onIssueSelect && lastNotifiedIssueId !== null) {
+				issueActions.onIssueSelect(null);
+				lastNotifiedIssueId = null;
+			}
+			return [];
+		}
 		
 		// If issues were updated, check if current tooltip's issue still exists
 		if (issuesUpdated && tooltips.length > 0) {

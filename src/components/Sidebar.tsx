@@ -12,6 +12,8 @@ const Kbd: ParentComponent = (props) => (
 
 interface SidebarExtendedProps extends SidebarProps {
 	onClose?: () => void;
+	isOpen?: boolean;
+	onToggle?: () => void;
 }
 
 const Sidebar: Component<SidebarExtendedProps> = (props) => {
@@ -29,7 +31,7 @@ const Sidebar: Component<SidebarExtendedProps> = (props) => {
 	});
 
 	return (
-		<div ref={containerRef} class="grid h-full border-l border-(--flexoki-ui-2) bg-(--flexoki-bg)/95 backdrop-blur-md max-w-100" style={{
+		<div ref={containerRef} class="grid h-full border-l border-(--flexoki-ui-2) bg-(--flexoki-bg)/95 backdrop-blur-md" style={{
 			"grid-template-rows": "min-content 1fr min-content",
 		}}>
 			<div class="flex items-center justify-between px-4 py-3 bg-(--flexoki-bg)">
@@ -44,7 +46,7 @@ const Sidebar: Component<SidebarExtendedProps> = (props) => {
 				<Show when={props.onClose}>
 					<button
 						onClick={props.onClose}
-						class="md:hidden p-1.5 hover:bg-(--flexoki-ui-3) aspect-square rounded-md transition-colors duration-150 flex"
+						class="sm:hidden p-1.5 hover:bg-(--flexoki-ui-3) aspect-square rounded-md transition-colors duration-150 flex"
 						aria-label="Close sidebar"
 					>
 						<span class="iconify lucide--x w-5 h-5 text-(--flexoki-tx-2)" />

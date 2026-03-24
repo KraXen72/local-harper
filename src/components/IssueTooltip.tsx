@@ -15,7 +15,7 @@ const IssueTooltip: Component<IssueTooltipProps> = (props) => {
 	const bgColor = () => lintKindColorWithAlpha(lintKind, 0.2);
 
 	return (
-		<div class="cm-issue-tooltip grid gap-x-1 gap-y-1" style={{
+		<div class="cm-issue-tooltip grid gap-x-1 gap-y-1 text-wrap" style={{
 			"grid-template-rows": "min-content 1fr min-content",
 			"grid-template-columns": "min-content 1fr min-content"
 		}}>
@@ -33,12 +33,9 @@ const IssueTooltip: Component<IssueTooltipProps> = (props) => {
 				<span class="iconify lucide--info w-4 h-4" />
 			</div>
 
-			<div class="flex gap-2 items-center mb-1 col-span-full">
-				<span class="flex-1">
-					<FormattedMessage message={props.issue.lint.message()} />
-				</span>
+			<div class="mb-1 col-span-full min-w-0 text-wrap break-all">
+				<FormattedMessage message={props.issue.lint.message()} />
 			</div>
-
 			<Show when={props.showIgnoreButton && props.onIgnore}>
 				<button
 					class="px-3 py-1 bg-(--flexoki-ui) text-(--flexoki-tx) border border-(--flexoki-ui-3) rounded text-xs font-medium cursor-pointer transition-all duration-120 w-full hover:bg-(--flexoki-ui-2) hover:border-(--flexoki-tx-3) active:scale-[0.98] col-span-full"
