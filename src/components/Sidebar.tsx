@@ -26,7 +26,7 @@ const Sidebar: Component<SidebarExtendedProps> = (props) => {
 		if (selectedId) {
 			const element = issueRefs.get(selectedId);
 			if (element) {
-				element.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+				element.scrollIntoView({ behavior: 'instant', block: 'nearest' });
 			}
 		}
 	});

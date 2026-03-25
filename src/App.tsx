@@ -7,6 +7,7 @@ import DictManager from './components/DictManager';
 import { initHarper, analyzeText, transformLints, getLinter, addWordToDictionary, removeWordFromDictionary, editWordInDictionary, clearAllCustomWords, getCustomWords, getRules, toggleRule, getIssueSignature } from './services/harper-service';
 import type { HarperIssue, Suggestion, RuleInfo } from './types';
 import { clearTooltip } from './utils/editor-extensions';
+import { loadFormatter } from './utils/markdown-formatter';
 import { sidebarStore, setSidebarStore, toggleRightPanel } from './stores/sidebar';
 
 const App: Component = () => {
@@ -36,6 +37,8 @@ const App: Component = () => {
 			setRules(rulesList);
 			setWords(getCustomWords());
 			setIsInitialized(true);
+			// Lazily start loading the markdown formatter now that the editor is ready
+			// loadFormatter();
 		} catch (error) {
 			console.error('Failed to initialize Harper:', error);
 		} finally {
@@ -228,7 +231,7 @@ const App: Component = () => {
 	};
 
 	const handleToggleRightPanel = (panel: 'rules' | 'dictionary') => {
-		setSidebarStore('isIssueSidebarOpen', false)
+		setSidebarStore('isIssueSidebarOpen', false);
 		if (sidebarStore.rightPanel !== panel) {
 			setSelectedIssueId(null);
 			clearTooltip();

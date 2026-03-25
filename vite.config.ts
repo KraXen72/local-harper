@@ -2,7 +2,7 @@ import tailwindcss from '@tailwindcss/vite';
 import { defineConfig } from 'vite';
 import solidPlugin from 'vite-plugin-solid';
 import devtools from 'solid-devtools/vite';
-
+ 
 export default defineConfig({
   base: '/local-harper/',
   plugins: [devtools(), solidPlugin(), tailwindcss()],
@@ -17,7 +17,7 @@ export default defineConfig({
     target: 'esnext',
   },
   optimizeDeps: {
-    exclude: ['harper.js'],
+    exclude: ['harper.js', '@hongdown/wasm'],
   },
   assetsInclude: ['**/*.wasm'],
 });
