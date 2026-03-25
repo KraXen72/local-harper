@@ -6,6 +6,10 @@
   "rangeStrategy": "bump",
   "packageRules": [
     {
+      "matchDatasources": ["npm"],
+      "minimumReleaseAge": "1 day"
+    },
+    {
       "matchUpdateTypes": ["major"],
       "enabled": false
     },
