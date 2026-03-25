@@ -187,7 +187,7 @@ const Editor: Component<EditorProps> = (props) => {
 
 	return (
 		<div class="h-full overflow-auto bg-(--flexoki-bg) w-full" onClick={handleContainerClick}>
-			<div class="pt-12 w-full px-4 pb-12 flex justify-center">
+			<div class="pt-5 sm:pt-13 w-full px-4 pb-12 flex justify-center">
 				<div
 					class="bg-(--flexoki-bg) rounded-xl overflow-hidden shadow-2xl border border-(--flexoki-ui-2) w-full max-w-216.75"
 					ref={editorRef}>

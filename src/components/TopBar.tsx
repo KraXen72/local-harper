@@ -36,33 +36,42 @@ const TopBar: Component<TopBarProps> = (props) => {
 				<Show when={props.onToggleSidebar}>
 					<button
 						onClick={props.onToggleSidebar}
-						class="md:hidden px-4 py-1.5 cursor-pointer hover:brightness-110 active:scale-95 text-white text-sm font-medium rounded-md shadow-md hover:shadow-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-(--flexoki-bg-2)"
+						class="md:hidden top-icon-button flex"
 						classList={{
 							'bg-[var(--flexoki-cyan)] focus:ring-[var(--flexoki-cyan)]': props.isSidebarOpen,
 							'bg-[var(--flexoki-ui-3)] text-[var(--flexoki-tx-2)] focus:ring-[var(--flexoki-ui-3)]': !props.isSidebarOpen
 						}}
 						aria-label="Toggle sidebar"
 					>
-						<div class="flex items-center gap-2">
-							<span class="iconify lucide--list w-4 h-4" />
-							Issues
-						</div>
+						<span class="iconify lucide--list w-4 h-4" />
+						<span class="text-sm">Issues</span>
 					</button>
 				</Show>
 
 				<button
+					onClick={props.onToggleDictManager}
+					class="top-icon-button top-icon-button-ltsm-square flex"
+					classList={{
+						'bg-[var(--flexoki-cyan)] focus:ring-[var(--flexoki-cyan)]': props.isDictManagerOpen,
+						'bg-[var(--flexoki-ui-3)] text-[var(--flexoki-tx-2)] focus:ring-[var(--flexoki-ui-3)]': !props.isDictManagerOpen
+					}}
+					aria-label="Toggle dictionary manager"
+				>
+					<span class="iconify lucide--book w-4 h-4" />
+					<span class="text-sm top-icon-button-title">Dict</span>
+				</button>
+
+				<button
 					onClick={props.onToggleRuleManager}
-					class="px-4 py-1.5 cursor-pointer hover:brightness-110 active:scale-95 text-white text-sm font-medium rounded-md shadow-md hover:shadow-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-(--flexoki-bg-2)"
+					class="top-icon-button top-icon-button-ltsm-square flex"
 					classList={{
 						'bg-[var(--flexoki-cyan)] focus:ring-[var(--flexoki-cyan)]': props.isRuleManagerOpen,
 						'bg-[var(--flexoki-ui-3)] text-[var(--flexoki-tx-2)] focus:ring-[var(--flexoki-ui-3)]': !props.isRuleManagerOpen
 					}}
 					aria-label="Toggle rule manager"
 				>
-					<div class="flex items-center gap-2">
-						<span class="iconify lucide--settings w-4 h-4" />
-						Rules
-					</div>
+					<span class="iconify lucide--settings w-4 h-4" />
+					<span class="text-sm top-icon-button-title">Rules</span>
 				</button>
 			</div>
 		</div>

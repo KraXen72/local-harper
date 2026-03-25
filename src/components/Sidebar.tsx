@@ -17,6 +17,7 @@ interface SidebarExtendedProps extends SidebarProps {
 }
 
 const Sidebar: Component<SidebarExtendedProps> = (props) => {
+	// oxlint-disable-next-line no-unassigned-vars
 	let containerRef!: HTMLDivElement;
 	const issueRefs = new Map<string, HTMLDivElement>();
 
@@ -31,12 +32,12 @@ const Sidebar: Component<SidebarExtendedProps> = (props) => {
 	});
 
 	return (
-		<div ref={containerRef} class="grid h-full border-l border-(--flexoki-ui-2) bg-(--flexoki-bg)/95 backdrop-blur-md" style={{
+		<div ref={containerRef} class="grid h-full bg-(--flexoki-bg) backdrop-blur-md" style={{
 			"grid-template-rows": "min-content 1fr min-content",
 		}}>
 			<div class="flex items-center justify-between px-4 py-3 bg-(--flexoki-bg)">
 				<div class="flex items-center gap-3">
-					<h2 class="text-base font-semibold text-(--flexoki-tx) tracking-tight">Issues</h2>
+					<h2 class="text-lg font-semibold text-(--flexoki-tx) tracking-tight">Issues</h2>
 					<Show when={props.issues.length > 0}>
 						<span class="inline-flex items-center justify-center min-w-8 h-6 px-2 rounded-md border border-(--flexoki-red)/40 bg-(--flexoki-red)/15 text-(--flexoki-red) text-xs font-bold tracking-wide shadow-sm">
 							{props.issues.length}
@@ -46,7 +47,7 @@ const Sidebar: Component<SidebarExtendedProps> = (props) => {
 				<Show when={props.onClose}>
 					<button
 						onClick={props.onClose}
-						class="sm:hidden p-1.5 hover:bg-(--flexoki-ui-3) aspect-square rounded-md transition-colors duration-150 flex"
+						class="sm:hidden p-1 hover:bg-(--flexoki-ui-3) aspect-square rounded-md transition-colors duration-150 flex"
 						aria-label="Close sidebar"
 					>
 						<span class="iconify lucide--x w-5 h-5 text-(--flexoki-tx-2)" />
@@ -84,7 +85,7 @@ const Sidebar: Component<SidebarExtendedProps> = (props) => {
 				</Show>
 			</div>
 			<Show when={props.issues.length > 0}>
-				<div class="py-3 border-t border-(--flexoki-ui-2) sticky bottom-0 bg-(--flexoki-bg) z-10">
+				<div class="sidebar-footer py-3 sticky bottom-0 bg-(--flexoki-bg) z-10 hidden sm:block">
 					<p class="text-xs text-(--flexoki-tx-3) text-center leading-6">
 						<Kbd>Ctrl+J</Kbd>
 						&nbsp;&nbsp;/&nbsp;&nbsp;
