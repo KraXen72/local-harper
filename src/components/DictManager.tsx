@@ -29,7 +29,7 @@ const DictManager: Component<DictManagerProps> = (props) => {
 	const showClearAll = () => props.words.length > 0 && !filterText().trim();
 
 	const handleAdd = () => {
-		const word = filterText().trim();
+		const word = filterText().trim().replaceAll(" ", "");
 		if (!word || props.words.includes(word)) return;
 		props.onAdd(word);
 		setFilterText('');
@@ -42,7 +42,7 @@ const DictManager: Component<DictManagerProps> = (props) => {
 	};
 
 	const handleEditSave = (oldWord: string) => {
-		const newWord = editValue().trim();
+		const newWord = editValue().trim().replaceAll(" ", "");
 		if (newWord && newWord !== oldWord) props.onEdit(oldWord, newWord);
 		setEditingWord(null);
 	};
@@ -98,6 +98,7 @@ const DictManager: Component<DictManagerProps> = (props) => {
 									'py-1 ps-1 pe-3': editingWord() === word,
 									'py-1 px-3': editingWord() !== word
 								}}
+								onDblClick={() => startEdit(word)}
 							>
 								<Show
 									when={editingWord() === word}

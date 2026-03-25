@@ -153,8 +153,15 @@ export async function removeWordFromDictionary(word: string): Promise<void> {
 export async function editWordInDictionary(oldWord: string, newWord: string): Promise<void> {
 	const trimmed = newWord.trim();
 	if (!trimmed || trimmed === oldWord) return;
-	const words = getCustomWords().map(w => w === oldWord ? trimmed : w);
-	localStorage.setItem('harper-custom-words', JSON.stringify(words));
+	const currentWords = getCustomWords();
+	// If newWord already exists, just remove the old word
+	if (currentWords.includes(trimmed)) {
+		const words = currentWords.filter(w => w !== oldWord);
+		localStorage.setItem('harper-custom-words', JSON.stringify(words));
+	} else {
+		const words = currentWords.map(w => w === oldWord ? trimmed : w);
+		localStorage.setItem('harper-custom-words', JSON.stringify(words));
+	}
 	// importWords() only adds — reset the linter so the old word is no longer valid
 	await resetLinter();
 }
