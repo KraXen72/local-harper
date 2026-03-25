@@ -228,6 +228,7 @@ const App: Component = () => {
 	};
 
 	const handleToggleRightPanel = (panel: 'rules' | 'dictionary') => {
+		setSidebarStore('isIssueSidebarOpen', false)
 		if (sidebarStore.rightPanel !== panel) {
 			setSelectedIssueId(null);
 			clearTooltip();
@@ -304,10 +305,12 @@ const App: Component = () => {
 
 				<div
 					class="overflow-hidden sidebar-right"
-					classList={{ 'show-rule-manager': sidebarStore.rightPanel !== null }}
+					classList={{ 
+						'show-rule-manager border-l border-l-(--flexoki-ui-2)/20': sidebarStore.rightPanel !== null
+					}}
 					style={{
 						"pointer-events": sidebarStore.rightPanel !== null ? "auto" : "none",
-						"box-shadow": sidebarStore.rightPanel !== null ? "-4px 0 12px rgba(0, 0, 0, 0.3)" : "none"
+						"box-shadow": sidebarStore.rightPanel !== null ? "-4px 0 15px rgba(0, 0, 0, 0.1)" : "none"
 					}}
 				>
 					<Show when={sidebarStore.rightPanel === 'rules'}>
