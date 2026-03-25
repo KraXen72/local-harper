@@ -33,6 +33,7 @@ const SidebarPanel: Component<SidebarPanelProps> = (props) => {
 						onInput={(e) => props.onFilterChange(e.currentTarget.value)}
 						onKeyDown={props.onFilterKeyDown}
 						placeholder={props.filterPlaceholder ?? 'Filter...'}
+						aria-label={props.filterPlaceholder ?? 'Filter...'}
 						class="w-full px-3 py-2 bg-(--flexoki-bg) border border-(--flexoki-ui-2) rounded-md text-sm text-(--flexoki-tx) placeholder-(--flexoki-tx-3) focus:outline-none focus:ring-2 focus:ring-(--flexoki-cyan) focus:border-transparent"
 					/>
 					<Show when={props.filterText}>

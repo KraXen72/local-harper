@@ -43,7 +43,9 @@ const DictManager: Component<DictManagerProps> = (props) => {
 
 	const handleEditSave = (oldWord: string) => {
 		const newWord = editValue().trim().replaceAll(" ", "");
-		if (newWord && newWord !== oldWord) props.onEdit(oldWord, newWord);
+		if (newWord && newWord !== oldWord && !props.words.includes(newWord)) {
+			props.onEdit(oldWord, newWord);
+		}
 		setEditingWord(null);
 	};
 
@@ -107,14 +109,14 @@ const DictManager: Component<DictManagerProps> = (props) => {
 											<span class="flex-1 ps-px text-sm text-(--flexoki-tx) truncate">{word}</span>
 											<button
 												onClick={() => startEdit(word)}
-												class="opacity-0 group-hover:opacity-100 px-1.5 py-0.5 hover:bg-(--flexoki-ui-2) rounded"
+												class="opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 px-1.5 py-0.5 hover:bg-(--flexoki-ui-2) rounded"
 												aria-label="Edit word"
 											>
 												<span class="iconify lucide--pencil w-3.5 h-3.5 text-(--flexoki-tx)" />
 											</button>
 											<button
 												onClick={() => props.onRemove(word)}
-												class="opacity-0 group-hover:opacity-100 px-1.5 py-0.5 hover:bg-(--flexoki-ui-2) rounded"
+												class="opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 px-1.5 py-0.5 hover:bg-(--flexoki-ui-2) rounded"
 												aria-label="Delete word"
 											>
 												<span class="iconify lucide--trash-2 w-3.5 h-3.5 text-(--flexoki-red)" />
