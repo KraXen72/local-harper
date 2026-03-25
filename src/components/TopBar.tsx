@@ -22,7 +22,6 @@ const TopBar: Component<TopBarProps> = (props) => {
 			</Show>
 
 			<div class="flex items-center gap-2">
-				{/* Copy — always icon-only */}
 				<button
 					onClick={props.onCopy}
 					class="aspect-square w-8 flex justify-center items-center cursor-pointer hover:brightness-110 active:scale-95 text-white text-sm font-medium rounded-md shadow-md hover:shadow-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-(--flexoki-bg-2)"
