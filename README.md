@@ -10,10 +10,10 @@ The main idea is that it uses Codemirror as the editor framework, since it's pre
 - keyboard shortcuts & navigation
 - issue sidebar: clicking issue in editor focused sidebar and vice-versa
 - initial dictionary support (localStorage)
-- sleek UI built with solid-js and tailwindcss@4
+- sleek, responsive UI built with solid-js and tailwindcss@4 (mobile support as well)
 - rule manager
+- dictionary manager
 - word counter (words, characters, sentences, paragraphs)
-- planned: dictionary manager
 
 ## installation & try it out
 pre-req: git, nodejs, [pnpm](https://pnpm.io/installation).
@@ -23,12 +23,6 @@ cd local-harper
 pnpm i
 pnpm dev
 ```
-
-## note to harper maintainers/potential contributors
-Most of the harper specific logic is probably (possibly very) bad. 
-This is due to the fact that it's mostly vibecoded. I am in the process of cleaning up the codebase, so it goes from the "working PoC" stage into something more maintainable long term.
-I will eargerly accept any improvements/rewrites to the harper-specific logic (or to any part of the app, really).
-Thank you for making harper!
 
 ## testing text:
 ```
