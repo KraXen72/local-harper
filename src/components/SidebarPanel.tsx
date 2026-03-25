@@ -18,14 +18,14 @@ const SidebarPanel: Component<SidebarPanelProps> = (props) => {
 				<h2 class="text-lg font-semibold text-(--flexoki-tx)">{props.title}</h2>
 				<button
 					onClick={props.onClose}
-					class="p-1.5 hover:bg-(--flexoki-ui-3) aspect-square rounded-md transition-colors duration-150 flex"
+					class="p-1 hover:bg-(--flexoki-ui-3) aspect-square rounded-md transition-colors duration-150 flex"
 					aria-label={`Close ${props.title}`}
 				>
 					<span class="iconify lucide--x w-5 h-5 text-(--flexoki-tx-2)" />
 				</button>
 			</div>
 
-			<div class="px-4 py-3 border-b border-(--flexoki-ui-2) flex gap-2">
+			<div class="px-3 py-3 border-b border-(--flexoki-ui-2) flex gap-2">
 				<div class="relative flex-1">
 					<input
 						type="text"
@@ -48,7 +48,7 @@ const SidebarPanel: Component<SidebarPanelProps> = (props) => {
 				{props.filterAddon}
 			</div>
 
-			<div class="overflow-y-auto p-2 min-h-0">
+			<div class="overflow-y-auto py-3 ps-3 pe-1 min-h-0 sidebar-panel-scroller">
 				{props.children}
 			</div>
 		</div>

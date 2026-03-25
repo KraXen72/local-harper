@@ -12,7 +12,7 @@ const IssueItem: Component<IssueItemProps> = (props) => {
 
 	return (
 		<div
-			class="shared-card cursor-pointer hover:translate-x-0.5"
+			class="shared-card shared-card-hover cursor-pointer hover:translate-x-0.5"
 			classList={{ 'shared-card-selected translate-x-0.5': props.isSelected }}
 			onClick={handleClick}
 			tabIndex={0}
@@ -29,7 +29,7 @@ const IssueItem: Component<IssueItemProps> = (props) => {
 					style={{ "background-color": lintColor() }}
 				/>
 				<div class="flex-1 min-w-0">
-					<p class="text-sm text-(--flexoki-tx) leading-snug text-wrap break-all line-clamp-3">
+					<p class="text-sm text-(--flexoki-tx) leading-snug text-wrap line-clamp-3">
 						<FormattedMessage message={props.issue.lint.message()} />
 					</p>
 				</div>

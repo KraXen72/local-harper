@@ -227,7 +227,7 @@ body {
 	background-color: color-mix(in oklab, var(--flexoki-ui) 20%, transparent);
 	border-color: var(--flexoki-ui-2);
 }
-.shared-card:not(.shared-card-selected):hover {
+.shared-card.shared-card-hover:not(.shared-card-selected):hover {
 	background-color: var(--flexoki-ui);
 	border-color: var(--flexoki-ui-3);
 
@@ -279,6 +279,18 @@ body {
 .sidebar-left {
 	grid-area: issues
 }
+.sidebar-footer {
+	border-top: 1px solid var(--flexoki-ui-2);
+
+	@media (width >= 40rem /* 640px */) {
+		border-top: 1px solid;
+		border-image: linear-gradient(
+			to right,
+			var(--flexoki-ui-2) 80%,
+			transparent
+		) 1;
+	}
+}
 .editor-wrapper {
 	grid-area: editor;
 	display: flex;
@@ -286,6 +298,37 @@ body {
 }
 .sidebar-right {
 	grid-area: rulemanager;
+}
+
+.top-icon-button {
+	justify-content: start;
+	align-items: center;
+	gap: .5rem;
+
+	color: white;
+	.top-icon-button-title {
+		display: none;
+		@media (width >= 40rem /* 640px */) {
+			display: flex;
+		}
+	}
+	&:active {
+		transform: scale(0.95);
+	}
+	/* icon-only style for lt-sm: */
+
+	@apply px-4 py-1.5 cursor-pointer text-sm font-medium rounded-md shadow-md hover:shadow-lg transition-all duration-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-(--flexoki-bg-2);
+}
+.top-icon-button-ltsm-square {
+	@media (width < 40rem) {
+		@apply w-8 aspect-square flex items-center justify-start p-2;
+	}
+}
+.sidebar-panel-scroller {
+	scrollbar-gutter: stable;
+}
+.sidebar-panel-scroller::-webkit-scrollbar {
+	width: 8px;
 }
 
 @media (max-width: 1200px) {
