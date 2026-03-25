@@ -7,6 +7,7 @@ import { render } from 'solid-js/web';
 import IssueTooltip from '../components/IssueTooltip';
 import { lintKindColor, lintKindBackgroundColor } from './lint-kind-colors';
 import { getLinter } from '../services/harper-service';
+import { formatMarkdownCommand } from './markdown-formatter';
 
 // Effect to update issues
 export const updateIssuesEffect = StateEffect.define<HarperIssue[]>();
@@ -219,7 +220,6 @@ function harperAutocomplete(context: CompletionContext): CompletionResult | null
 		
 		options.push({
 			label,
-			// detail: isRemove ? 'Remove this text' : 'Replace',
 			apply: async (view) => {
 				// Use linter.applySuggestion() to properly handle all suggestion types,
 				// including insertions (comma rules), replacements, and removals.
@@ -249,14 +249,12 @@ function harperAutocomplete(context: CompletionContext): CompletionResult | null
 				});
 			},
 			type: 'text',
-			// info: 'Replace'
 		});
 	}
 	
 	// Always add ignore option first (before dictionary so it's always at the bottom)
 	options.push({
 		label: 'Ignore',
-		// detail: 'Ignore this issue',
 		apply: (view) => {
 			if (issueActions) {
 				issueActions.onIgnore(issue.id);
@@ -272,7 +270,6 @@ function harperAutocomplete(context: CompletionContext): CompletionResult | null
 	if (isSpelling) {
 		options.push({
 			label: 'Add to Dictionary',
-			// detail: 'Add word to dictionary',
 			apply: (view) => {
 				if (issueActions) {
 					issueActions.onAddToDictionary(issue.lint.get_problem_text());
@@ -619,8 +616,8 @@ function handleTabOnIssue(view: EditorView): boolean {
 	return false;
 }
 
-// Keymap for issue navigation and Tab trigger
-export const issueNavigationKeymap = keymap.of([
+// Keymap for issue navigation, Tab trigger, and markdown formatting
+export const keymapExtensions = keymap.of([
 	{
 		key: 'Tab',
 		run: handleTabOnIssue,
@@ -633,6 +630,10 @@ export const issueNavigationKeymap = keymap.of([
 		key: 'Ctrl-k',
 		run: navigateToPreviousIssue,
 	},
+	// {
+	// 	key: 'Ctrl-;',
+	// 	run: formatMarkdownCommand
+	// },
 ]);
 
 export { issueTheme, darkEditorTheme };

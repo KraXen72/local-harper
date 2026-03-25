@@ -331,6 +331,10 @@ body {
 	width: 8px;
 }
 
+dialog {
+  margin: auto;
+}
+
 @media (max-width: 1200px) {
 	.app-layout {
 		grid-template-columns: minmax(250px, 1fr) 3fr;
