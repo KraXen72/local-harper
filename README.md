@@ -8,12 +8,12 @@ The main idea is that it uses Codemirror as the editor framework, since it's pre
 ## features
 - live, performant and local grammar checking with [harper](https://github.com/Automattic/harper)
 - keyboard shortcuts & navigation
-- issue sidebar: clicking issue in editor focused sidebar and vice-versa
-- initial dictionary support (localStorage)
+- issue sidebar: clicking issue in editor focuses sidebar and vice-versa
 - sleek, responsive UI built with solid-js and tailwindcss@4 (mobile support as well)
-- rule manager
-- dictionary manager
+- settings: search & toggle individual rules, change the harper dialect
+- dictionary persisted in localStorage + UI for managing the dictionary, including import/export
 - word counter (words, characters, sentences, paragraphs)
+- installable as a PWA, with offline support (WIP, may not work)
 
 ## installation & try it out
 pre-req: git, nodejs, [pnpm](https://pnpm.io/installation).
