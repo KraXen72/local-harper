@@ -34,14 +34,15 @@ export default defineConfig({
 			// Inject the SW registration script automatically into index.html
 			injectRegister: 'auto',
 
-			// Silently install the new SW and take control of all clients;
-			// the page reloads automatically so the user always has the latest.
+			// Auto-update when new SW is available
 			registerType: 'autoUpdate',
 
 			// Cache ALL assets for full offline support
 			workbox: {
 				globPatterns: ['**/*'],
 				runtimeCaching: [],
+				navigateFallback: '/index.html',
+				navigateFallbackDenylist: [/^\/api\//],
 			},
 			includeAssets: ['**/*'],
 
