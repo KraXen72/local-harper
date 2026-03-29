@@ -34,6 +34,9 @@ const WordCounter: Component<WordCounterProps> = (props) => {
                 {/* md/lg+ wordcount */}
                 <div class="hidden sm:block text-sm" aria-hidden="false">Characters: {counts().graphemes} &middot; Sentences: {counts().sentences} &middot; Lines: {counts().lines} &middot; Paragraphs: {counts().paragraphs}</div>
             </div>
+            <div class="mt-1 text-xs opacity-35 text-right">
+                build {__BUILD_INFO__.hash} &middot; {__BUILD_INFO__.date}
+            </div>
         </div>
     );
 };
