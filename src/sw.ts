@@ -13,11 +13,16 @@ clientsClaim();
 // Remove caches from older precache versions
 cleanupOutdatedCaches();
 
-// Debug: List all cached entries
-async function listPrecache(): Promise<string[]> {
-	const cache = await caches.open('workbox-precache-v1');
-	const keys = await cache.keys();
-	return keys.map(r => r.url);
+// Debug: List all cached entries across ALL caches
+async function listAllCachedUrls(): Promise<string[]> {
+	const cacheNames = await caches.keys();
+	const allUrls: string[] = [];
+	for (const name of cacheNames) {
+		const cache = await caches.open(name);
+		const keys = await cache.keys();
+		allUrls.push(...keys.map(r => r.url));
+	}
+	return allUrls;
 }
 
 // Generate debug HTML with cache info
@@ -26,9 +31,9 @@ async function generateDebugHtml(title: string, message: string, requestedUrl: s
 	let allCaches: { name: string; entries: string[] }[] = [];
 
 	try {
-		cacheEntries = await listPrecache();
+		cacheEntries = await listAllCachedUrls();
 	} catch (e) {
-		cacheEntries = [`Error listing precache: ${e}`];
+		cacheEntries = [`Error listing caches: ${e}`];
 	}
 
 	try {
@@ -46,36 +51,36 @@ async function generateDebugHtml(title: string, message: string, requestedUrl: s
 	}
 
 	return `
-<!DOCTYPE html>
-<html lang="en">
-<head>
+	<!DOCTYPE html>
+	<html lang="en">
+	<head>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<title>${title}</title>
 	<style>
-		body { font-family: system-ui, sans-serif; padding: 20px; background: #1a1a1a; color: #e0e0e0; }
-		h1 { color: #f5a623; }
-		p { color: #a0a0a0; }
-		h2 { color: #7ed321; margin-top: 30px; }
-		pre { background: #2a2a2a; padding: 15px; border-radius: 8px; overflow-x: auto; font-size: 12px; }
-		.entry { color: #4a9eff; }
-		.count { color: #7ed321; }
+	body { font-family: system-ui, sans-serif; padding: 20px; background: #1a1a1a; color: #e0e0e0; }
+	h1 { color: #f5a623; }
+	p { color: #a0a0a0; }
+	h2 { color: #7ed321; margin-top: 30px; }
+	pre { background: #2a2a2a; padding: 15px; border-radius: 8px; overflow-x: auto; font-size: 12px; }
+	.entry { color: #4a9eff; }
+	.count { color: #7ed321; }
 	</style>
-</head>
-<body>
+	</head>
+	<body>
 	<h1>${title}</h1>
 	<p>${message}</p>
 	<h2>Request Info</h2>
 	<pre>URL: <span class="entry">${requestedUrl}</span></pre>
-	<h2>Precache <span class="count">(${cacheEntries.length} entries)</span></h2>
+	<h2>All Cached URLs <span class="count">(${cacheEntries.length} total)</span></h2>
 	<pre>${cacheEntries.map(e => `<span class="entry">${e}</span>`).join('\n')}</pre>
 	<h2>All Caches</h2>
 	${allCaches.map(c => `
 		<h3>${c.name} <span class="count">(${c.entries.length} entries)</span></h3>
 		<pre>${c.entries.map(e => `<span class="entry">${e}</span>`).join('\n')}</pre>
-	`).join('')}
-</body>
-</html>`;
+		`).join('')}
+		</body>
+		</html>`;
 }
 
 // ─── COEP / COOP header injection ────────────────────────────────────────────
@@ -103,31 +108,23 @@ function withCOIHeaders(response: Response): Response {
 	});
 }
 
-// Match request against precache - try multiple strategies
+// Match a request against ALL available caches (not just a hardcoded cache name).
+// Workbox names its precache "workbox-precache-v2-<origin+scope>" so the name
+// is not stable and must not be hardcoded.
 async function matchFromPrecache(request: Request): Promise<Response | null> {
-	const cache = await caches.open('workbox-precache-v1');
-	
-	// Try exact match first
-	let cached = await cache.match(request);
+	// caches.match() searches every cache storage entry in insertion order.
+	let cached = await caches.match(request);
 	if (cached) return cached;
-	
-	// Try without query params
+
+	// Try without query params (Workbox stores revision strings as query params,
+	// but the navigation request won't have them).
 	const url = new URL(request.url);
-	url.search = '';
-	const noQueryRequest = new Request(url.toString(), { credentials: request.credentials });
-	cached = await cache.match(noQueryRequest);
-	if (cached) return cached;
-	
-	// Try just the pathname
-	const pathRequest = new Request(url.pathname, { credentials: request.credentials });
-	cached = await cache.match(pathRequest);
-	if (cached) return cached;
-	
-	// Try with base URL
-	const basePathRequest = new Request(self.location.origin + url.pathname, { credentials: request.credentials });
-	cached = await cache.match(basePathRequest);
-	if (cached) return cached;
-	
+	if (url.search) {
+		url.search = '';
+		cached = await caches.match(new Request(url.toString(), { credentials: request.credentials }));
+		if (cached) return cached;
+	}
+
 	return null;
 }
 
@@ -142,7 +139,7 @@ self.addEventListener('fetch', (event) => {
 					return event.request.mode === 'navigate' ? withCOIHeaders(cached) : cached;
 				}
 
-				// Not in precache - return debug offline response
+				// Not in any cache — return debug offline response
 				if (event.request.mode === 'navigate') {
 					const html = await generateDebugHtml(
 						'Data Saver Mode',
@@ -167,8 +164,10 @@ self.addEventListener('fetch', (event) => {
 					const response = await fetch(event.request);
 					return withCOIHeaders(response);
 				} catch {
-					// Offline: try to find index.html in precache
-					const cached = await matchFromPrecache(new Request('/index.html'));
+					// Offline: try to find index.html in any cache
+					const cached = await matchFromPrecache(
+						new Request(self.location.origin + '/local-harper/index.html'),
+					);
 					if (cached) {
 						return withCOIHeaders(cached);
 					}
@@ -192,7 +191,7 @@ self.addEventListener('fetch', (event) => {
 			if (cached) {
 				return cached;
 			}
-			// Try network if not in precache
+			// Try network if not in any cache
 			try {
 				return await fetch(event.request);
 			} catch {
