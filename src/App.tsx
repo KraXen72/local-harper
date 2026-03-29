@@ -8,6 +8,7 @@ import { initHarper, analyzeText, transformLints, getLinter, addWordToDictionary
 import type { HarperIssue, Suggestion, RuleInfo } from './types';
 import { clearTooltip } from './utils/editor-extensions';
 import { sidebarStore, setSidebarStore, toggleRightPanel } from './stores/sidebar';
+import { isOnCellular } from './utils/cellular-check';
 
 const App: Component = () => {
 	const [content, setContent] = createSignal('');
@@ -15,6 +16,7 @@ const App: Component = () => {
 	const [selectedIssueId, setSelectedIssueId] = createSignal<string | null>(null);
 	const [isInitialized, setIsInitialized] = createSignal(false);
 	const [isInitializing, setIsInitializing] = createSignal(false);
+	const [isCellular, setIsCellular] = createSignal(false);
 
 	const [scrollToIssue, setScrollToIssue] = createSignal<string | null>(null);
 	const [isAnalyzing, setIsAnalyzing] = createSignal(false);
@@ -31,6 +33,12 @@ const App: Component = () => {
 	let lastClickedIssueFromSidebar: string | null = null;
 
 	onMount(async () => {
+		// Check if on constrained network - show indicator but still load from cache
+		if (isOnCellular()) {
+			setIsCellular(true);
+			console.log('On constrained network - content served from cache');
+		}
+
 		setIsInitializing(true);
 		try {
 			const savedDialect = localStorage.getItem('harper-dialect');
@@ -302,6 +310,7 @@ const App: Component = () => {
 				isInitializing={isInitializing()}
 				isReloading={isReloading()}
 				isSidebarOpen={sidebarStore.isIssueSidebarOpen}
+				isCellular={isCellular()}
 				onToggleSidebar={() => {
 					if (sidebarStore.rightPanel !== null) {
 						// When a right panel is open, always close it and open issues —

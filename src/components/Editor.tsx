@@ -23,6 +23,7 @@ import {
 } from '../utils/editor-extensions';
 
 const Editor: Component<EditorProps> = (props) => {
+	// oxlint-disable-next-line no-unassigned-vars
 	let editorRef!: HTMLDivElement;
 	let view: EditorView | undefined;
 	let editorInitialized = false;

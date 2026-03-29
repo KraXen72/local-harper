@@ -14,6 +14,9 @@ const TopBar: Component<TopBarProps> = (props) => {
 				/>
 				<div class="flex items-center">
 					<span class="text-sm font-medium text-(--flexoki-tx-2)">local-harper</span>
+					<Show when={props.isCellular}>
+						<span class="iconify lucide--leaf w-4 h-4 ml-2 text-(--flexoki-tx-2)" title="Data Saver"/>
+					</Show>
 				</div>
 			</div>
 

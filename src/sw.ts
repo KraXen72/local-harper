@@ -2,6 +2,7 @@
 
 import { clientsClaim } from 'workbox-core';
 import { cleanupOutdatedCaches, matchPrecache, precacheAndRoute } from 'workbox-precaching';
+import { isOnCellular } from './utils/cellular-check';
 
 declare let self: ServiceWorkerGlobalScope;
 
@@ -39,6 +40,29 @@ function withCOIHeaders(response: Response): Response {
 
 // Handle all fetch requests with proper offline support
 self.addEventListener('fetch', (event) => {
+	// On constrained network: cache only, no network requests
+	if (isOnCellular()) {
+		event.respondWith(
+			(async () => {
+				const cached = await matchPrecache(event.request);
+				if (cached) {
+					return event.request.mode === 'navigate' ? withCOIHeaders(cached) : cached;
+				}
+				// Not in precache - return offline response
+				if (event.request.mode === 'navigate') {
+					return withCOIHeaders(
+						new Response(
+							'<h1>Data Saver Mode</h1><p>On constrained network. Connect to WiFi and reload for fresh content.</p>',
+							{ status: 503, headers: { 'Content-Type': 'text/html' } },
+						),
+					);
+				}
+				return new Response('', { status: 404, statusText: 'Not cached' });
+			})(),
+		);
+		return;
+	}
+
 	// Navigation requests: network first with offline fallback
 	if (event.request.mode === 'navigate') {
 		event.respondWith(

@@ -38,6 +38,7 @@ export interface TopBarProps {
 	isReloading?: boolean;
 	isSidebarOpen?: boolean;
 	onToggleSidebar?: () => void;
+	isCellular?: boolean;
 }
 
 export interface RuleInfo {
