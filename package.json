@@ -1,8 +1,9 @@
 {
-  "name": "vite-template-solid",
-  "version": "0.0.0",
-  "description": "",
+  "name": "local-harper",
+  "version": "1.0.1",
+  "description": "Offline grammar & style checker powered by Harper",
   "type": "module",
+  "private": true,
   "scripts": {
     "start": "vite",
     "dev": "vite",

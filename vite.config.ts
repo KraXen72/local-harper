@@ -32,7 +32,6 @@ export default defineConfig({
 			manifest: {
 				name: 'local-harper',
 				short_name: 'local-harper',
-				description: 'Offline grammar & style checker powered by Harper',
 				theme_color: '#100f0f',
 				background_color: '#100f0f',
 				display: 'standalone',
