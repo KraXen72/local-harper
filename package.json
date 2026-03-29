@@ -38,6 +38,7 @@
     "harper.js": "^1.12.0",
     "solid-js": "^1.9.12",
     "workbox-core": "^7.4.0",
-    "workbox-precaching": "^7.4.0"
+    "workbox-precaching": "^7.4.0",
+    "workbox-window": "^7.4.0"
   }
 }
