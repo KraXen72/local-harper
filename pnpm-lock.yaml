@@ -39,10 +39,10 @@ importers:
         specifier: ^1.9.11
         version: 1.9.11
       workbox-core:
-        specifier: ^7.3.0
+        specifier: ^7.4.0
         version: 7.4.0
       workbox-precaching:
-        specifier: ^7.3.0
+        specifier: ^7.4.0
         version: 7.4.0
     devDependencies:
       '@iconify-json/lucide':
@@ -73,7 +73,7 @@ importers:
         specifier: ^2.11.11
         version: 2.11.11(solid-js@1.9.11)(vite@7.3.1(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(yaml@2.6.1))
       workbox-build:
-        specifier: ^7.3.0
+        specifier: ^7.4.0
         version: 7.4.0(@types/babel__core@7.20.5)
 
 packages:
