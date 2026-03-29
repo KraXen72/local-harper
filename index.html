@@ -3,9 +3,53 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#000000" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="theme-color" content="#100f0f" />
+
+    <!-- PWA -->
+    <link rel="manifest" href="/local-harper/manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="/local-harper/icons/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="local-harper" />
+
+    <link rel="icon" type="image/png" href="/local-harper/icons/icon-192.png" />
     <title>local-harper</title>
+
+    <!--
+      Cross-Origin Isolation bootstrap
+      ─────────────────────────────────
+      harper.js needs SharedArrayBuffer (WASM threading), which requires the
+      page to be cross-origin isolated (COEP + COOP headers).
+
+      GitHub Pages never sends those headers, so our service worker injects
+      them into every navigation response — but only once it's active.
+
+      Problem: on the very first page load the SW hasn't activated yet, so
+      the page loads without the headers and SharedArrayBuffer is unavailable.
+
+      Solution: if an active SW exists but the page is *not* yet isolated,
+      we do a single silent reload.  The SW is already controlling the client
+      at that point, so the reload is served with the injected headers.
+
+      A sessionStorage flag prevents an infinite reload loop if the SW ever
+      fails to inject the headers.
+    -->
+    <script>
+      (function () {
+        if (!('serviceWorker' in navigator)) return;
+        if (window.crossOriginIsolated) return; // Already isolated — nothing to do
+
+        var reloadKey = 'coi_reload_attempted';
+        if (sessionStorage.getItem(reloadKey)) return; // Already tried once
+
+        navigator.serviceWorker.getRegistration().then(function (reg) {
+          if (reg && reg.active) {
+            sessionStorage.setItem(reloadKey, '1');
+            location.reload();
+          }
+        });
+      })();
+    </script>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>

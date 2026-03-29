@@ -19,7 +19,9 @@
     "tailwindcss": "^4.2.2",
     "typescript": "^5.9.3",
     "vite": "^7.3.1",
-    "vite-plugin-solid": "^2.11.11"
+    "vite-plugin-pwa": "^0.21.1",
+    "vite-plugin-solid": "^2.11.11",
+    "workbox-build": "^7.3.0"
   },
   "dependencies": {
     "@codemirror/autocomplete": "^6.20.1",
@@ -31,6 +33,8 @@
     "@fontsource-variable/inter": "^5.2.8",
     "@twocaretcat/tally-ts": "^1.0.0",
     "harper.js": "^1.12.0",
-    "solid-js": "^1.9.11"
+    "solid-js": "^1.9.11",
+    "workbox-core": "^7.3.0",
+    "workbox-precaching": "^7.3.0"
   }
 }
