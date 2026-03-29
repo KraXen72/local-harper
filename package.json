@@ -20,7 +20,7 @@
     "tailwindcss": "^4.2.2",
     "typescript": "^5.9.3",
     "vite": "^7.3.1",
-    "vite-plugin-pwa": "^0.21.1",
+    "vite-plugin-pwa": "^0.21.2",
     "vite-plugin-solid": "^2.11.11",
     "workbox-build": "^7.4.0"
   },
