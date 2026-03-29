@@ -4,7 +4,7 @@ import Editor from './components/Editor';
 import Sidebar from './components/Sidebar';
 import RuleManager from './components/RuleManager';
 import DictManager from './components/DictManager';
-import { initHarper, analyzeText, transformLints, getLinter, addWordToDictionary, removeWordFromDictionary, editWordInDictionary, clearAllCustomWords, getCustomWords, getRules, toggleRule, getIssueSignature } from './services/harper-service';
+import { initHarper, analyzeText, transformLints, getLinter, addWordToDictionary, removeWordFromDictionary, editWordInDictionary, clearAllCustomWords, getCustomWords, getRules, toggleRule, getIssueSignature, setHarperDialect, importDictionary, Dialect } from './services/harper-service';
 import type { HarperIssue, Suggestion, RuleInfo } from './types';
 import { clearTooltip } from './utils/editor-extensions';
 import { sidebarStore, setSidebarStore, toggleRightPanel } from './stores/sidebar';
@@ -20,6 +20,8 @@ const App: Component = () => {
 	const [isAnalyzing, setIsAnalyzing] = createSignal(false);
 	const [rules, setRules] = createSignal<RuleInfo[]>([]);
 	const [words, setWords] = createSignal<string[]>([]);
+	const [currentDialect, setCurrentDialect] = createSignal<Dialect>(Dialect.American);
+	const [isReloading, setIsReloading] = createSignal(false);
 
 	let debounceTimeout: number | undefined;
 	let analysisGeneration = 0;
@@ -31,7 +33,13 @@ const App: Component = () => {
 	onMount(async () => {
 		setIsInitializing(true);
 		try {
-			await initHarper();
+			const savedDialect = localStorage.getItem('harper-dialect');
+			const parsedDialect = savedDialect ? Number(savedDialect) : NaN;
+			const dialect = Object.values(Dialect).includes(parsedDialect)
+				? parsedDialect as Dialect
+				: Dialect.American;
+			setCurrentDialect(dialect);
+			await initHarper(dialect);
 			const rulesList = await getRules();
 			setRules(rulesList);
 			setWords(getCustomWords());
@@ -154,6 +162,7 @@ const App: Component = () => {
 
 	const handleAddToDictionary = async (word: string) => {
 		try {
+			setIsReloading(true);
 			await addWordToDictionary(word);
 			setWords(getCustomWords());
 			const currentText = content();
@@ -166,36 +175,60 @@ const App: Component = () => {
 			setIssues(filteredIssues);
 		} catch (error) {
 			console.error('Failed to add word to dictionary:', error);
+		} finally {
+			setIsReloading(false);
 		}
 	};
 
 	const handleRemoveFromDictionary = async (word: string) => {
 		try {
+			setIsReloading(true);
 			await removeWordFromDictionary(word);
 			setWords(getCustomWords());
 			scheduleAnalysis(content());
 		} catch (error) {
 			console.error('Failed to remove word from dictionary:', error);
+		} finally {
+			setIsReloading(false);
 		}
 	};
 
 	const handleEditInDictionary = async (oldWord: string, newWord: string) => {
 		try {
+			setIsReloading(true);
 			await editWordInDictionary(oldWord, newWord);
 			setWords(getCustomWords());
 			scheduleAnalysis(content());
 		} catch (error) {
 			console.error('Failed to edit word in dictionary:', error);
+		} finally {
+			setIsReloading(false);
 		}
 	};
 
 	const handleClearAllDictionary = async () => {
 		try {
+			setIsReloading(true);
 			await clearAllCustomWords();
 			setWords(getCustomWords());
 			scheduleAnalysis(content());
 		} catch (error) {
 			console.error('Failed to clear dictionary:', error);
+		} finally {
+			setIsReloading(false);
+		}
+	};
+
+	const handleImportDictionary = async (words: string[]) => {
+		try {
+			setIsReloading(true);
+			await importDictionary(words);
+			setWords(getCustomWords());
+			scheduleAnalysis(content());
+		} catch (error) {
+			console.error('Failed to import dictionary:', error);
+		} finally {
+			setIsReloading(false);
 		}
 	};
 
@@ -227,6 +260,27 @@ const App: Component = () => {
 		}
 	};
 
+	const handleDialectChange = async (dialect: Dialect) => {
+		try {
+			setIsReloading(true);
+			await setHarperDialect(dialect);
+			setCurrentDialect(dialect);
+			localStorage.setItem('harper-dialect', String(dialect));
+			const currentText = content();
+			const lints = await analyzeText(currentText);
+			const harperIssues = transformLints(lints);
+			const filteredIssues = harperIssues.filter(issue => {
+				const sig = getIssueSignature(issue);
+				return !ignoredIssues.has(sig);
+			});
+			setIssues(filteredIssues);
+		} catch (error) {
+			console.error('Failed to change dialect:', error);
+		} finally {
+			setIsReloading(false);
+		}
+	};
+
 	const handleToggleRightPanel = (panel: 'rules' | 'dictionary') => {
 		setSidebarStore('isIssueSidebarOpen', false)
 		if (sidebarStore.rightPanel !== panel) {
@@ -246,6 +300,7 @@ const App: Component = () => {
 				isDictManagerOpen={sidebarStore.rightPanel === 'dictionary'}
 				onToggleDictManager={() => handleToggleRightPanel('dictionary')}
 				isInitializing={isInitializing()}
+				isReloading={isReloading()}
 				isSidebarOpen={sidebarStore.isIssueSidebarOpen}
 				onToggleSidebar={() => {
 					if (sidebarStore.rightPanel !== null) {
@@ -305,7 +360,7 @@ const App: Component = () => {
 
 				<div
 					class="overflow-hidden sidebar-right"
-					classList={{ 
+					classList={{
 						'show-rule-manager border-l border-l-(--flexoki-ui-2)/20': sidebarStore.rightPanel !== null
 					}}
 					style={{
@@ -317,7 +372,9 @@ const App: Component = () => {
 						<RuleManager
 							onClose={() => setSidebarStore('rightPanel', null)}
 							onRuleToggle={handleRuleToggle}
+							onDialectChange={handleDialectChange}
 							rules={rules()}
+							currentDialect={currentDialect()}
 						/>
 					</Show>
 					<Show when={sidebarStore.rightPanel === 'dictionary'}>
@@ -328,6 +385,7 @@ const App: Component = () => {
 							onRemove={handleRemoveFromDictionary}
 							onEdit={handleEditInDictionary}
 							onClearAll={handleClearAllDictionary}
+							onImport={handleImportDictionary}
 						/>
 					</Show>
 				</div>

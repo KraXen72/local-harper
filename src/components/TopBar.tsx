@@ -17,7 +17,7 @@ const TopBar: Component<TopBarProps> = (props) => {
 				</div>
 			</div>
 
-			<Show when={props.isInitializing}>
+			<Show when={props.isInitializing || props.isReloading}>
 				<progress class="matter-progress-linear absolute left-0 right-0 top-0" aria-hidden="true" />
 			</Show>
 

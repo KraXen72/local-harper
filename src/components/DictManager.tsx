@@ -1,6 +1,8 @@
-import { Component, createSignal, createMemo, For, Show } from 'solid-js';
+import { Component, createSignal, createMemo, For, Show, createEffect } from 'solid-js';
 import SidebarPanel from './SidebarPanel';
 import DictCard from './DictCard';
+import { exportDictionary, validateDictionaryJson } from '../services/harper-service';
+import type { DictionaryImportResult } from '../types';
 
 export interface DictManagerProps {
 	onClose: () => void;
@@ -9,12 +11,15 @@ export interface DictManagerProps {
 	onRemove: (word: string) => void;
 	onEdit: (oldWord: string, newWord: string) => void;
 	onClearAll?: () => void;
+	onImport?: (words: string[]) => void;
 }
 
 const DictManager: Component<DictManagerProps> = (props) => {
 	const [filterText, setFilterText] = createSignal('');
 	const [editingWord, setEditingWord] = createSignal<string | null>(null);
 	const [editValue, setEditValue] = createSignal('');
+	const [importData, setImportData] = createSignal<Extract<DictionaryImportResult, { valid: true }> | null>(null);
+	const [importError, setImportError] = createSignal<string | null>(null);
 
 	const filteredWords = createMemo(() => {
 		const f = filterText().trim().toLowerCase();
@@ -23,7 +28,7 @@ const DictManager: Component<DictManagerProps> = (props) => {
 
 	const canAdd = () => {
 		const f = filterText().trim();
-		return f.length > 0 && !props.words.includes(f);
+		return f.length > 0 && !props.words.includes(f) && !importData();
 	};
 
 	const showClearAll = () => props.words.length > 0 && !filterText().trim();
@@ -41,6 +46,65 @@ const DictManager: Component<DictManagerProps> = (props) => {
 		}
 	};
 
+	const handleExport = () => {
+		exportDictionary();
+	};
+
+	const handleImport = async () => {
+		const data = importData();
+		if (!data) return;
+		props.onImport?.(data.words);
+		setFilterText('');
+		setImportData(null);
+		setImportError(null);
+	};
+
+	const handleFileDrop = (e: DragEvent) => {
+		e.preventDefault();
+		const file = e.dataTransfer?.files[0];
+		if (!file || !file.name.endsWith('.json')) {
+			setImportError('Please drop a .json file');
+			return;
+		}
+		const reader = new FileReader();
+		reader.onload = (ev) => {
+			const content = ev.target?.result as string;
+			if (content) {
+				const result = validateDictionaryJson(content);
+				if (result.valid) {
+					setImportData(result);
+					setImportError(null);
+					setFilterText(content);
+				} else {
+					setImportError(result.error);
+				}
+			}
+		};
+		reader.onerror = () => setImportError('Failed to read file');
+		reader.readAsText(file);
+	};
+
+	const validateInput = (input: string) => {
+		const trimmed = input.trim();
+		if (trimmed.startsWith('{')) {
+			const result = validateDictionaryJson(trimmed);
+			if (result.valid) {
+				setImportData(result);
+				setImportError(null);
+			} else {
+				setImportData(null);
+				setImportError(result.error);
+			}
+		} else {
+			setImportData(null);
+			setImportError(null);
+		}
+	};
+
+	createEffect(() => {
+		validateInput(filterText());
+	});
+
 	const startEdit = (word: string) => {
 		setEditingWord(word);
 		setEditValue(word);
@@ -55,60 +119,87 @@ const DictManager: Component<DictManagerProps> = (props) => {
 	};
 
 	return (
-		<SidebarPanel
-			title="Dictionary"
-			onClose={props.onClose}
-			filterText={filterText()}
-			onFilterChange={setFilterText}
-			filterPlaceholder="Search or add word..."
-			onFilterKeyDown={(e) => { if (e.key === 'Enter') handleAdd(); }}
-			filterAddon={
-				<>
-					<Show when={showClearAll()}>
-						<button
-							onClick={handleClearAll}
-							class="px-3 py-2 bg-(--flexoki-red)/15 text-(--flexoki-red) text-sm font-medium rounded-md hover:bg-(--flexoki-red)/25 active:scale-95 transition-all shrink-0"
-						>
-							Clear all
-						</button>
-					</Show>
-					<Show when={canAdd()}>
-						<button
-							onClick={handleAdd}
-							class="px-3 py-2 bg-(--flexoki-cyan) text-white text-sm font-medium rounded-md hover:brightness-110 active:scale-95 transition-all shrink-0"
-						>
-							Add
-						</button>
-					</Show>
-				</>
-			}
+		<div
+			class="h-full"
+			onDragOver={(e) => e.preventDefault()}
+			onDrop={handleFileDrop}
 		>
-			<Show
-				when={filteredWords().length > 0}
-				fallback={
-					<div class="text-center py-8 text-(--flexoki-tx-3) text-sm">
-						{props.words.length === 0 ? 'No words added yet' : 'No words match your search'}
-					</div>
+			<SidebarPanel
+				title="Dictionary"
+				onClose={props.onClose}
+				filterText={filterText()}
+				onFilterChange={setFilterText}
+				filterPlaceholder="Search or add word..."
+				onFilterKeyDown={(e) => { if (e.key === 'Enter') handleAdd(); }}
+				headerControl={[
+					{
+						type: 'button',
+						icon: 'lucide--file-json-2',
+						action: handleExport,
+						label: 'Export dictionary',
+					},
+				]}
+				filterAddon={
+					<>
+						<Show when={showClearAll()}>
+							<button
+								onClick={handleClearAll}
+								class="px-3 py-2 bg-(--flexoki-red)/15 text-(--flexoki-red) text-sm font-medium rounded-md hover:bg-(--flexoki-red)/25 active:scale-95 transition-all shrink-0"
+							>
+								Clear all
+							</button>
+						</Show>
+						<Show when={importData()}>
+							<button
+								onClick={handleImport}
+								class="px-3 py-2 bg-(--flexoki-cyan) text-white text-sm font-medium rounded-md hover:brightness-110 active:scale-95 transition-all shrink-0"
+							>
+								Import
+							</button>
+						</Show>
+						<Show when={canAdd()}>
+							<button
+								onClick={handleAdd}
+								class="px-3 py-2 bg-(--flexoki-cyan) text-white text-sm font-medium rounded-md hover:brightness-110 active:scale-95 transition-all shrink-0"
+							>
+								Add
+							</button>
+						</Show>
+					</>
 				}
 			>
-				<div class="space-y-1.5">
-					<For each={filteredWords()}>
-						{(word) => (
-							<DictCard
-								word={word}
-								isEditing={editingWord() === word}
-								editValue={editValue()}
-								onEditStart={() => startEdit(word)}
-								onEditChange={setEditValue}
-								onEditSave={() => handleEditSave(word)}
-								onEditCancel={() => setEditingWord(null)}
-								onRemove={() => props.onRemove(word)}
-							/>
-						)}
-					</For>
-				</div>
-			</Show>
-		</SidebarPanel>
+				<Show when={importError()}>
+					<div class="px-3 py-2 bg-(--flexoki-red)/15 border border-(--flexoki-red)/30 rounded-md text-(--flexoki-red) text-xs">
+						{importError()}
+					</div>
+				</Show>
+				<Show
+					when={filteredWords().length > 0}
+					fallback={
+						<div class="text-center py-8 text-(--flexoki-tx-3) text-sm">
+							{props.words.length === 0 ? 'No words added yet' : 'No words match your search'}
+						</div>
+					}
+				>
+					<div class="space-y-1.5">
+						<For each={filteredWords()}>
+							{(word) => (
+								<DictCard
+									word={word}
+									isEditing={editingWord() === word}
+									editValue={editValue()}
+									onEditStart={() => startEdit(word)}
+									onEditChange={setEditValue}
+									onEditSave={() => handleEditSave(word)}
+									onEditCancel={() => setEditingWord(null)}
+									onRemove={() => props.onRemove(word)}
+								/>
+							)}
+						</For>
+					</div>
+				</Show>
+			</SidebarPanel>
+		</div>
 	);
 };
 

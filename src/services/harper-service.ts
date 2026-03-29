@@ -1,19 +1,24 @@
 import { WorkerLinter, binary, Dialect } from 'harper.js';
 import type { Lint } from 'harper.js';
-import type { HarperIssue } from '../types';
+import type { HarperIssue, DictionaryExport, DictionaryImportResult } from '../types';
+
+export { Dialect };
 
 let linter: WorkerLinter | null = null;
 let initPromise: Promise<void> | null = null;
+let currentDialect: Dialect = Dialect.American;
 
 const DEFAULT_DISABLED_RULES = ['AvoidCurses'];
 
-export async function initHarper(): Promise<void> {
+export async function initHarper(dialect: Dialect = Dialect.American): Promise<void> {
 	if (initPromise) return initPromise;
+
+	currentDialect = dialect;
 
 	initPromise = (async () => {
 		linter = new WorkerLinter({
 			binary,
-			dialect: Dialect.American,
+			dialect,
 		});
 
 		await linter.setup();
@@ -48,13 +53,19 @@ export async function initHarper(): Promise<void> {
 	return initPromise;
 }
 
+export async function setHarperDialect(dialect: Dialect): Promise<void> {
+	if (currentDialect === dialect) return;
+	currentDialect = dialect;
+	await resetLinter();
+}
+
 // Tears down and recreates the linter so removed/edited words are no longer
 // in harper's internal dictionary. importWords() only appends — it doesn't
 // remove words that were previously imported.
 async function resetLinter(): Promise<void> {
 	linter = null;
 	initPromise = null;
-	await initHarper();
+	await initHarper(currentDialect);
 }
 
 export function getLinter(): WorkerLinter {
@@ -80,7 +91,7 @@ export async function analyzeText(text: string, abortSignal?: AbortSignal): Prom
 	// Race the linter promise against an abort promise so we can fail fast
 	const lintPromise = linter.organizedLints(text);
 
-	let removeListener: () => void = () => {};
+	let removeListener: () => void = () => { };
 	const abortPromise = new Promise<never>((_, reject) => {
 		const onAbort = () => reject(new DOMException('Aborted', 'AbortError'));
 		abortSignal.addEventListener('abort', onAbort);
@@ -168,6 +179,47 @@ export async function editWordInDictionary(oldWord: string, newWord: string): Pr
 
 export async function clearAllCustomWords(): Promise<void> {
 	localStorage.setItem('harper-custom-words', JSON.stringify([]));
+	await resetLinter();
+}
+
+export function exportDictionary(): void {
+	const words = getCustomWords();
+	const exportData: DictionaryExport = { dictVersion: 1, words };
+	const json = JSON.stringify(exportData, null, 2);
+	const blob = new Blob([json], { type: 'application/json' });
+	const url = URL.createObjectURL(blob);
+	const a = document.createElement('a');
+	a.href = url;
+	a.download = `${new Date().toISOString().split('T')[0]}-local-harper-dictionary.json`;
+	document.body.appendChild(a);
+	a.click();
+	document.body.removeChild(a);
+	URL.revokeObjectURL(url);
+}
+
+export function validateDictionaryJson(input: string): DictionaryImportResult {
+	try {
+		const parsed = JSON.parse(input);
+		if (typeof parsed !== 'object' || parsed === null) {
+			return { valid: false, error: 'JSON must be an object' };
+		}
+		if (parsed.dictVersion !== 1) {
+			return { valid: false, error: 'Unsupported dictVersion. Expected 1.' };
+		}
+		if (!Array.isArray(parsed.words)) {
+			return { valid: false, error: 'Missing or invalid "words" array' };
+		}
+		if (!parsed.words.every((w: unknown) => typeof w === 'string')) {
+			return { valid: false, error: 'All words must be strings' };
+		}
+		return { valid: true, words: parsed.words };
+	} catch (e) {
+		return { valid: false, error: e instanceof Error ? e.message : 'Invalid JSON' };
+	}
+}
+
+export async function importDictionary(words: string[]): Promise<void> {
+	localStorage.setItem('harper-custom-words', JSON.stringify(words));
 	await resetLinter();
 }
 
