@@ -219,7 +219,9 @@ export function validateDictionaryJson(input: string): DictionaryImportResult {
 }
 
 export async function importDictionary(words: string[]): Promise<void> {
-	localStorage.setItem('harper-custom-words', JSON.stringify(words));
+	// De-duplicate imported words
+	const uniqueWords = Array.from(new Set(words));
+	localStorage.setItem('harper-custom-words', JSON.stringify(uniqueWords));
 	await resetLinter();
 }
 
