@@ -1,19 +1,24 @@
 import { Component, createSignal, createMemo, For, Show } from 'solid-js';
 import RuleCard from './RuleCard';
 import SidebarPanel from './SidebarPanel';
+import { Dialect } from '../services/harper-service';
+import type { RuleInfo, HeaderControl } from '../types';
 
 export interface RuleManagerProps {
 	onClose: () => void;
 	onRuleToggle: (ruleName: string, enabled: boolean) => void;
+	onDialectChange?: (dialect: Dialect) => void;
 	rules: RuleInfo[];
+	currentDialect: Dialect;
 }
 
-export interface RuleInfo {
-	name: string;
-	displayName: string;
-	description: string;
-	enabled: boolean;
-}
+const DIALECT_OPTIONS: { value: string; label: string }[] = [
+	{ value: String(Dialect.American), label: 'American English' },
+	{ value: String(Dialect.British), label: 'British English' },
+	{ value: String(Dialect.Australian), label: 'Australian English' },
+	{ value: String(Dialect.Canadian), label: 'Canadian English' },
+	{ value: String(Dialect.Indian), label: 'Indian English' },
+];
 
 const RuleManager: Component<RuleManagerProps> = (props) => {
 	const [filterText, setFilterText] = createSignal('');
@@ -27,6 +32,16 @@ const RuleManager: Component<RuleManagerProps> = (props) => {
 		);
 	});
 
+	const headerControl: HeaderControl = [
+		{
+			type: 'select',
+			options: DIALECT_OPTIONS,
+			defaultOption: String(props.currentDialect),
+			onChange: (value) => props.onDialectChange?.(Number(value) as Dialect),
+			label: 'Select dialect',
+		},
+	];
+
 	return (
 		<SidebarPanel
 			title="Rule Manager"
@@ -34,6 +49,7 @@ const RuleManager: Component<RuleManagerProps> = (props) => {
 			filterText={filterText()}
 			onFilterChange={setFilterText}
 			filterPlaceholder="Filter rules..."
+			headerControl={headerControl}
 		>
 			<Show
 				when={filteredRules().length > 0}

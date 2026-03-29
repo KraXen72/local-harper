@@ -35,6 +35,7 @@ export interface TopBarProps {
 	isDictManagerOpen: boolean;
 	onToggleDictManager: () => void;
 	isInitializing?: boolean;
+	isReloading?: boolean;
 	isSidebarOpen?: boolean;
 	onToggleSidebar?: () => void;
 }
@@ -64,3 +65,32 @@ export interface IssueItemProps {
 	onApplySuggestion: (suggestion: Suggestion) => void;
 	onAddToDictionary: (word: string) => void;
 }
+
+export interface DictionaryExport {
+	dictVersion: 1;
+	words: string[];
+}
+
+export type DictionaryImportResult = { valid: true; words: string[] } | { valid: false; error: string };
+
+export interface HeaderButton {
+	type: 'button';
+	icon: string;
+	action: () => void;
+	label?: string;
+}
+
+export interface HeaderSelectOption {
+	value: string;
+	label: string;
+}
+
+export interface HeaderSelect {
+	type: 'select';
+	options: HeaderSelectOption[];
+	defaultOption?: string;
+	onChange: (value: string) => void;
+	label?: string;
+}
+
+export type HeaderControl = (HeaderButton | HeaderSelect)[];

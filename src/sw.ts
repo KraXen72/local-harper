@@ -1,5 +1,7 @@
+/// <reference lib="WebWorker" />
+
 import { clientsClaim } from 'workbox-core';
-import { cleanupOutdatedCaches, precacheAndRoute } from 'workbox-precaching';
+import { cleanupOutdatedCaches, matchPrecache, precacheAndRoute } from 'workbox-precaching';
 
 declare let self: ServiceWorkerGlobalScope;
 
@@ -27,8 +29,7 @@ function withCOIHeaders(response: Response): Response {
 	const headers = new Headers(response.headers);
 	headers.set('Cross-Origin-Embedder-Policy', 'require-corp');
 	headers.set('Cross-Origin-Opener-Policy', 'same-origin');
-	// Restrict sub-resources to same-origin only (required by COEP: require-corp)
-	headers.set('Cross-Origin-Resource-Policy', 'same-origin');
+	headers.set('Cross-Origin-Resource-Policy', 'same-origin'); // required by COEP: require-corp
 	return new Response(response.body, {
 		status: response.status,
 		statusText: response.statusText,
@@ -36,32 +37,47 @@ function withCOIHeaders(response: Response): Response {
 	});
 }
 
-// This listener must be registered BEFORE precacheAndRoute so that it runs
-// first and calls event.respondWith() before workbox's listener can.
+// Handle all fetch requests with proper offline support
 self.addEventListener('fetch', (event) => {
-	if (event.request.mode !== 'navigate') return;
-
-	event.respondWith(
-		(async () => {
-			// Try network first so we always serve the freshest HTML.
-			// On failure (offline), fall back to any cached copy of index.html.
-			let response: Response;
-			try {
-				response = await fetch(event.request);
-			} catch {
-				const cached =
-					(await caches.match('/local-harper/index.html')) ??
-					(await caches.match('/local-harper/')) ??
-					(await caches.match(event.request));
-				if (!cached) {
+	// Navigation requests: network first with offline fallback
+	if (event.request.mode === 'navigate') {
+		event.respondWith(
+			(async () => {
+				try {
+					const response = await fetch(event.request);
+					return withCOIHeaders(response);
+				} catch {
+					// Offline: try to find index.html in precache
+					const cached = await matchPrecache('/index.html');
+					if (cached) {
+						return withCOIHeaders(cached);
+					}
+					// Last resort: offline page
 					return new Response(
 						'<h1>Offline</h1><p>No cached version available. Please reconnect and reload.</p>',
 						{ status: 503, headers: { 'Content-Type': 'text/html' } },
 					);
 				}
-				response = cached;
+			})(),
+		);
+		return;
+	}
+
+	// Non-navigation requests (JS, CSS, WASM, etc.): cache first
+	event.respondWith(
+		(async () => {
+			// Try cache first using the full request
+			const cached = await matchPrecache(event.request);
+			if (cached) {
+				return cached;
 			}
-			return withCOIHeaders(response);
+			// Try network if not in precache
+			try {
+				return await fetch(event.request);
+			} catch {
+				// Offline and not cached
+				return new Response('', { status: 404, statusText: 'Not found in cache' });
+			}
 		})(),
 	);
 });
