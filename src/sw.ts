@@ -40,8 +40,8 @@ function withCOIHeaders(response: Response): Response {
 
 // Handle all fetch requests with proper offline support
 self.addEventListener('fetch', (event) => {
-	// On constrained network: cache only, no network requests
-	if (isOnCellular()) {
+	// On constrained network or offline: cache only, no network requests
+	if (isOnCellular() || !navigator.onLine) {
 		event.respondWith(
 			(async () => {
 				const cached = await matchPrecache(event.request);

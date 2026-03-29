@@ -23,9 +23,16 @@ export default defineConfig({
 			// the page reloads automatically so the user always has the latest.
 			registerType: 'autoUpdate',
 
+			// Cache ALL assets for full offline support
+			workbox: {
+				globPatterns: ['**/*'],
+				runtimeCaching: [],
+			},
+			includeAssets: ['**/*'],
+
 			// Tell workbox which assets to precache (WASM included)
 			injectManifest: {
-				globPatterns: ['**/*.{js,css,html,wasm,svg,png,ico,webp,ttf,woff,woff2}'],
+				globPatterns: ['**/*'],
 				maximumFileSizeToCacheInBytes: 100 * 1024 * 1024, // 100 MB to accommodate large WASM and other assets
 			},
 
