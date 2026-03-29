@@ -20,14 +20,62 @@ async function listPrecache(): Promise<string[]> {
 	return keys.map(r => r.url);
 }
 
-// Debug: Log cached entries with prefix
-async function logCacheDebug(prefix: string): Promise<void> {
+// Generate debug HTML with cache info
+async function generateDebugHtml(title: string, message: string, requestedUrl: string): Promise<string> {
+	let cacheEntries: string[] = [];
+	let allCaches: { name: string; entries: string[] }[] = [];
+
 	try {
-		const entries = await listPrecache();
-		console.log(`[${prefix}] Precache entries (${entries.length}):`, entries);
+		cacheEntries = await listPrecache();
 	} catch (e) {
-		console.log(`[${prefix}] Failed to list precache:`, e);
+		cacheEntries = [`Error listing precache: ${e}`];
 	}
+
+	try {
+		const cacheNames = await caches.keys();
+		for (const name of cacheNames) {
+			const cache = await caches.open(name);
+			const keys = await cache.keys();
+			allCaches.push({
+				name,
+				entries: keys.map(r => r.url),
+			});
+		}
+	} catch (e) {
+		allCaches = [{ name: 'Error', entries: [String(e)] }];
+	}
+
+	return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>${title}</title>
+	<style>
+		body { font-family: system-ui, sans-serif; padding: 20px; background: #1a1a1a; color: #e0e0e0; }
+		h1 { color: #f5a623; }
+		p { color: #a0a0a0; }
+		h2 { color: #7ed321; margin-top: 30px; }
+		pre { background: #2a2a2a; padding: 15px; border-radius: 8px; overflow-x: auto; font-size: 12px; }
+		.entry { color: #4a9eff; }
+		.count { color: #7ed321; }
+	</style>
+</head>
+<body>
+	<h1>${title}</h1>
+	<p>${message}</p>
+	<h2>Request Info</h2>
+	<pre>URL: <span class="entry">${requestedUrl}</span></pre>
+	<h2>Precache <span class="count">(${cacheEntries.length} entries)</span></h2>
+	<pre>${cacheEntries.map(e => `<span class="entry">${e}</span>`).join('\n')}</pre>
+	<h2>All Caches</h2>
+	${allCaches.map(c => `
+		<h3>${c.name} <span class="count">(${c.entries.length} entries)</span></h3>
+		<pre>${c.entries.map(e => `<span class="entry">${e}</span>`).join('\n')}</pre>
+	`).join('')}
+</body>
+</html>`;
 }
 
 // ─── COEP / COOP header injection ────────────────────────────────────────────
@@ -89,23 +137,20 @@ self.addEventListener('fetch', (event) => {
 	if (isOnCellular() || !navigator.onLine) {
 		event.respondWith(
 			(async () => {
-				console.log(`[SW] ${event.request.mode} request to ${event.request.url} (offline/constrained)`);
-				await logCacheDebug('FETCH');
-				
 				const cached = await matchFromPrecache(event.request);
 				if (cached) {
-					console.log(`[SW] ✓ Found in cache: ${event.request.url}`);
 					return event.request.mode === 'navigate' ? withCOIHeaders(cached) : cached;
 				}
-				
-				console.log(`[SW] ✗ NOT in cache: ${event.request.url}`);
-				// Not in precache - return offline response
+
+				// Not in precache - return debug offline response
 				if (event.request.mode === 'navigate') {
+					const html = await generateDebugHtml(
+						'Data Saver Mode',
+						'On constrained network. Content not in cache. Connect to WiFi and reload for fresh content.',
+						event.request.url,
+					);
 					return withCOIHeaders(
-						new Response(
-							'<h1>Data Saver Mode</h1><p>On constrained network. Connect to WiFi and reload for fresh content.</p>',
-							{ status: 503, headers: { 'Content-Type': 'text/html' } },
-						),
+						new Response(html, { status: 503, headers: { 'Content-Type': 'text/html' } }),
 					);
 				}
 				return new Response('', { status: 404, statusText: 'Not cached' });
@@ -123,20 +168,17 @@ self.addEventListener('fetch', (event) => {
 					return withCOIHeaders(response);
 				} catch {
 					// Offline: try to find index.html in precache
-					console.log(`[SW] Network failed, trying precache for ${event.request.url}`);
-					await logCacheDebug('OFFLINE-FALLBACK');
-					
 					const cached = await matchFromPrecache(new Request('/index.html'));
 					if (cached) {
-						console.log(`[SW] ✓ Found index.html in cache`);
 						return withCOIHeaders(cached);
 					}
-					console.log(`[SW] ✗ index.html NOT in cache`);
-					// Last resort: offline page
-					return new Response(
-						'<h1>Offline</h1><p>No cached version available. Please reconnect and reload.</p>',
-						{ status: 503, headers: { 'Content-Type': 'text/html' } },
+					// Last resort: debug offline page
+					const html = await generateDebugHtml(
+						'Offline',
+						'No cached version available. Please reconnect and reload.',
+						event.request.url,
 					);
+					return new Response(html, { status: 503, headers: { 'Content-Type': 'text/html' } });
 				}
 			})(),
 		);
@@ -154,7 +196,6 @@ self.addEventListener('fetch', (event) => {
 			try {
 				return await fetch(event.request);
 			} catch {
-				console.log(`[SW] ✗ Not in cache and offline: ${event.request.url}`);
 				return new Response('', { status: 404, statusText: 'Not found in cache' });
 			}
 		})(),
@@ -164,13 +205,3 @@ self.addEventListener('fetch', (event) => {
 // Precache and route all build artifacts (JS, CSS, WASM, assets).
 // The manifest is injected at build time by vite-plugin-pwa.
 precacheAndRoute(self.__WB_MANIFEST);
-
-// Log precache contents after installation
-self.addEventListener('install', () => {
-	console.log('[SW] Installing...');
-});
-
-self.addEventListener('activate', () => {
-	console.log('[SW] Activated');
-	logCacheDebug('ACTIVATE');
-});
