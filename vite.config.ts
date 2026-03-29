@@ -26,6 +26,7 @@ export default defineConfig({
 			// Tell workbox which assets to precache (WASM included)
 			injectManifest: {
 				globPatterns: ['**/*.{js,css,html,wasm,svg,png,ico,webp,ttf,woff,woff2}'],
+				maximumFileSizeToCacheInBytes: 100 * 1024 * 1024, // 100 MB to accommodate large WASM and other assets
 			},
 
 			manifest: {
