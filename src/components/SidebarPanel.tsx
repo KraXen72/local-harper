@@ -1,6 +1,6 @@
 import { Component, For, Show } from 'solid-js';
 import type { JSX } from 'solid-js'; 
-import type { HeaderControl, HeaderButton, HeaderSelect } from '../types';
+import type { HeaderControls, HeaderButton, HeaderSelect } from '../types';
 
 const HeaderButtonItem: Component<HeaderButton> = (props) => (
 	<button
@@ -41,7 +41,7 @@ interface SidebarPanelProps {
 	filterPlaceholder?: string;
 	filterAddon?: JSX.Element;
 	onFilterKeyDown?: JSX.EventHandler<HTMLInputElement, KeyboardEvent>;
-	headerControl?: HeaderControl;
+	headerControl?: HeaderControls;
 	children: JSX.Element;
 }
 

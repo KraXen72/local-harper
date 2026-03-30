@@ -2,7 +2,7 @@ import { Component, createSignal, createMemo, For, Show } from 'solid-js';
 import RuleCard from './RuleCard';
 import SidebarPanel from './SidebarPanel';
 import { Dialect } from '../services/harper-service';
-import type { RuleInfo, HeaderControl } from '../types';
+import type { RuleInfo, HeaderControls } from '../types';
 
 export interface RuleManagerProps {
 	onClose: () => void;
@@ -32,7 +32,7 @@ const RuleManager: Component<RuleManagerProps> = (props) => {
 		);
 	});
 
-	const headerControl: HeaderControl = [
+	const headerControl: HeaderControls = [
 		{
 			type: 'select',
 			options: DIALECT_OPTIONS,

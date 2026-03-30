@@ -94,4 +94,4 @@ export interface HeaderSelect {
 	label?: string;
 }
 
-export type HeaderControl = (HeaderButton | HeaderSelect)[];
+export type HeaderControls = (HeaderButton | HeaderSelect)[];
