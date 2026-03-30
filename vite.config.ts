@@ -26,32 +26,15 @@ export default defineConfig({
 		solidPlugin(),
 		tailwindcss(),
 		VitePWA({
-			// Use our hand-written SW so we can inject COEP/COOP headers
 			strategies: 'injectManifest',
 			srcDir: 'src',
 			filename: 'sw.ts',
-
-			// Inject the SW registration script automatically into index.html
 			injectRegister: 'auto',
-
-			// Auto-update when new SW is available
 			registerType: 'autoUpdate',
-
-			// Cache ALL assets for full offline support
-			workbox: {
-				globPatterns: ['**/*'],
-				runtimeCaching: [],
-				navigateFallback: '/index.html',
-				navigateFallbackDenylist: [/^\/api\//],
-			},
-			includeAssets: ['**/*'],
-
-			// Tell workbox which assets to precache (WASM included)
 			injectManifest: {
 				globPatterns: ['**/*'],
-				maximumFileSizeToCacheInBytes: 100 * 1024 * 1024, // 100 MB to accommodate large WASM and other assets
+				maximumFileSizeToCacheInBytes: 100 * 1024 * 1024,
 			},
-
 			manifest: {
 				name: 'local-harper',
 				short_name: 'local-harper',
@@ -79,9 +62,7 @@ export default defineConfig({
 					},
 				],
 			},
-
 			devOptions: {
-				// Keep the dev server working normally; disable SW in dev
 				enabled: false,
 			},
 		}),

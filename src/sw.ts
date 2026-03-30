@@ -6,101 +6,25 @@ import { isOnCellular } from './utils/cellular-check';
 
 declare let self: ServiceWorkerGlobalScope;
 
-// Take control of all clients as soon as the SW activates
 self.skipWaiting();
 clientsClaim();
-
-// Remove caches from older precache versions
 cleanupOutdatedCaches();
 
-// Debug: List all cached entries across ALL caches
-async function listAllCachedUrls(): Promise<string[]> {
-	const cacheNames = await caches.keys();
-	const allUrls: string[] = [];
-	for (const name of cacheNames) {
-		const cache = await caches.open(name);
-		const keys = await cache.keys();
-		allUrls.push(...keys.map(r => r.url));
-	}
-	return allUrls;
-}
+// Precache and route all build artifacts.
+// Handles ignoreSearch, index.html fallback, etc. automatically.
+precacheAndRoute(self.__WB_MANIFEST);
 
-// Generate debug HTML with cache info
-async function generateDebugHtml(title: string, message: string, requestedUrl: string): Promise<string> {
-	let cacheEntries: string[] = [];
-	let allCaches: { name: string; entries: string[] }[] = [];
-
-	try {
-		cacheEntries = await listAllCachedUrls();
-	} catch (e) {
-		cacheEntries = [`Error listing caches: ${e}`];
-	}
-
-	try {
-		const cacheNames = await caches.keys();
-		for (const name of cacheNames) {
-			const cache = await caches.open(name);
-			const keys = await cache.keys();
-			allCaches.push({
-				name,
-				entries: keys.map(r => r.url),
-			});
-		}
-	} catch (e) {
-		allCaches = [{ name: 'Error', entries: [String(e)] }];
-	}
-
-	return `
-	<!DOCTYPE html>
-	<html lang="en">
-	<head>
-	<meta charset="utf-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<title>${title}</title>
-	<style>
-	body { font-family: system-ui, sans-serif; padding: 20px; background: #1a1a1a; color: #e0e0e0; }
-	h1 { color: #f5a623; }
-	p { color: #a0a0a0; }
-	h2 { color: #7ed321; margin-top: 30px; }
-	pre { background: #2a2a2a; padding: 15px; border-radius: 8px; overflow-x: auto; font-size: 12px; }
-	.entry { color: #4a9eff; }
-	.count { color: #7ed321; }
-	</style>
-	</head>
-	<body>
-	<h1>${title}</h1>
-	<p>${message}</p>
-	<h2>Request Info</h2>
-	<pre>URL: <span class="entry">${requestedUrl}</span></pre>
-	<h2>All Cached URLs <span class="count">(${cacheEntries.length} total)</span></h2>
-	<pre>${cacheEntries.map(e => `<span class="entry">${e}</span>`).join('\n')}</pre>
-	<h2>All Caches</h2>
-	${allCaches.map(c => `
-		<h3>${c.name} <span class="count">(${c.entries.length} entries)</span></h3>
-		<pre>${c.entries.map(e => `<span class="entry">${e}</span>`).join('\n')}</pre>
-		`).join('')}
-		</body>
-		</html>`;
-}
-
-// ─── COEP / COOP header injection ────────────────────────────────────────────
-//
-// GitHub Pages does not send Cross-Origin-Embedder-Policy or
-// Cross-Origin-Opener-Policy headers.  harper.js needs SharedArrayBuffer
-// (WASM threading), which requires cross-origin isolation.  Once this SW is
-// active, it intercepts every navigation request (HTML page load) and rewrites
-// the response with the required headers so the browser treats the page as
-// cross-origin isolated from the second load onward.
-//
-// Sub-resources (JS, WASM, CSS, …) are served from the precache and are
-// same-origin by definition, so they pass COEP automatically.
-// ─────────────────────────────────────────────────────────────────────────────
+// ─── COEP / COOP header injection ─────────────────────────────────────────
+// GitHub Pages doesn't send these headers, but SharedArrayBuffer (needed for
+// WASM threading in harper.js) requires cross-origin isolation. The SW
+// rewrites every navigation response with the required headers.
+// ──────────────────────────────────────────────────────────────────────────
 
 function withCOIHeaders(response: Response): Response {
 	const headers = new Headers(response.headers);
 	headers.set('Cross-Origin-Embedder-Policy', 'require-corp');
 	headers.set('Cross-Origin-Opener-Policy', 'same-origin');
-	headers.set('Cross-Origin-Resource-Policy', 'same-origin'); // required by COEP: require-corp
+	headers.set('Cross-Origin-Resource-Policy', 'same-origin');
 	return new Response(response.body, {
 		status: response.status,
 		statusText: response.statusText,
@@ -108,99 +32,30 @@ function withCOIHeaders(response: Response): Response {
 	});
 }
 
-// Match a request against ALL available caches (not just a hardcoded cache name).
-// Workbox names its precache "workbox-precache-v2-<origin+scope>" so the name
-// is not stable and must not be hardcoded.
-async function matchFromPrecache(request: Request): Promise<Response | null> {
-	// caches.match() searches every cache storage entry in insertion order.
-	let cached = await caches.match(request);
-	if (cached) return cached;
-
-	// Try without query params (Workbox stores revision strings as query params,
-	// but the navigation request won't have them).
-	const url = new URL(request.url);
-	if (url.search) {
-		url.search = '';
-		cached = await caches.match(new Request(url.toString(), { credentials: request.credentials }));
-		if (cached) return cached;
-	}
-
-	return null;
-}
-
-// Handle all fetch requests with proper offline support
 self.addEventListener('fetch', (event) => {
-	// On constrained network or offline: cache only, no network requests
-	if (isOnCellular() || !navigator.onLine) {
-		event.respondWith(
-			(async () => {
-				const cached = await matchFromPrecache(event.request);
-				if (cached) {
-					return event.request.mode === 'navigate' ? withCOIHeaders(cached) : cached;
-				}
+	const { request } = event;
 
-				// Not in any cache — return debug offline response
-				if (event.request.mode === 'navigate') {
-					const html = await generateDebugHtml(
-						'Data Saver Mode',
-						'On constrained network. Content not in cache. Connect to WiFi and reload for fresh content.',
-						event.request.url,
-					);
-					return withCOIHeaders(
-						new Response(html, { status: 503, headers: { 'Content-Type': 'text/html' } }),
-					);
-				}
-				return new Response('', { status: 404, statusText: 'Not cached' });
-			})(),
-		);
-		return;
-	}
+	// Only intercept navigation requests for COI headers + cellular check.
+	// Everything else (JS, WASM, CSS, fonts) is handled by precacheAndRoute.
+	if (request.mode !== 'navigate') return;
 
-	// Navigation requests: network first with offline fallback
-	if (event.request.mode === 'navigate') {
-		event.respondWith(
-			(async () => {
-				try {
-					const response = await fetch(event.request);
-					return withCOIHeaders(response);
-				} catch {
-					// Offline: try to find index.html in any cache
-					const cached = await matchFromPrecache(
-						new Request(self.location.origin + '/local-harper/index.html'),
-					);
-					if (cached) {
-						return withCOIHeaders(cached);
-					}
-					// Last resort: debug offline page
-					const html = await generateDebugHtml(
-						'Offline',
-						'No cached version available. Please reconnect and reload.',
-						event.request.url,
-					);
-					return new Response(html, { status: 503, headers: { 'Content-Type': 'text/html' } });
-				}
-			})(),
-		);
-		return;
-	}
-
-	// Non-navigation requests (JS, CSS, WASM, etc.): cache first
 	event.respondWith(
 		(async () => {
-			const cached = await matchFromPrecache(event.request);
-			if (cached) {
-				return cached;
+			// On cellular: serve the cached page without hitting the network.
+			if (isOnCellular()) {
+				const cached = await caches.match(request, { ignoreSearch: true });
+				if (cached) return withCOIHeaders(cached);
 			}
-			// Try network if not in any cache
+
+			// Normal: network first, cache fallback.
 			try {
-				return await fetch(event.request);
+				return withCOIHeaders(await fetch(request));
 			} catch {
-				return new Response('', { status: 404, statusText: 'Not found in cache' });
+				const cached = await caches.match(request, { ignoreSearch: true });
+				return cached
+					? withCOIHeaders(cached)
+					: new Response('Offline', { status: 503 });
 			}
 		})(),
 	);
 });
-
-// Precache and route all build artifacts (JS, CSS, WASM, assets).
-// The manifest is injected at build time by vite-plugin-pwa.
-precacheAndRoute(self.__WB_MANIFEST);
