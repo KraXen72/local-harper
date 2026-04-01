@@ -13,7 +13,7 @@
   },
   "license": "MIT",
   "devDependencies": {
-    "@iconify-json/lucide": "^1.2.100",
+    "@iconify-json/lucide": "^1.2.101",
     "@iconify/tailwind4": "^1.2.3",
     "@tailwindcss/vite": "^4.2.2",
     "@types/node": "^25.5.0",
