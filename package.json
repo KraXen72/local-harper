@@ -17,7 +17,7 @@
     "@iconify/tailwind4": "^1.2.3",
     "@tailwindcss/vite": "^4.2.2",
     "@types/node": "^25.6.0",
-    "oxlint": "^1.59.0",
+    "oxlint": "^1.61.0",
     "solid-devtools": "^0.34.5",
     "tailwindcss": "^4.2.2",
     "typescript": "^5.9.3",
