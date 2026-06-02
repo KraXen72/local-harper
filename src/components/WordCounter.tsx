@@ -1,28 +1,13 @@
 import { Component, createMemo } from 'solid-js';
-import { Tally } from '@twocaretcat/tally-ts';
+import { countText } from '../utils/word-count';
 
 type WordCounterProps = {
     text: string;
 };
 
-const tally = new Tally();
-
 const WordCounter: Component<WordCounterProps> = (props) => {
     const counts = createMemo(() => {
-        try {
-            const res = tally.countAll(props.text || '');
-            return {
-                words: res.words?.total ?? 0,
-                graphemes: res.graphemes?.total ?? 0,
-                paragraphs: res.paragraphs?.total ?? 0,
-                lines: res.lines?.total ?? 0,
-                sentences: res.sentences?.total ?? 0,
-            };
-        } catch {
-            const w = tally.countWords ? tally.countWords(props.text || '') : { total: 0 };
-            const s = tally.countSentences ? tally.countSentences(props.text || '') : { total: 0 };
-            return { words: w.total ?? 0, graphemes: 0, paragraphs: 0, lines: 0, sentences: s.total ?? 0 };
-        }
+        return countText(props.text);
     });
 
     return (
@@ -35,7 +20,7 @@ const WordCounter: Component<WordCounterProps> = (props) => {
                 <div class="hidden sm:block text-sm" aria-hidden="false">Characters: {counts().graphemes} &middot; Sentences: {counts().sentences} &middot; Lines: {counts().lines} &middot; Paragraphs: {counts().paragraphs}</div>
             </div>
             <div class="mt-1 text-xs opacity-35 text-right">
-                build {__BUILD_INFO__.hash} &middot; {__BUILD_INFO__.date}
+                build {__BUILD_INFO__.hash} &middot; Harper {__BUILD_INFO__.harperVersion} &middot; {__BUILD_INFO__.date}
             </div>
         </div>
     );

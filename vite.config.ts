@@ -3,6 +3,7 @@ import { defineConfig } from 'vite';
 import solidPlugin from 'vite-plugin-solid';
 import { VitePWA } from 'vite-plugin-pwa';
 import { execSync } from 'child_process';
+import harperPackageJson from './node_modules/harper.js/package.json' with { type: 'json' };
 
 const commitHash = execSync('git rev-parse --short HEAD').toString().trim();
 const buildDate = new Date().toLocaleString('en-UK', {
@@ -18,7 +19,11 @@ const buildDate = new Date().toLocaleString('en-UK', {
 export default defineConfig({
 	base: '/local-harper/',
 	define: {
-		__BUILD_INFO__: JSON.stringify({ hash: commitHash, date: buildDate }),
+		__BUILD_INFO__: JSON.stringify({
+			hash: commitHash,
+			date: buildDate,
+			harperVersion: harperPackageJson.version,
+		}),
 	},
 	plugins: [
 		solidPlugin(),

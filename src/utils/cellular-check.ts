@@ -7,18 +7,32 @@ export interface NetworkHints {
 	isLikelyConstrained: boolean;
 }
 
+type NetworkConnection = {
+	type?: string;
+	effectiveType?: string;
+	saveData?: boolean;
+	downlink?: number;
+};
+
+type NavigatorWithConnection = Navigator & {
+	connection?: NetworkConnection;
+	mozConnection?: NetworkConnection;
+	webkitConnection?: NetworkConnection;
+};
+
 /**
  * Get network connection hints from the Network Information API.
  * Works across different browsers (Chrome, Firefox, Safari).
  */
 export function getNetworkHints(): NetworkHints {
+	const nav = navigator as NavigatorWithConnection;
 	const c =
-		(navigator as any).connection ||
-		(navigator as any).mozConnection ||
-		(navigator as any).webkitConnection;
+		nav.connection ||
+		nav.mozConnection ||
+		nav.webkitConnection;
 
 	return {
-		online: navigator.onLine,
+		online: nav.onLine,
 		type: c?.type ?? 'unknown',
 		effectiveType: c?.effectiveType ?? 'unknown',
 		saveData: c?.saveData ?? false,
