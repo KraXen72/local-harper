@@ -1,4 +1,5 @@
-import { WorkerLinter, binary, Dialect } from 'harper.js';
+import { WorkerLinter, Dialect } from 'harper.js';
+import { binary } from 'harper.js/binary';
 import type { Lint } from 'harper.js';
 import type { HarperIssue, DictionaryExport, DictionaryImportResult } from '../types';
 

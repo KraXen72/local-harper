@@ -1,7 +1,6 @@
 import tailwindcss from '@tailwindcss/vite';
 import { defineConfig } from 'vite';
 import solidPlugin from 'vite-plugin-solid';
-import devtools from 'solid-devtools/vite';
 import { VitePWA } from 'vite-plugin-pwa';
 import { execSync } from 'child_process';
 
@@ -22,7 +21,6 @@ export default defineConfig({
 		__BUILD_INFO__: JSON.stringify({ hash: commitHash, date: buildDate }),
 	},
 	plugins: [
-		devtools(),
 		solidPlugin(),
 		tailwindcss(),
 		VitePWA({
@@ -34,6 +32,7 @@ export default defineConfig({
 			injectManifest: {
 				globPatterns: ['**/*'],
 				maximumFileSizeToCacheInBytes: 100 * 1024 * 1024,
+				rollupFormat: 'iife',
 			},
 			manifest: {
 				name: 'local-harper',
