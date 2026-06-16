@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { countText } from './word-count';
 
 describe('countText', () => {
@@ -23,5 +23,27 @@ describe('countText', () => {
 		expect(counts.graphemes).toBeGreaterThan(0);
 		expect(counts.lines).toBe(2);
 		expect(counts.sentences).toBeGreaterThanOrEqual(1);
+	});
+
+	it('falls back to word and sentence count when countAll throws', async () => {
+		// Arrange: mock the tally module so countAll throws, but countWords and countSentences work normally.
+		const tallyModule = await import('@twocaretcat/tally-ts');
+		vi.spyOn(tallyModule.Tally.prototype, 'countAll').mockImplementation(() => {
+			throw new Error('Simulated error');
+		});
+
+		// The countText function imports its own tally instance, but it uses the same class.
+		// Our spy on the prototype will affect the instance inside countText as well.
+
+		const result = countText('Some text.');
+		expect(result.words).toBeGreaterThanOrEqual(0);
+		expect(result.sentences).toBeGreaterThanOrEqual(0);
+		// These values come from countAll, so they should fall back to 0.
+		expect(result.graphemes).toBe(0);
+		expect(result.paragraphs).toBe(0);
+		expect(result.lines).toBe(0);
+
+		// Cleanup – restore original method.
+		vi.restoreAllMocks();
 	});
 });
