@@ -26,5 +26,8 @@ gitignore
 # System Files
 .DS_Store
 Thumbs.db
+
 repomix-output.xml
+repomix-output.txt
 .qwen
+/coverage

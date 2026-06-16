@@ -217,6 +217,25 @@ describe('analysis and lint transforms', () => {
 		await expect(analyzeTextWithAbort(linter as HarperLinter, 'text')).resolves.toBe(organized);
 	});
 
+	it('throws AbortError after lint resolves but signal is aborted', async () => {
+		// This covers the defensive check after Promise.race resolves.
+		const linter = createMockLinter();
+		const organized = { SpellCheck: [fakeLint(1)] };
+		linter.organizedLints.mockResolvedValueOnce(organized);
+
+		// Fake an AbortSignal that is already aborted but without triggering the 'abort' event
+		// (so the abortPromise won't reject).
+		const abortedSignal = {
+			aborted: true,
+			addEventListener: vi.fn(),
+			removeEventListener: vi.fn(),
+		} as unknown as AbortSignal;
+
+		await expect(analyzeTextWithAbort(linter, 'text', abortedSignal)).rejects.toMatchObject({
+			name: 'AbortError',
+		});
+	});
+
 	it('transforms and sorts lints with stable issue ids', () => {
 		vi.useFakeTimers();
 		vi.setSystemTime(new Date('2026-06-02T00:00:00.000Z'));
