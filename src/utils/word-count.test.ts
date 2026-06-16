@@ -1,7 +1,12 @@
 import { describe, expect, it, vi } from 'vitest';
 import { countText } from './word-count';
+import { afterEach } from 'node:test';
 
 describe('countText', () => {
+	afterEach(() => {
+		vi.restoreAllMocks();
+	})
+
 	it('counts empty and whitespace-only text without throwing', () => {
 		expect(countText('')).toEqual({
 			words: 0,
@@ -36,14 +41,11 @@ describe('countText', () => {
 		// Our spy on the prototype will affect the instance inside countText as well.
 
 		const result = countText('Some text.');
-		expect(result.words).toBeGreaterThanOrEqual(0);
-		expect(result.sentences).toBeGreaterThanOrEqual(0);
+		expect(result.words).toBeGreaterThan(0);
+		expect(result.sentences).toBeGreaterThan(0);
 		// These values come from countAll, so they should fall back to 0.
 		expect(result.graphemes).toBe(0);
 		expect(result.paragraphs).toBe(0);
 		expect(result.lines).toBe(0);
-
-		// Cleanup – restore original method.
-		vi.restoreAllMocks();
 	});
 });

@@ -1,10 +1,10 @@
 /* @vitest-environment happy-dom */
 
-import { describe, expect, it } from 'vitest';
-import { parseMessage, FormattedMessage } from './message-formatter';
-import { createRoot, createSignal } from 'solid-js';
 import type { JSX } from 'solid-js';
+import { createRoot } from 'solid-js';
 import { render } from 'solid-js/web';
+import { describe, expect, it } from 'vitest';
+import { FormattedMessage, parseMessage } from './message-formatter';
 
 // Helper to render a SolidJS component and return the container element.
 function renderToDom(jsx: () => JSX.Element): HTMLElement {
