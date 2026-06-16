@@ -3,6 +3,7 @@
 import { describe, expect, it } from 'vitest';
 import { parseMessage, FormattedMessage } from './message-formatter';
 import { createRoot, createSignal } from 'solid-js';
+import type { JSX } from 'solid-js';
 import { render } from 'solid-js/web';
 
 // Helper to render a SolidJS component and return the container element.
