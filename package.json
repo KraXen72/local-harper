@@ -22,7 +22,7 @@
     "@tailwindcss/vite": "^4.3.1",
     "@types/node": "^25.9.3",
     "@vitest/coverage-v8": "^4.1.8",
-    "happy-dom": "^20.10.3",
+    "happy-dom": "^20.10.6",
     "oxlint": "^1.69.0",
     "tailwindcss": "^4.3.1",
     "typescript": "^6.0.3",
