@@ -26,7 +26,7 @@
     "oxlint": "^1.69.0",
     "tailwindcss": "^4.3.1",
     "typescript": "^6.0.3",
-    "vite": "^8.0.16",
+    "vite": "^8.1.2",
     "vite-plugin-pwa": "^1.3.0",
     "vite-plugin-solid": "^2.11.12",
     "vitest": "^4.1.8",
