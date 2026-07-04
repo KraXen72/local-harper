@@ -3,3 +3,5 @@ packages:
 allowBuilds:
   '@tailwindcss/oxide': true
   esbuild: true
+minimumReleaseAgeExclude:
+  - '@codemirror/view@6.43.5'
