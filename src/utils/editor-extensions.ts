@@ -145,6 +145,57 @@ function updateDecorationsForSelection(decorations: DecorationSet, selectedId: s
 	return Decoration.set(updated.map(d => d.decoration.range(d.from, d.to)));
 }
 
+/**
+ * Compute the minimal changed region between two strings and determine
+ * where a cursor should land in the new document after applying the change.
+ *
+ * The diff works by scanning from both ends to find the first and last
+ * characters that differ. The cursor is then mapped through the change:
+ *
+ *  - Before the diff region → unchanged.
+ *  - Exactly at a zero-width insertion → past the inserted text.
+ *  - Inside the deleted region → end of the new text.
+ *  - After the diff region → shifted by the net length delta.
+ */
+export function computeSuggestionCursor(
+	oldText: string, newText: string, oldCursor: number,
+): { changeStart: number; changeEndOld: number; changeEndNew: number; newCursor: number } {
+	// Scan forward from the start for the first differing character.
+	let changeStart = 0;
+	const limit = Math.min(oldText.length, newText.length);
+	while (changeStart < limit && oldText[changeStart] === newText[changeStart]) {
+		changeStart++;
+	}
+
+	// Scan backward from the end for the last differing character.
+	let changeEndOld = oldText.length;
+	let changeEndNew = newText.length;
+	while (changeEndOld > changeStart && changeEndNew > changeStart &&
+	       oldText[changeEndOld - 1] === newText[changeEndNew - 1]) {
+		changeEndOld--;
+		changeEndNew--;
+	}
+
+	// Map the old cursor position through the change.
+	let newCursor: number;
+	if (oldCursor < changeStart) {
+		// Cursor was strictly before any change — keep it.
+		newCursor = oldCursor;
+	} else if (changeStart === changeEndOld && oldCursor === changeStart) {
+		// Pure insertion (zero-width at cursor) — land past the inserted text.
+		newCursor = changeEndNew;
+	} else if (oldCursor > changeStart && oldCursor < changeEndOld) {
+		// Cursor was strictly inside the deleted range — go to end of replacement.
+		newCursor = changeEndNew;
+	} else {
+		// Cursor was at the boundary of or after a deletion — shift by net length
+		// delta. This matches CodeMirror's default ChangeSet.mapPos behaviour.
+		newCursor = oldCursor + (changeEndNew - changeEndOld);
+	}
+
+	return { changeStart, changeEndOld, changeEndNew, newCursor };
+}
+
 // Actions interface for applying suggestions
 interface IssueActions {
 	onApplySuggestion: (issueId: string, suggestion: Suggestion) => void;
@@ -221,31 +272,15 @@ function harperAutocomplete(context: CompletionContext): CompletionResult | null
 			label,
 			// detail: isRemove ? 'Remove this text' : 'Replace',
 			apply: async (view) => {
-				// Use linter.applySuggestion() to properly handle all suggestion types,
-				// including insertions (comma rules), replacements, and removals.
 				const linter = getLinter();
 				const oldText = view.state.doc.toString();
 				const newText = await linter.applySuggestion(oldText, issue.lint, suggestion);
-				
-				// Find the minimal changed region by comparing from both ends
-				let changeStart = 0;
-				const minLen = Math.min(oldText.length, newText.length);
-				while (changeStart < minLen && oldText[changeStart] === newText[changeStart]) {
-					changeStart++;
-				}
-				
-				let changeEndOld = oldText.length;
-				let changeEndNew = newText.length;
-				while (changeEndOld > changeStart && changeEndNew > changeStart &&
-				       oldText[changeEndOld - 1] === newText[changeEndNew - 1]) {
-					changeEndOld--;
-					changeEndNew--;
-				}
-				
-				// Apply the minimal change and position cursor at the end of the inserted text
+				const oldCursor = view.state.selection.main.head;
+				const { changeStart, changeEndOld, changeEndNew, newCursor } =
+					computeSuggestionCursor(oldText, newText, oldCursor);
 				view.dispatch({
 					changes: { from: changeStart, to: changeEndOld, insert: newText.slice(changeStart, changeEndNew) },
-					selection: { anchor: changeEndNew }
+					selection: { anchor: newCursor }
 				});
 			},
 			type: 'text',
