@@ -12,7 +12,6 @@ type Lockfile = {
 	snapshots?: Record<string, { dependencies?: Record<string, string> }>;
 };
 
-const CODEMIRROR_VIEW = '@codemirror/view';
 const CODEMIRROR_PACKAGES = [
 	'@codemirror/autocomplete',
 	'@codemirror/commands',
@@ -20,29 +19,46 @@ const CODEMIRROR_PACKAGES = [
 	'@codemirror/lint',
 ];
 
+// Packages whose resolution must be a true singleton across the whole
+// CodeMirror dependency graph, and the direct dependents that must all
+// agree on that single version. @codemirror/state is included because a
+// loose "^6.0.0" range on @codemirror/language (a transitive dependency of
+// autocomplete/commands) previously let pnpm resolve a second copy of both
+// @codemirror/language and @codemirror/state, which silently broke
+// TypeScript's structural typing (TS2345) despite install/tests passing.
+const SINGLETON_TARGETS: { name: string; dependents: string[] }[] = [
+	{ name: '@codemirror/view', dependents: CODEMIRROR_PACKAGES },
+	{ name: '@codemirror/state', dependents: ['@codemirror/view', ...CODEMIRROR_PACKAGES] },
+	{ name: '@codemirror/language', dependents: ['@codemirror/autocomplete', '@codemirror/commands'] },
+];
+
 function packageKey(name: string, version: string): string {
 	return `${name}@${version}`;
 }
 
 describe('dependency contracts', () => {
-	it('keeps CodeMirror packages on exactly one @codemirror/view resolution', () => {
-		const lockfile = YAML.parse(readFileSync('pnpm-lock.yaml', 'utf8')) as Lockfile;
-		const rootDeps = lockfile.importers['.'].dependencies;
-		const viewVersion = rootDeps[CODEMIRROR_VIEW]?.version;
+	const lockfile = YAML.parse(readFileSync('pnpm-lock.yaml', 'utf8')) as Lockfile;
+	const rootDeps = lockfile.importers['.'].dependencies;
 
-		expect(viewVersion).toMatch(/^\d+\.\d+\.\d+$/);
+	for (const { name: singletonName, dependents } of SINGLETON_TARGETS) {
+		it(`keeps CodeMirror packages on exactly one ${singletonName} resolution`, () => {
+			const singletonVersion = rootDeps[singletonName]?.version;
+			expect(singletonVersion).toMatch(/^\d+\.\d+\.\d+$/);
 
-		const packageViewKeys = Object.keys(lockfile.packages).filter((key) => key.startsWith(`${CODEMIRROR_VIEW}@`));
-		expect(packageViewKeys).toEqual([packageKey(CODEMIRROR_VIEW, viewVersion)]);
+			const resolvedKeys = Object.keys(lockfile.packages).filter((key) => key.startsWith(`${singletonName}@`));
+			expect(resolvedKeys, `expected exactly one resolved version of ${singletonName}`).toEqual([
+				packageKey(singletonName, singletonVersion),
+			]);
 
-		for (const dependencyName of CODEMIRROR_PACKAGES) {
-			const dependencyVersion = rootDeps[dependencyName]?.version;
-			const key = packageKey(dependencyName, dependencyVersion);
-			const snapshotDeps = lockfile.snapshots?.[key]?.dependencies;
-			const packageDeps = lockfile.packages[key]?.dependencies;
-			const viewRange = snapshotDeps?.[CODEMIRROR_VIEW] ?? packageDeps?.[CODEMIRROR_VIEW];
+			for (const dependencyName of dependents) {
+				const dependencyVersion = rootDeps[dependencyName]?.version;
+				const key = packageKey(dependencyName, dependencyVersion);
+				const snapshotDeps = lockfile.snapshots?.[key]?.dependencies;
+				const packageDeps = lockfile.packages[key]?.dependencies;
+				const resolvedRange = snapshotDeps?.[singletonName] ?? packageDeps?.[singletonName];
 
-			expect(viewRange, `${key} should depend on ${CODEMIRROR_VIEW}`).toBe(viewVersion);
-		}
-	});
+				expect(resolvedRange, `${key} should depend on ${singletonName}`).toBe(singletonVersion);
+			}
+		});
+	}
 });
