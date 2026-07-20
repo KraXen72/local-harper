@@ -525,6 +525,10 @@ export const issueSyncExtension = EditorView.updateListener.of((update) => {
 		update.view.dispatch({
 			effects: setSelectedIssueEffect.of(issueId),
 		});
+		// Trigger autocomplete when cursor lands on an issue via cursor movement
+		if (issue) {
+			triggerAutocompleteForIssue(update.view, issue);
+		}
 	}
 	
 	// Reset editor click tracking when cursor moves away from the last clicked issue
