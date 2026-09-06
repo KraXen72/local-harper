@@ -37,7 +37,7 @@ test('navigates to an issue and applies its suggestion with the keyboard', async
 	await editor(page).press('Control+j');
 	await expect(page.getByRole('listbox', { name: 'Completions' })).toBeVisible();
 	await expect(page.getByRole('option', { name: 'definitely', exact: true })).toBeVisible();
-	await editor(page).press('Enter');
+	await page.keyboard.press('Enter');
 
 	await expect(editor(page)).toHaveText('This is definitely seperate.');
 	await expect(page.getByTestId('issue-highlight')).toHaveCount(1);
