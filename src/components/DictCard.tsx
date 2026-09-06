@@ -15,6 +15,8 @@ const DictCard: Component<DictCardProps> = (props) => {
 	return (
 		<div
 			class="flex items-center gap-x-0.5 rounded-lg bg-(--flexoki-ui)/20 border border-(--flexoki-ui-2) group"
+			data-testid="dictionary-word"
+			data-word={props.word}
 			classList={{
 				'py-1 ps-1 pe-3': props.isEditing,
 				'py-1 px-3': !props.isEditing,

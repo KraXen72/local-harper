@@ -12,7 +12,7 @@ export interface RuleCardProps {
 
 const RuleCard: Component<RuleCardProps> = (props) => {
 	return (
-		<div class="shared-card mb-2">
+		<div class="shared-card mb-2" data-rule-name={props.name}>
 			<div class="flex items-start justify-between gap-3">
 				<div class="flex flex-col gap-1 flex-1 min-w-0">
 					<span class="text-sm font-medium text-(--flexoki-tx)">
@@ -24,6 +24,7 @@ const RuleCard: Component<RuleCardProps> = (props) => {
 				</div>
 				<div class="shrink-0">
 					<Toggle
+						ariaLabel={`Toggle rule ${props.name}`}
 						checked={props.enabled}
 						onChange={props.onToggle}
 					/>

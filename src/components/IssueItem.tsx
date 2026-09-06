@@ -14,7 +14,10 @@ const IssueItem: Component<IssueItemProps> = (props) => {
 		<div
 			class="shared-card shared-card-hover cursor-pointer hover:translate-x-0.5"
 			classList={{ 'shared-card-selected translate-x-0.5': props.isSelected }}
+			data-testid="issue-card"
 			onClick={handleClick}
+			role="button"
+			aria-label={`Issue: ${props.issue.lint.message()}`}
 			tabIndex={0}
 			onKeyDown={(e) => {
 				if (e.key === 'Enter' || e.key === ' ') {

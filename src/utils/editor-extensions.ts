@@ -99,6 +99,7 @@ function buildDecorations(issues: HarperIssue[], selectedId: string | null): Dec
 			decoration: Decoration.mark({
 				class: cssClass,
 				attributes: { 
+					'data-testid': 'issue-highlight',
 					'data-issue-id': issue.id,
 					'data-lint-kind': lintKind,
 					style: `text-decoration-color: ${color}; background-color: ${bgColor};`,
@@ -133,6 +134,7 @@ function updateDecorationsForSelection(decorations: DecorationSet, selectedId: s
 				decoration: Decoration.mark({
 					class: cssClass,
 					attributes: { 
+						'data-testid': 'issue-highlight',
 						'data-issue-id': issueId,
 						'data-lint-kind': lintKind,
 						style: `text-decoration-color: ${color}; background-color: ${bgColor};`,
