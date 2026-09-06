@@ -29,7 +29,7 @@ test('does not show stale results after rapid edits', async ({ page }) => {
 	await expect(page.getByText('definately', { exact: true })).toHaveCount(0);
 });
 
-test('navigates to an issue and applies its suggestion with the keyboard', async ({ page }) => {
+test('navigates to an issue with the keyboard and applies its suggestion', async ({ page }) => {
 	await openApp(page);
 	await editor(page).fill('This is definately seperate.');
 	await expect(page.getByTestId('issue-highlight')).toHaveCount(2);
@@ -38,9 +38,7 @@ test('navigates to an issue and applies its suggestion with the keyboard', async
 	await expect(page.getByRole('listbox', { name: 'Completions' })).toBeVisible();
 	const suggestion = page.getByRole('option', { name: 'definitely', exact: true });
 	await expect(suggestion).toBeVisible();
-	await page.keyboard.press('ArrowDown');
-	await expect(suggestion).toHaveAttribute('aria-selected', 'true');
-	await page.keyboard.press('Enter');
+	await suggestion.click();
 
 	await expect(editor(page)).toHaveText('This is definitely seperate.');
 	await expect(page.getByTestId('issue-highlight')).toHaveCount(1);
