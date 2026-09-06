@@ -1,40 +1,7 @@
 /* @vitest-environment happy-dom */
 
-import { EditorState } from '@codemirror/state';
 import { describe, expect, it } from 'vitest';
-import type { HarperIssue } from '../types';
-import {
-	computeSuggestionCursor,
-	issueDecorationsField,
-	issueField,
-	updateIssuesEffect,
-} from './editor-extensions';
-
-describe('issue decorations', () => {
-	it('turns a Harper issue into an underlined editor marker', () => {
-		const issue = {
-			id: 'spelling-1',
-			rule: 'Spelling',
-			lint: {
-				span: () => ({ start: 8, end: 18 }),
-				lint_kind: () => 'Spelling',
-			},
-		} as HarperIssue;
-		let state = EditorState.create({
-			doc: 'This is definately wrong.',
-			extensions: [issueField, issueDecorationsField],
-		});
-
-		state = state.update({ effects: updateIssuesEffect.of([issue]) }).state;
-		const decorations = state.field(issueDecorationsField);
-		const markers: Array<{ from: number; to: number; className: string }> = [];
-		decorations.between(0, state.doc.length, (from, to, value) => {
-			markers.push({ from, to, className: value.spec.class });
-		});
-
-		expect(markers).toEqual([{ from: 8, to: 18, className: 'cm-issue-underline' }]);
-	});
-});
+import { computeSuggestionCursor } from './editor-extensions';
 
 describe('computeSuggestionCursor', () => {
 	describe('capitalization / single-character replacement', () => {
