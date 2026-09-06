@@ -4,6 +4,9 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+overrides:
+  '@codemirror/view': 6.43.5
+
 importers:
 
   .:
@@ -24,8 +27,8 @@ importers:
         specifier: ^6.7.4
         version: 6.7.4
       '@codemirror/view':
-        specifier: ^6.43.11
-        version: 6.43.11
+        specifier: 6.43.5
+        version: 6.43.5
       '@fontsource-variable/inter':
         specifier: ^5.3.0
         version: 5.3.0
@@ -642,8 +645,8 @@ packages:
   '@codemirror/state@6.7.4':
     resolution: {integrity: sha512-QhQIVRY+xHZDxwOSFrJ1eUMapJBUID3IdeAjf7dHO7zBUzSkyooHiodnalz5MG3iHzwixKMlAAyn7244y537EA==}
 
-  '@codemirror/view@6.43.11':
-    resolution: {integrity: sha512-2+esucbQX6wB2JYi1eDvdCPFTA31BN8oSy6xCmk3G6CloV11yOvEjYk+gH7kLrP0MuHG94E8WDhjs5oMiu3+Wg==}
+  '@codemirror/view@6.43.5':
+    resolution: {integrity: sha512-7uT/vUgH6dfXWn3WqOe23KneILMvGy5wQjNMEcRXLKzziJ9NOktpW6tGoyQpwVkBgE5Gj6hKkCcsddbnkaWrOQ==}
 
   '@cyberalien/svg-utils@1.2.15':
     resolution: {integrity: sha512-ZbKU6npzW5PNocdoLVJYfKzaP+c/RpT6JUkoaKrW1DOcw6lyXub8XtcNpI3xok6FnyNjS6ZbsrrtjTnS9yeZAQ==}
@@ -3450,20 +3453,20 @@ snapshots:
     dependencies:
       '@codemirror/language': 6.12.4
       '@codemirror/state': 6.7.4
-      '@codemirror/view': 6.43.11
+      '@codemirror/view': 6.43.5
       '@lezer/common': 1.5.2
 
   '@codemirror/commands@6.11.0':
     dependencies:
       '@codemirror/language': 6.12.4
       '@codemirror/state': 6.7.4
-      '@codemirror/view': 6.43.11
+      '@codemirror/view': 6.43.5
       '@lezer/common': 1.5.2
 
   '@codemirror/language@6.12.4':
     dependencies:
       '@codemirror/state': 6.7.4
-      '@codemirror/view': 6.43.11
+      '@codemirror/view': 6.43.5
       '@lezer/common': 1.5.2
       '@lezer/highlight': 1.2.3
       '@lezer/lr': 1.4.10
@@ -3472,14 +3475,14 @@ snapshots:
   '@codemirror/lint@6.9.7':
     dependencies:
       '@codemirror/state': 6.7.4
-      '@codemirror/view': 6.43.11
+      '@codemirror/view': 6.43.5
       crelt: 1.0.6
 
   '@codemirror/state@6.7.4':
     dependencies:
       '@marijn/find-cluster-break': 1.0.4
 
-  '@codemirror/view@6.43.11':
+  '@codemirror/view@6.43.5':
     dependencies:
       '@codemirror/state': 6.7.4
       crelt: 1.0.7
