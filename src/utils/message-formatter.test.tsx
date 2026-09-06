@@ -9,7 +9,7 @@ import { FormattedMessage, parseMessage } from './message-formatter';
 // Helper to render a SolidJS component and return the container element.
 function renderToDom(jsx: () => JSX.Element): HTMLElement {
 	const container = document.createElement('div');
-	createRoot((dispose) => {
+	createRoot((_dispose) => {
 		render(jsx, container);
 		// dispose is not called here because we want the result, but in tests we don't clean up.
 		// For simple assertions it's fine.
