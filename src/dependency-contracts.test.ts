@@ -1,5 +1,7 @@
 import { readFileSync } from 'node:fs';
+
 import { describe, expect, it } from 'vitest';
+
 import YAML from 'yaml';
 
 type Lockfile = {
@@ -37,15 +39,24 @@ function packageKey(name: string, version: string): string {
 }
 
 describe('dependency contracts', () => {
-	const lockfile = YAML.parse(readFileSync('pnpm-lock.yaml', 'utf8')) as Lockfile;
+	const lockfile = YAML.parseAllDocuments(readFileSync('pnpm-lock.yaml', 'utf8'))
+		.map((document) => document.toJS() as Partial<Lockfile>)
+		.find((document) => document.importers?.['.']?.dependencies);
+
+	if (!lockfile?.importers || !lockfile.packages) {
+		throw new Error('Could not find project dependency document in pnpm-lock.yaml');
+	}
+
 	const rootDeps = lockfile.importers['.'].dependencies;
 
 	for (const { name: singletonName, dependents } of SINGLETON_TARGETS) {
 		it(`keeps CodeMirror packages on exactly one ${singletonName} resolution`, () => {
 			const singletonVersion = rootDeps[singletonName]?.version;
+
 			expect(singletonVersion).toMatch(/^\d+\.\d+\.\d+$/);
 
 			const resolvedKeys = Object.keys(lockfile.packages).filter((key) => key.startsWith(`${singletonName}@`));
+
 			expect(resolvedKeys, `expected exactly one resolved version of ${singletonName}`).toEqual([
 				packageKey(singletonName, singletonVersion),
 			]);
@@ -53,6 +64,7 @@ describe('dependency contracts', () => {
 			for (const dependencyName of dependents) {
 				const dependencyVersion = rootDeps[dependencyName]?.version;
 				const key = packageKey(dependencyName, dependencyVersion);
+
 				const snapshotDeps = lockfile.snapshots?.[key]?.dependencies;
 				const packageDeps = lockfile.packages[key]?.dependencies;
 				const resolvedRange = snapshotDeps?.[singletonName] ?? packageDeps?.[singletonName];
