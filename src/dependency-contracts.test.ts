@@ -48,6 +48,8 @@ describe('dependency contracts', () => {
 	}
 
 	const rootDeps = lockfile.importers['.'].dependencies;
+	const packages = lockfile.packages;
+	const snapshots = lockfile.snapshots;
 
 	for (const { name: singletonName, dependents } of SINGLETON_TARGETS) {
 		it(`keeps CodeMirror packages on exactly one ${singletonName} resolution`, () => {
@@ -55,7 +57,7 @@ describe('dependency contracts', () => {
 
 			expect(singletonVersion).toMatch(/^\d+\.\d+\.\d+$/);
 
-			const resolvedKeys = Object.keys(lockfile.packages).filter((key) => key.startsWith(`${singletonName}@`));
+			const resolvedKeys = Object.keys(packages).filter((key) => key.startsWith(`${singletonName}@`));
 
 			expect(resolvedKeys, `expected exactly one resolved version of ${singletonName}`).toEqual([
 				packageKey(singletonName, singletonVersion),
@@ -65,8 +67,8 @@ describe('dependency contracts', () => {
 				const dependencyVersion = rootDeps[dependencyName]?.version;
 				const key = packageKey(dependencyName, dependencyVersion);
 
-				const snapshotDeps = lockfile.snapshots?.[key]?.dependencies;
-				const packageDeps = lockfile.packages[key]?.dependencies;
+				const snapshotDeps = snapshots?.[key]?.dependencies;
+				const packageDeps = packages[key]?.dependencies;
 				const resolvedRange = snapshotDeps?.[singletonName] ?? packageDeps?.[singletonName];
 
 				expect(resolvedRange, `${key} should depend on ${singletonName}`).toBe(singletonVersion);
