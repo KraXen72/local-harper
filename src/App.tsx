@@ -299,7 +299,11 @@ const App: Component = () => {
 	};
 
 	return (
-		<div class="h-screen flex flex-col bg-(--flexoki-bg)">
+		<div
+			class="h-screen flex flex-col bg-(--flexoki-bg)"
+			data-testid="app"
+			data-harper-ready={isInitialized()}
+		>
 			<TopBar
 				onCopy={handleCopy}
 				isAnalyzing={isAnalyzing()}

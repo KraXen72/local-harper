@@ -13,12 +13,15 @@
     "lint": "tsc -noEmit -skipLibCheck && oxlint",
     "test": "vitest",
     "test:run": "vitest run",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "test:e2e": "pnpm build && playwright test",
+    "test:e2e:run": "playwright test"
   },
   "license": "MIT",
   "devDependencies": {
     "@iconify-json/lucide": "^1.2.129",
     "@iconify/tailwind4": "^1.2.3",
+    "@playwright/test": "1.63.0",
     "@tailwindcss/vite": "^4.3.3",
     "@types/node": "^26.4.1",
     "@vitest/coverage-v8": "^4.1.11",
