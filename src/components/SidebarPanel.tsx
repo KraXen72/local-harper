@@ -57,7 +57,7 @@ interface SidebarPanelProps {
 	headerControl?: HeaderControls;
 	headerAddon?: JSX.Element;
 	toolbarControl?: HeaderControls;
-	toolbarControlPlacement?: 'filter' | 'row';
+	toolbarControlPlacement?: 'filter' | 'footer';
 	toolbarControlLabel?: string;
 	children: JSX.Element;
 }
@@ -80,15 +80,6 @@ const SidebarPanel: Component<SidebarPanelProps> = (props) => {
 				</div>
 			</div>
 
-			<Show when={props.toolbarControlPlacement === 'row'}>
-				<div class="sidebar-panel-control-row px-3 py-2 border-b border-(--flexoki-ui-2) flex items-center gap-2">
-					<span class="sidebar-panel-control-label text-sm text-(--flexoki-tx) shrink-0">{props.toolbarControlLabel}</span>
-					<div class="flex-1 min-w-0 flex justify-end">
-						<HeaderControlList controls={props.toolbarControl} />
-					</div>
-				</div>
-			</Show>
-
 			<div class="sidebar-panel-filter px-3 py-3 border-b border-(--flexoki-ui-2) flex gap-2">
 				<div class="relative flex-1">
 					<input
@@ -110,7 +101,7 @@ const SidebarPanel: Component<SidebarPanelProps> = (props) => {
 						</button>
 					</Show>
 				</div>
-				<Show when={props.toolbarControlPlacement !== 'row'}>
+				<Show when={props.toolbarControlPlacement !== 'footer'}>
 					<div class="sidebar-panel-toolbar-controls flex items-center gap-1 shrink-0">
 						<HeaderControlList controls={props.toolbarControl} />
 					</div>
@@ -121,6 +112,14 @@ const SidebarPanel: Component<SidebarPanelProps> = (props) => {
 			<div class="overflow-y-auto py-3 ps-3 pe-1 min-h-0 flex-1 sidebar-panel-scroller">
 				{props.children}
 			</div>
+			<Show when={props.toolbarControlPlacement === 'footer'}>
+				<div class="sidebar-panel-control-row shrink-0 px-3 py-2 border-t border-(--flexoki-ui-2) flex items-center gap-2">
+					<span class="sidebar-panel-control-label text-sm text-(--flexoki-tx) shrink-0">{props.toolbarControlLabel}</span>
+					<div class="flex-1 min-w-0 flex justify-end">
+						<HeaderControlList controls={props.toolbarControl} />
+					</div>
+				</div>
+			</Show>
 		</div>
 	);
 };

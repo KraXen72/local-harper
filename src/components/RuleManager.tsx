@@ -54,7 +54,7 @@ const RuleManager: Component<RuleManagerProps> = (props) => {
 			onFilterChange={setFilterText}
 			filterPlaceholder="Filter rules..."
 			toolbarControl={headerControl}
-			toolbarControlPlacement="row"
+			toolbarControlPlacement="footer"
 			toolbarControlLabel="Writing dialect"
 			headerAddon={<ThemeToggle value={props.theme} onChange={props.onThemeChange} />}
 		>
