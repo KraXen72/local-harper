@@ -12,7 +12,7 @@ const IssueItem: Component<IssueItemProps> = (props) => {
 
 	return (
 		<div
-			class="shared-card shared-card-hover cursor-pointer hover:translate-x-0.5"
+			class="shared-card shared-card-hover cursor-pointer transition-transform duration-150 hover:translate-x-0.5"
 			classList={{ 'shared-card-selected translate-x-0.5': props.isSelected }}
 			data-testid="issue-card"
 			onClick={handleClick}

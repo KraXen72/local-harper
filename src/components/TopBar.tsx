@@ -27,7 +27,7 @@ const TopBar: Component<TopBarProps> = (props) => {
 			<div class="flex items-center gap-2">
 				<button
 					onClick={props.onCopy}
-					class="aspect-square w-8 flex justify-center items-center cursor-pointer hover:brightness-110 active:scale-95 text-(--button-primary-fg) text-sm font-medium rounded-md shadow-md hover:shadow-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-(--flexoki-bg-2)"
+					class="aspect-square w-8 flex justify-center items-center cursor-pointer hover:brightness-110 active:scale-95 text-(--button-primary-fg) text-sm font-medium rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-(--flexoki-bg-2)"
 					classList={{
 						'bg-(--flexoki-cyan) focus:ring-(--flexoki-cyan)': true,
 					}}

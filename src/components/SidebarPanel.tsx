@@ -57,12 +57,14 @@ interface SidebarPanelProps {
 	headerControl?: HeaderControls;
 	headerAddon?: JSX.Element;
 	toolbarControl?: HeaderControls;
+	toolbarControlPlacement?: 'filter' | 'row';
+	toolbarControlLabel?: string;
 	children: JSX.Element;
 }
 
 const SidebarPanel: Component<SidebarPanelProps> = (props) => {
 	return (
-		<div class="h-full bg-(--flexoki-bg) grid" style={{ "grid-template-rows": "min-content min-content 1fr" }}>
+		<div class="h-full bg-(--flexoki-bg) flex flex-col">
 			<div class="sidebar-panel-header flex items-center justify-between gap-2 px-4 py-3 border-b border-(--flexoki-ui-2)">
 				<h2 class="text-lg font-semibold text-(--flexoki-tx) flex-1 min-w-0">{props.title}</h2>
 				<div class="sidebar-panel-controls flex items-center justify-end gap-1 shrink-0">
@@ -77,6 +79,15 @@ const SidebarPanel: Component<SidebarPanelProps> = (props) => {
 					</button>
 				</div>
 			</div>
+
+			<Show when={props.toolbarControlPlacement === 'row'}>
+				<div class="sidebar-panel-control-row px-3 py-2 border-b border-(--flexoki-ui-2) flex items-center gap-2">
+					<span class="text-xs font-medium text-(--flexoki-tx-2) shrink-0">{props.toolbarControlLabel}</span>
+					<div class="flex-1 min-w-0 flex justify-end">
+						<HeaderControlList controls={props.toolbarControl} />
+					</div>
+				</div>
+			</Show>
 
 			<div class="sidebar-panel-filter px-3 py-3 border-b border-(--flexoki-ui-2) flex gap-2">
 				<div class="relative flex-1">
@@ -99,13 +110,15 @@ const SidebarPanel: Component<SidebarPanelProps> = (props) => {
 						</button>
 					</Show>
 				</div>
-				<div class="sidebar-panel-toolbar-controls flex items-center gap-1 shrink-0">
-					<HeaderControlList controls={props.toolbarControl} />
-				</div>
+				<Show when={props.toolbarControlPlacement !== 'row'}>
+					<div class="sidebar-panel-toolbar-controls flex items-center gap-1 shrink-0">
+						<HeaderControlList controls={props.toolbarControl} />
+					</div>
+				</Show>
 				{props.filterAddon}
 			</div>
 
-			<div class="overflow-y-auto py-3 ps-3 pe-1 min-h-0 sidebar-panel-scroller">
+			<div class="overflow-y-auto py-3 ps-3 pe-1 min-h-0 flex-1 sidebar-panel-scroller">
 				{props.children}
 			</div>
 		</div>
