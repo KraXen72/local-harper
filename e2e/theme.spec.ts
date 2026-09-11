@@ -10,12 +10,13 @@ test('uses the system theme and persists an explicit preference', async ({ page 
 	await expect(page.getByRole('radio', { name: 'System theme' })).toHaveAttribute('aria-checked', 'true');
 	await expect(page.getByRole('button', { name: 'Toggle rule manager' })).toHaveCSS('color', 'rgb(16, 15, 15)');
 	await expect(page.getByRole('button', { name: 'Toggle dictionary manager' })).toHaveCSS('background-color', 'rgb(230, 228, 217)');
-	await expect(page.getByRole('button', { name: 'Toggle dictionary manager' })).toHaveCSS('color', 'rgb(64, 62, 60)');
+	await expect(page.getByRole('button', { name: 'Toggle dictionary manager' })).toHaveCSS('color', 'rgb(16, 15, 15)');
 	await page.getByRole('button', { name: 'Toggle rule manager' }).evaluate(button => button.blur());
 	await expect(page.getByRole('button', { name: 'Toggle rule manager' })).toHaveCSS('box-shadow', 'none');
 
 	await page.getByRole('radio', { name: 'Dark theme' }).click();
 	await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+	await expect(page.locator('html')).not.toHaveAttribute('data-theme-changing', '');
 	await expect(page.getByTestId('app')).toHaveCSS('background-color', 'rgb(16, 15, 15)');
 	await expect.poll(() => page.evaluate(() => localStorage.getItem('harper-theme'))).toBe('dark');
 
@@ -34,6 +35,7 @@ test('tracks OS changes in system mode and remains usable on mobile', async ({ p
 	const themePicker = page.getByRole('radiogroup', { name: 'Theme' });
 	await expect(themePicker).toBeVisible();
 	await expect(page.getByRole('button', { name: 'Toggle rule manager' })).toHaveCSS('color', 'rgb(255, 252, 240)');
+	await expect(page.getByRole('button', { name: 'Toggle dictionary manager' })).toHaveCSS('color', 'rgb(255, 252, 240)');
 	await expect(page.getByRole('radio', { name: 'System theme' })).toHaveCSS('background-color', 'rgb(64, 62, 60)');
 	await expect(page.getByRole('combobox', { name: 'Select dialect' })).toBeVisible();
 	await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');

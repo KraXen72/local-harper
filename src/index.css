@@ -70,7 +70,7 @@
 	--toggle-thumb-icon: #CECDC3;
 	--accent-button-tx: #FFFCF0;
 	--secondary-button-bg: #403E3C;
-	--secondary-button-tx: #878580;
+	--secondary-button-tx: #FFFCF0;
 	--editor-shadow: rgba(0, 0, 0, 0.3);
 	--br-mini: 3px;
 	--br-small: 5px;
@@ -150,8 +150,15 @@
 	--toggle-thumb-icon: #100F0F;
 	--accent-button-tx: #100F0F;
 	--secondary-button-bg: #E6E4D9;
-	--secondary-button-tx: #403E3C;
+	--secondary-button-tx: #100F0F;
 	--editor-shadow: rgba(16, 15, 15, 0.04);
+}
+
+/* A palette swap should be one paint, not hundreds of simultaneous card transitions. */
+:root[data-theme-changing] *,
+:root[data-theme-changing] *::before,
+:root[data-theme-changing] *::after {
+	transition: none !important;
 }
 
 /* credit: https://github.com/finnhvman/matter */
@@ -260,7 +267,9 @@ body {
 	border-radius: var(--radius-lg);
 	border-style: solid;
 	border-width: 1px;
-	transition: all 200ms cubic-bezier(0, 0, 0.2, 1);
+	transition: background-color 200ms cubic-bezier(0, 0, 0.2, 1),
+		border-color 200ms cubic-bezier(0, 0, 0.2, 1),
+		box-shadow 200ms cubic-bezier(0, 0, 0.2, 1);
 
 	background-color: color-mix(in oklab, var(--flexoki-ui) 20%, transparent);
 	border-color: var(--flexoki-ui-2);
