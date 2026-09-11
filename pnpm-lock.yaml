@@ -134,8 +134,8 @@ importers:
         specifier: ^2.0.0
         version: 2.0.0
       harper.js:
-        specifier: ^2.7.0
-        version: 2.7.0
+        specifier: ^2.10.0
+        version: 2.10.0
       solid-js:
         specifier: ^1.9.15
         version: 1.9.15
@@ -1789,8 +1789,8 @@ packages:
     resolution: {integrity: sha512-4bRh1KzRvKDnFNTlLhzT1RZTpkKhQbQDl9j+7GXszWsvuspYdo29k6OHRf4PwiM6oLb8r/pMWeYiJjkfod5AvQ==}
     engines: {node: '>=20.0.0'}
 
-  harper.js@2.7.0:
-    resolution: {integrity: sha512-INDnUMNJvQzv5Zv9lhgGuIRYNIpDvOXcieCbo5ED/dwn8V/02zVW5kKvU6jSJJHq1MpY0VDyg+5RjE7z5D+FeA==}
+  harper.js@2.10.0:
+    resolution: {integrity: sha512-s6BDuqtRbX8M/5exH1G5M7VzAuv6l0TagbRxMY37OsrT/1kWFjWmqHydWrkYFqTUW+fFhu4Hj2yUxvChp862Pg==}
 
   has-bigints@1.1.0:
     resolution: {integrity: sha512-R3pbpkcIqv2Pm3dUwgjclDRVmWpTJW2DcMzcIhEXEx1oh/CEMObMm3KLmRJOdvhM7o4uQBnwr8pzRK2sJWIqfg==}
@@ -4522,7 +4522,7 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
-  harper.js@2.7.0:
+  harper.js@2.10.0:
     dependencies:
       fflate: 0.8.3
 
