@@ -20,7 +20,7 @@ const HeaderSelectItem: Component<HeaderSelect> = (props) => (
 			onChange={(e) => props.onChange(e.currentTarget.value)}
 			aria-label={props.label}
 			title={props.label}
-			class="px-2 py-1 pr-7 bg-(--flexoki-bg) h-7 text-(--flexoki-tx) text-sm rounded-md hover:bg-(--flexoki-ui-3) focus:outline-none focus:ring-2 focus:ring-(--flexoki-cyan) cursor-pointer appearance-none"
+			class="header-select px-2 py-1 pr-7 bg-(--flexoki-bg) h-7 text-(--flexoki-tx) text-sm rounded-md hover:bg-(--flexoki-ui-3) focus:outline-none focus:ring-2 focus:ring-(--flexoki-cyan) cursor-pointer appearance-none"
 		// style={{ "height": "28px" }}
 		>
 			<For each={props.options}>
@@ -33,6 +33,19 @@ const HeaderSelectItem: Component<HeaderSelect> = (props) => (
 	</div>
 );
 
+const HeaderControlList: Component<{ controls?: HeaderControls }> = (props) => (
+	<For each={props.controls}>
+		{(control) => (
+			<Show
+				when={control.type === 'button'}
+				fallback={<HeaderSelectItem {...(control as HeaderSelect)} />}
+			>
+				<HeaderButtonItem {...(control as HeaderButton)} />
+			</Show>
+		)}
+	</For>
+);
+
 interface SidebarPanelProps {
 	title: string;
 	onClose: () => void;
@@ -42,25 +55,19 @@ interface SidebarPanelProps {
 	filterAddon?: JSX.Element;
 	onFilterKeyDown?: JSX.EventHandler<HTMLInputElement, KeyboardEvent>;
 	headerControl?: HeaderControls;
+	headerAddon?: JSX.Element;
+	toolbarControl?: HeaderControls;
 	children: JSX.Element;
 }
 
 const SidebarPanel: Component<SidebarPanelProps> = (props) => {
 	return (
 		<div class="h-full bg-(--flexoki-bg) grid" style={{ "grid-template-rows": "min-content min-content 1fr" }}>
-			<div class="flex items-center justify-between px-4 py-3 border-b border-(--flexoki-ui-2)">
-				<h2 class="text-lg font-semibold text-(--flexoki-tx)">{props.title}</h2>
-				<div class="flex items-center gap-1">
-					<For each={props.headerControl}>
-						{(control) => (
-							<Show
-								when={control.type === 'button'}
-								fallback={<HeaderSelectItem {...(control as HeaderSelect)} />}
-							>
-								<HeaderButtonItem {...(control as HeaderButton)} />
-							</Show>
-						)}
-					</For>
+			<div class="sidebar-panel-header flex items-center justify-between gap-2 px-4 py-3 border-b border-(--flexoki-ui-2)">
+				<h2 class="text-lg font-semibold text-(--flexoki-tx) flex-1 min-w-0">{props.title}</h2>
+				<div class="sidebar-panel-controls flex items-center justify-end gap-1 shrink-0">
+					{props.headerAddon}
+					<HeaderControlList controls={props.headerControl} />
 					<button
 						onClick={props.onClose}
 						class="p-1 hover:bg-(--flexoki-ui-3) aspect-square rounded-md transition-colors duration-150 flex"
@@ -71,7 +78,7 @@ const SidebarPanel: Component<SidebarPanelProps> = (props) => {
 				</div>
 			</div>
 
-			<div class="px-3 py-3 border-b border-(--flexoki-ui-2) flex gap-2">
+			<div class="sidebar-panel-filter px-3 py-3 border-b border-(--flexoki-ui-2) flex gap-2">
 				<div class="relative flex-1">
 					<input
 						type="text"
@@ -91,6 +98,9 @@ const SidebarPanel: Component<SidebarPanelProps> = (props) => {
 							<span class="iconify lucide--x text-lg text-(--flexoki-tx-3)" />
 						</button>
 					</Show>
+				</div>
+				<div class="sidebar-panel-toolbar-controls flex items-center gap-1 shrink-0">
+					<HeaderControlList controls={props.toolbarControl} />
 				</div>
 				{props.filterAddon}
 			</div>

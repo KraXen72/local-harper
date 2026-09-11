@@ -27,7 +27,7 @@ const issueTheme = EditorView.baseTheme({
 		textDecorationSkipInk: 'auto',
 	},
 	'.cm-issue-selected': {
-		backgroundColor: 'rgba(58, 169, 159, 0.3)', // flexoki-cyan with opacity
+		backgroundColor: 'var(--text-selection-background-color)',
 	},
 });
 
@@ -540,36 +540,37 @@ export const issueSyncExtension = EditorView.updateListener.of((update) => {
 	}
 });
 
-// Dark editor theme with Flexoki colors
-const darkEditorTheme = EditorView.theme({
+// Editor surfaces use CSS variables so CodeMirror follows the app palette
+// without reconstructing the editor on every theme change.
+const editorTheme = EditorView.theme({
 	'&': {
-		color: '#CECDC3', // flexoki-tx
-		backgroundColor: '#100F0F', // flexoki-bg
+		color: 'var(--flexoki-tx)',
+		backgroundColor: 'var(--flexoki-bg)',
 		padding: '1.5rem',
 	},
 	'.cm-content': {
-		caretColor: '#CECDC3',
+		caretColor: 'var(--flexoki-tx)',
 		padding: '0',
 	},
 	'&.cm-focused .cm-cursor': {
-		borderLeftColor: '#CECDC3',
+		borderLeftColor: 'var(--flexoki-tx)',
 	},
 	'&.cm-focused .cm-selectionBackground, ::selection': {
-		backgroundColor: '#3aa99f4c !important', // flexoki-cyan with opacity (matching text-selection)
+		backgroundColor: 'var(--text-selection-background-color) !important',
 	},
 	'.cm-selectionBackground': {
-		backgroundColor: '#3aa99f4c !important',
+		backgroundColor: 'var(--text-selection-background-color) !important',
 	},
 	'.cm-gutters': {
-		backgroundColor: '#1C1B1A', // flexoki-bg-2
-		color: '#878580', // flexoki-tx-2
+		backgroundColor: 'var(--flexoki-bg-2)',
+		color: 'var(--flexoki-tx-2)',
 		border: 'none',
 	},
 	'.cm-activeLineGutter': {
-		backgroundColor: '#282726', // flexoki-ui
+		backgroundColor: 'var(--flexoki-ui)',
 	},
 	'.cm-activeLine': {
-		backgroundColor: 'rgba(40, 39, 38, 0.5)', // flexoki-ui with transparency
+		backgroundColor: 'color-mix(in srgb, var(--flexoki-ui) 50%, transparent)',
 	},
 	'.cm-scroller': {
 		lineHeight: '1.5',
@@ -676,4 +677,4 @@ export const issueNavigationKeymap = keymap.of([
 	},
 ]);
 
-export { issueTheme, darkEditorTheme };
+export { issueTheme, editorTheme };

@@ -3,6 +3,9 @@ import './index.css';
 import { render } from 'solid-js/web';
 
 import App from './App';
+import { applyTheme, getThemePreference } from './utils/theme';
+
+applyTheme(getThemePreference());
 
 const root = document.getElementById('root');
 

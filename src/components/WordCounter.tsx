@@ -11,7 +11,7 @@ const WordCounter: Component<WordCounterProps> = (props) => {
     });
 
     return (
-        <div class="pt-1 pb-3 px-2 text-sm text-(--flexoki-text-muted)">
+		<div class="pt-1 pb-3 px-2 text-sm text-(--flexoki-tx-2)">
             <div class="flex items-center justify-between">
                 <div class="text-sm font-medium mr-2" data-testid="word-count">Words: {counts().words}</div>
                 {/* mobile wordcount */}

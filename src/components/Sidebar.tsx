@@ -60,7 +60,7 @@ const Sidebar: Component<SidebarExtendedProps> = (props) => {
 					fallback={
 						<div class="text-center py-12 px-4 mx-3">
 							<div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-(--flexoki-ui)/50 mb-3">
-								<span class="text-2xl">✓</span>
+								<span class="iconify lucide--check w-6 h-6 text-(--flexoki-green)" aria-hidden="true" />
 							</div>
 							<p class="text-sm text-(--flexoki-tx-2) font-medium">No issues found</p>
 							<p class="text-xs text-(--flexoki-tx-3) mt-1.5">Start typing to see suggestions</p>

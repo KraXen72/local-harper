@@ -6,7 +6,7 @@ const TopBar: Component<TopBarProps> = (props) => {
 		<div class="relative flex items-center justify-between px-4 py-2.5 border-b border-(--flexoki-ui-2) bg-(--flexoki-bg-2) backdrop-blur-sm h-14">
 			<div class="flex items-center gap-3">
 				<div
-					class="w-2 h-2 rounded-full transition-all duration-500"
+					class="w-2 h-2 rounded-full transition-colors duration-300"
 					classList={{
 						'bg-[var(--flexoki-green)] shadow-[0_0_8px_rgba(135,154,57,0.6)] animate-pulse': props.isAnalyzing,
 						'bg-[var(--flexoki-tx-3)]': !props.isAnalyzing
@@ -27,9 +27,9 @@ const TopBar: Component<TopBarProps> = (props) => {
 			<div class="flex items-center gap-2">
 				<button
 					onClick={props.onCopy}
-					class="aspect-square w-8 flex justify-center items-center cursor-pointer hover:brightness-110 active:scale-95 text-white text-sm font-medium rounded-md shadow-md hover:shadow-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-(--flexoki-bg-2)"
+					class="aspect-square w-8 flex justify-center items-center cursor-pointer hover:brightness-110 active:scale-95 text-(--button-primary-fg) text-sm font-medium rounded-md shadow-md hover:shadow-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-(--flexoki-bg-2)"
 					classList={{
-						'bg-[var(--flexoki-cyan)] focus:ring-[var(--flexoki-cyan)]': true,
+						'bg-(--flexoki-cyan) focus:ring-(--flexoki-cyan)': true,
 					}}
 					aria-label="Copy text"
 				>
@@ -41,8 +41,8 @@ const TopBar: Component<TopBarProps> = (props) => {
 						onClick={props.onToggleSidebar}
 						class="md:hidden top-icon-button flex"
 						classList={{
-							'bg-[var(--flexoki-cyan)] focus:ring-[var(--flexoki-cyan)]': props.isSidebarOpen,
-							'bg-[var(--flexoki-ui-3)] text-[var(--flexoki-tx-2)] focus:ring-[var(--flexoki-ui-3)]': !props.isSidebarOpen
+							'bg-(--flexoki-cyan) text-(--button-primary-fg) focus:ring-(--flexoki-cyan)': props.isSidebarOpen,
+							'bg-(--button-secondary-bg) text-(--button-secondary-fg) focus:ring-(--button-secondary-bg)': !props.isSidebarOpen
 						}}
 						aria-label="Toggle sidebar"
 					>
@@ -55,8 +55,8 @@ const TopBar: Component<TopBarProps> = (props) => {
 					onClick={props.onToggleDictManager}
 					class="top-icon-button top-icon-button-ltsm-square flex"
 					classList={{
-						'bg-[var(--flexoki-cyan)] focus:ring-[var(--flexoki-cyan)]': props.isDictManagerOpen,
-						'bg-[var(--flexoki-ui-3)] text-[var(--flexoki-tx-2)] focus:ring-[var(--flexoki-ui-3)]': !props.isDictManagerOpen
+						'bg-(--flexoki-cyan) text-(--button-primary-fg) focus:ring-(--flexoki-cyan)': props.isDictManagerOpen,
+						'bg-(--button-secondary-bg) text-(--button-secondary-fg) focus:ring-(--button-secondary-bg)': !props.isDictManagerOpen
 					}}
 					aria-label="Toggle dictionary manager"
 				>
@@ -68,8 +68,8 @@ const TopBar: Component<TopBarProps> = (props) => {
 					onClick={props.onToggleRuleManager}
 					class="top-icon-button top-icon-button-ltsm-square flex"
 					classList={{
-						'bg-[var(--flexoki-cyan)] focus:ring-[var(--flexoki-cyan)]': props.isRuleManagerOpen,
-						'bg-[var(--flexoki-ui-3)] text-[var(--flexoki-tx-2)] focus:ring-[var(--flexoki-ui-3)]': !props.isRuleManagerOpen
+						'bg-(--flexoki-cyan) text-(--button-primary-fg) focus:ring-(--flexoki-cyan)': props.isRuleManagerOpen,
+						'bg-(--button-secondary-bg) text-(--button-secondary-fg) focus:ring-(--button-secondary-bg)': !props.isRuleManagerOpen
 					}}
 					aria-label="Toggle rule manager"
 				>

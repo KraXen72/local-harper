@@ -28,7 +28,7 @@ const IssueItem: Component<IssueItemProps> = (props) => {
 		>
 			<div class="flex items-center gap-2.5">
 				<span
-					class="inline-block w-2 h-2 rounded-full shrink-0 transition-all duration-200"
+					class="inline-block w-2 h-2 rounded-full shrink-0"
 					style={{ "background-color": lintColor() }}
 				/>
 				<div class="flex-1 min-w-0">

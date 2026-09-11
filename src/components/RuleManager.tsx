@@ -3,6 +3,8 @@ import RuleCard from './RuleCard';
 import SidebarPanel from './SidebarPanel';
 import { Dialect } from '../services/harper-service';
 import type { RuleInfo, HeaderControls } from '../types';
+import ThemeToggle from './ThemeToggle';
+import type { ThemePreference } from '../utils/theme';
 
 export interface RuleManagerProps {
 	onClose: () => void;
@@ -10,6 +12,8 @@ export interface RuleManagerProps {
 	onDialectChange?: (dialect: Dialect) => void;
 	rules: RuleInfo[];
 	currentDialect: Dialect;
+	theme: ThemePreference;
+	onThemeChange: (theme: ThemePreference) => void;
 }
 
 const DIALECT_OPTIONS: { value: string; label: string }[] = [
@@ -49,7 +53,8 @@ const RuleManager: Component<RuleManagerProps> = (props) => {
 			filterText={filterText()}
 			onFilterChange={setFilterText}
 			filterPlaceholder="Filter rules..."
-			headerControl={headerControl}
+			toolbarControl={headerControl}
+			headerAddon={<ThemeToggle value={props.theme} onChange={props.onThemeChange} />}
 		>
 			<Show
 				when={filteredRules().length > 0}
