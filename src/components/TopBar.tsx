@@ -42,7 +42,7 @@ const TopBar: Component<TopBarProps> = (props) => {
 						class="md:hidden top-icon-button flex"
 						classList={{
 							'bg-[var(--flexoki-cyan)] text-(--accent-button-tx) focus:ring-[var(--flexoki-cyan)]': props.isSidebarOpen,
-							'bg-[var(--flexoki-ui-3)] text-[var(--flexoki-tx-2)] focus:ring-[var(--flexoki-ui-3)]': !props.isSidebarOpen
+							'bg-(--secondary-button-bg) text-(--secondary-button-tx) focus:ring-(--secondary-button-bg)': !props.isSidebarOpen
 						}}
 						aria-label="Toggle sidebar"
 					>
@@ -56,7 +56,7 @@ const TopBar: Component<TopBarProps> = (props) => {
 					class="top-icon-button top-icon-button-ltsm-square flex"
 					classList={{
 						'bg-[var(--flexoki-cyan)] text-(--accent-button-tx) focus:ring-[var(--flexoki-cyan)]': props.isDictManagerOpen,
-						'bg-[var(--flexoki-ui-3)] text-[var(--flexoki-tx-2)] focus:ring-[var(--flexoki-ui-3)]': !props.isDictManagerOpen
+						'bg-(--secondary-button-bg) text-(--secondary-button-tx) focus:ring-(--secondary-button-bg)': !props.isDictManagerOpen
 					}}
 					aria-label="Toggle dictionary manager"
 				>
@@ -69,7 +69,7 @@ const TopBar: Component<TopBarProps> = (props) => {
 					class="top-icon-button top-icon-button-ltsm-square flex"
 					classList={{
 						'bg-[var(--flexoki-cyan)] text-(--accent-button-tx) focus:ring-[var(--flexoki-cyan)]': props.isRuleManagerOpen,
-						'bg-[var(--flexoki-ui-3)] text-[var(--flexoki-tx-2)] focus:ring-[var(--flexoki-ui-3)]': !props.isRuleManagerOpen
+						'bg-(--secondary-button-bg) text-(--secondary-button-tx) focus:ring-(--secondary-button-bg)': !props.isRuleManagerOpen
 					}}
 					aria-label="Toggle rule manager"
 				>

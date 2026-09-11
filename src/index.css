@@ -69,6 +69,8 @@
 	--toggle-thumb: #403E3C;
 	--toggle-thumb-icon: #CECDC3;
 	--accent-button-tx: #FFFCF0;
+	--secondary-button-bg: #403E3C;
+	--secondary-button-tx: #878580;
 	--editor-shadow: rgba(0, 0, 0, 0.3);
 	--br-mini: 3px;
 	--br-small: 5px;
@@ -147,6 +149,8 @@
 	--toggle-thumb: #FFFCF0;
 	--toggle-thumb-icon: #100F0F;
 	--accent-button-tx: #100F0F;
+	--secondary-button-bg: #E6E4D9;
+	--secondary-button-tx: #403E3C;
 	--editor-shadow: rgba(16, 15, 15, 0.04);
 }
 
