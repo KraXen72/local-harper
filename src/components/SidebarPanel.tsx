@@ -82,7 +82,7 @@ const SidebarPanel: Component<SidebarPanelProps> = (props) => {
 
 			<Show when={props.toolbarControlPlacement === 'row'}>
 				<div class="sidebar-panel-control-row px-3 py-2 border-b border-(--flexoki-ui-2) flex items-center gap-2">
-					<span class="text-xs font-medium text-(--flexoki-tx-2) shrink-0">{props.toolbarControlLabel}</span>
+					<span class="sidebar-panel-control-label text-sm text-(--flexoki-tx-2) shrink-0">{props.toolbarControlLabel}</span>
 					<div class="flex-1 min-w-0 flex justify-end">
 						<HeaderControlList controls={props.toolbarControl} />
 					</div>

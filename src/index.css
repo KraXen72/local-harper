@@ -154,14 +154,14 @@
 	--button-primary-fg: #FFFCF0;
 	--button-secondary-bg: #6F6E69;
 	--button-secondary-fg: #FFFCF0;
-	--toggle-track: #E6E4D9;
+	--toggle-track: var(--flexoki-bg);
 	--toggle-track-border: #B7B5AC;
-	--toggle-thumb: #FFFCF0;
+	--toggle-thumb: var(--flexoki-bg-2);
 	--toggle-thumb-fg: #100F0F;
 	--toggle-shadow: rgba(16, 15, 15, 0.18);
 	--overlay-shadow: rgba(16, 15, 15, 0.16);
 	--panel-shadow: rgba(16, 15, 15, 0.14);
-	--editor-shadow: rgba(16, 15, 15, 0.08);
+	--editor-shadow: rgba(16, 15, 15, 0.075);
 	--focus-ring: #24837B;
 }
 
@@ -216,6 +216,13 @@ html {
 .header-select option {
 	background-color: var(--flexoki-bg);
 	color: var(--flexoki-tx);
+}
+
+.header-select,
+.sidebar-panel-control-label {
+	font-family: inherit;
+	font-size: 0.875rem;
+	font-weight: 400;
 }
 
 /* Dark mode with Flexoki colors */
@@ -411,6 +418,10 @@ body {
 	min-width: 0;
 }
 
+.sidebar-panel-control-row .header-select {
+	min-width: 0;
+}
+
 .theme-toggle {
 	--theme-index: 0;
 	position: relative;
@@ -418,7 +429,7 @@ body {
 	grid-template-columns: repeat(3, minmax(0, 1fr));
 	align-items: center;
 	width: 5.75rem;
-	height: 2rem;
+	height: 1.75rem;
 	padding: 3px;
 	border: 1px solid var(--toggle-track-border);
 	border-radius: 6px;
@@ -483,10 +494,6 @@ body {
 	.sidebar-panel-control-row .header-select {
 		width: 100%;
 	}
-}
-
-.sidebar-panel-control-row .header-select {
-	min-width: 0;
 }
 
 @media (max-width: 1200px) {

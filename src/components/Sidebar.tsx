@@ -5,7 +5,7 @@ import IssueItem from './IssueItem';
 
 
 const Kbd: ParentComponent = (props) => (
-	<kbd class="px-2 py-1 bg-(--flexoki-ui) border border-(--flexoki-ui-2) rounded text-[10px] font-mono text-(--flexoki-tx-2) shadow-sm">
+	<kbd class="px-2 py-1 bg-(--flexoki-ui) border border-(--flexoki-ui-2) rounded text-[10px] font-mono text-(--flexoki-tx-2)">
 		{props.children}
 	</kbd>
 );
@@ -39,7 +39,7 @@ const Sidebar: Component<SidebarExtendedProps> = (props) => {
 				<div class="flex items-center gap-3">
 					<h2 class="text-lg font-semibold text-(--flexoki-tx) tracking-tight">Issues</h2>
 					<Show when={props.issues.length > 0}>
-						<span class="inline-flex items-center justify-center min-w-8 h-6 px-2 rounded-md border border-(--flexoki-red)/40 bg-(--flexoki-red)/15 text-(--flexoki-red) text-xs font-bold tracking-wide shadow-sm">
+						<span class="inline-flex items-center justify-center min-w-8 h-6 px-2 rounded-md border border-(--flexoki-red)/40 bg-(--flexoki-red)/15 text-(--flexoki-red) text-xs font-bold tracking-wide">
 							{props.issues.length}
 						</span>
 					</Show>
