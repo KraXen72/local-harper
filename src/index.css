@@ -161,6 +161,12 @@
 	transition: none !important;
 }
 
+/* Keep the native select popup on a stable, high-contrast Flexoki surface. */
+.header-select option {
+	background-color: var(--flexoki-bg);
+	color: var(--flexoki-tx);
+}
+
 /* credit: https://github.com/finnhvman/matter */
 .matter-progress-linear {
 	-webkit-appearance: none;

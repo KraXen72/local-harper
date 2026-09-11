@@ -20,7 +20,7 @@ const HeaderSelectItem: Component<HeaderSelect> = (props) => (
 			onChange={(e) => props.onChange(e.currentTarget.value)}
 			aria-label={props.label}
 			title={props.label}
-			class="px-2 py-1 pr-7 bg-(--flexoki-bg) h-7 text-(--flexoki-tx) text-sm rounded-md hover:bg-(--flexoki-ui-3) focus:outline-none focus:ring-2 focus:ring-(--flexoki-cyan) cursor-pointer appearance-none"
+			class="header-select px-2 py-1 pr-7 bg-(--flexoki-bg) h-7 text-(--flexoki-tx) text-sm rounded-md focus:outline-none focus:ring-2 focus:ring-(--flexoki-cyan) cursor-pointer appearance-none"
 		// style={{ "height": "28px" }}
 		>
 			<For each={props.options}>
