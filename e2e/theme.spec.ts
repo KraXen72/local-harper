@@ -31,6 +31,7 @@ test('tracks OS changes in system mode and remains usable on mobile', async ({ p
 
 	const themePicker = page.getByRole('radiogroup', { name: 'Theme' });
 	await expect(themePicker).toBeVisible();
+	await expect(page.getByRole('button', { name: 'Toggle rule manager' })).toHaveCSS('color', 'rgb(255, 252, 240)');
 	await expect(page.getByRole('radio', { name: 'System theme' })).toHaveCSS('background-color', 'rgb(64, 62, 60)');
 	await expect(page.getByRole('combobox', { name: 'Select dialect' })).toBeVisible();
 	await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
