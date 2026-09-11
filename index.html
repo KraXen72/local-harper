@@ -5,6 +5,31 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#100f0f" />
 
+    <script>
+      (function () {
+        var preference = 'system';
+        try {
+          var saved = localStorage.getItem('harper-theme');
+          if (saved === 'light' || saved === 'dark' || saved === 'system') {
+            preference = saved;
+          }
+        } catch (_) {
+          // Continue with the system preference when storage is unavailable.
+        }
+
+        var resolved = preference === 'dark' ||
+          (preference === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+          ? 'dark'
+          : 'light';
+        document.documentElement.dataset.theme = resolved;
+        document.documentElement.style.colorScheme = resolved;
+        document.querySelector('meta[name="theme-color"]').setAttribute(
+          'content',
+          resolved === 'dark' ? '#100f0f' : '#fffcf0'
+        );
+      })();
+    </script>
+
     <!-- PWA -->
     <link rel="manifest" href="/local-harper/manifest.webmanifest" />
     <link rel="apple-touch-icon" href="/local-harper/icons/apple-touch-icon.png" />

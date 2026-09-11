@@ -21,7 +21,7 @@ const Toggle: Component<ToggleProps> = (props) => {
 				aria-label={props.ariaLabel}
 				class="absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0 peer"
 			/>
-			<div class="pointer-events-none relative w-11 h-6 bg-(--flexoki-ui-3) peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-(--flexoki-cyan) peer-focus:ring-offset-2 peer-focus:ring-offset-(--flexoki-bg-2) rounded-full peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-(--flexoki-cyan)" />
+			<div class="pointer-events-none relative w-11 h-6 bg-(--flexoki-ui-3) shadow-inner peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-(--focus-ring) peer-focus:ring-offset-2 peer-focus:ring-offset-(--flexoki-bg-2) rounded-full peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-(--toggle-thumb) after:shadow-sm after:rounded-full after:h-5 after:w-5 after:transition-transform peer-checked:bg-(--flexoki-cyan)" />
 		</label>
 	);
 };

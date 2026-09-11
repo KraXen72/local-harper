@@ -5,7 +5,7 @@ import IssueItem from './IssueItem';
 
 
 const Kbd: ParentComponent = (props) => (
-	<kbd class="px-2 py-1 bg-(--flexoki-ui) border border-(--flexoki-ui-2) rounded text-[10px] font-mono text-(--flexoki-tx-2) shadow-sm">
+	<kbd class="inline-flex items-center whitespace-nowrap px-2 py-1 bg-(--flexoki-ui) border border-(--flexoki-ui-2) rounded text-[10px] font-mono leading-none text-(--flexoki-tx)">
 		{props.children}
 	</kbd>
 );
@@ -39,7 +39,7 @@ const Sidebar: Component<SidebarExtendedProps> = (props) => {
 				<div class="flex items-center gap-3">
 					<h2 class="text-lg font-semibold text-(--flexoki-tx) tracking-tight">Issues</h2>
 					<Show when={props.issues.length > 0}>
-						<span class="inline-flex items-center justify-center min-w-8 h-6 px-2 rounded-md border border-(--flexoki-red)/40 bg-(--flexoki-red)/15 text-(--flexoki-red) text-xs font-bold tracking-wide shadow-sm">
+						<span class="inline-flex items-center justify-center min-w-8 h-6 px-2 rounded-md border border-(--flexoki-red)/40 bg-(--flexoki-red)/15 text-(--flexoki-red) text-xs font-bold tracking-wide">
 							{props.issues.length}
 						</span>
 					</Show>
@@ -60,7 +60,7 @@ const Sidebar: Component<SidebarExtendedProps> = (props) => {
 					fallback={
 						<div class="text-center py-12 px-4 mx-3">
 							<div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-(--flexoki-ui)/50 mb-3">
-								<span class="text-2xl">✓</span>
+								<span class="iconify lucide--check w-6 h-6 text-(--flexoki-green)" aria-hidden="true" />
 							</div>
 							<p class="text-sm text-(--flexoki-tx-2) font-medium">No issues found</p>
 							<p class="text-xs text-(--flexoki-tx-3) mt-1.5">Start typing to see suggestions</p>
@@ -86,19 +86,22 @@ const Sidebar: Component<SidebarExtendedProps> = (props) => {
 			</div>
 			<Show when={props.issues.length > 0}>
 				<div class="sidebar-footer py-3 sticky bottom-0 bg-(--flexoki-bg) z-10 hidden sm:block">
-					<p class="text-xs text-(--flexoki-tx-3) text-center leading-6">
-						<Kbd>Ctrl+J</Kbd>
-						&nbsp;&nbsp;/&nbsp;&nbsp;
-						<Kbd>Ctrl+K</Kbd>
-						&nbsp;to navigate
-						<br />
-						<Kbd>Ctrl+Space</Kbd>
-						&nbsp;&nbsp;/&nbsp;&nbsp;
-						<Kbd>Tab</Kbd>
-						&nbsp;&nbsp;/&nbsp;&nbsp;
-						<Kbd>Click</Kbd>
-						&nbsp;on issue to fix
-					</p>
+					<div class="sidebar-shortcuts text-xs text-(--flexoki-tx-3) text-center leading-6">
+						<div class="sidebar-shortcut-row">
+							<Kbd>Ctrl+J</Kbd>
+							<span>/</span>
+							<Kbd>Ctrl+K</Kbd>
+							<span>to navigate</span>
+						</div>
+						<div class="sidebar-shortcut-row">
+							<Kbd>Ctrl+Space</Kbd>
+							<span>/</span>
+							<Kbd>Tab</Kbd>
+							<span>/</span>
+							<Kbd>Click</Kbd>
+							<span>to fix</span>
+						</div>
+					</div>
 				</div>
 			</Show>
 		</div>

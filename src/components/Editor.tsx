@@ -9,7 +9,7 @@ import {
 	issueField,
 	issueDecorationsField,
 	issueTheme,
-	darkEditorTheme,
+	editorTheme,
 	updateIssuesEffect,
 	setSelectedIssueEffect,
 	harperAutocompletion,
@@ -61,11 +61,14 @@ const Editor: Component<EditorProps> = (props) => {
 				placeholder("Paste text or start typing..."),
 				EditorView.lineWrapping,
 				keymap.of([...defaultKeymap, ...historyKeymap]),
+				// Keep the final line clear of the fixed counter/divider when CodeMirror
+				// scrolls the cursor into view near the bottom of the editor.
+				EditorView.cursorScrollMargin.of({ x: 5, y: 14 }),
 				issueNavigationKeymap,
 				issueField,
 				issueDecorationsField,
 				issueTheme,
-				darkEditorTheme,
+				editorTheme,
 				harperAutocompletion,
 				harperCursorTooltip,
 				issueSyncExtension,
@@ -187,18 +190,20 @@ const Editor: Component<EditorProps> = (props) => {
 	};
 
 	return (
-		<div class="h-full overflow-auto bg-(--flexoki-bg) w-full" onClick={handleContainerClick}>
-			<div class="pt-5 sm:pt-13 w-full px-4 pb-12 flex justify-center">
-				<div
-					class="bg-(--flexoki-bg) rounded-xl overflow-hidden shadow-2xl border border-(--flexoki-ui-2) w-full max-w-216.75"
-					ref={editorRef}>
+		<div class="h-full flex flex-col bg-(--flexoki-bg) w-full" onClick={handleContainerClick}>
+			{/* Shrink to the available height, but never grow beyond the document. */}
+			<div class="editor-scroll-region min-h-0 overflow-auto shrink">
+				<div class="pt-5 sm:pt-13 pb-14 w-full px-4 flex justify-center">
+					<div
+						class="editor-surface bg-(--flexoki-bg) rounded-xl overflow-hidden border border-(--flexoki-ui-2) w-full max-w-216.75"
+						ref={editorRef}>
+					</div>
 				</div>
 			</div>
 
-			{/* Sticky word counter at bottom of the scrolling container */}
-			<div class="w-full sticky bottom-0 left-0 right-0 px-4">
+			<div class="editor-footer shrink-0 w-full px-4 bg-(--flexoki-bg)">
 				<div class="w-full max-w-216.75 mx-auto bg-(--flexoki-bg)">
-					<hr class="border-(--flexoki-ui-2) my-2" />
+					<hr class="editor-divider mt-0 mb-2" />
 					<WordCounter text={counterText()} />
 				</div>
 			</div>

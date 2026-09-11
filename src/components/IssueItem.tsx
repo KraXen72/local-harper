@@ -12,7 +12,7 @@ const IssueItem: Component<IssueItemProps> = (props) => {
 
 	return (
 		<div
-			class="shared-card shared-card-hover cursor-pointer hover:translate-x-0.5"
+			class="shared-card shared-card-hover cursor-pointer transition-transform duration-150 hover:translate-x-0.5"
 			classList={{ 'shared-card-selected translate-x-0.5': props.isSelected }}
 			data-testid="issue-card"
 			onClick={handleClick}
@@ -28,7 +28,7 @@ const IssueItem: Component<IssueItemProps> = (props) => {
 		>
 			<div class="flex items-center gap-2.5">
 				<span
-					class="inline-block w-2 h-2 rounded-full shrink-0 transition-all duration-200"
+					class="inline-block w-2 h-2 rounded-full shrink-0"
 					style={{ "background-color": lintColor() }}
 				/>
 				<div class="flex-1 min-w-0">

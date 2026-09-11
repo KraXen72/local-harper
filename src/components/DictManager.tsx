@@ -144,7 +144,7 @@ const DictManager: Component<DictManagerProps> = (props) => {
 						<Show when={showClearAll()}>
 							<button
 								onClick={handleClearAll}
-								class="px-3 py-2 bg-(--flexoki-red)/15 text-(--flexoki-red) text-sm font-medium rounded-md hover:bg-(--flexoki-red)/25 active:scale-95 transition-all shrink-0"
+								class="px-3 py-2 bg-(--flexoki-red)/15 text-(--flexoki-red) text-sm font-medium rounded-md hover:bg-(--flexoki-red)/25 active:scale-95 transition-colors shrink-0"
 							>
 								Clear all
 							</button>
@@ -152,7 +152,7 @@ const DictManager: Component<DictManagerProps> = (props) => {
 						<Show when={importData()}>
 							<button
 								onClick={handleImport}
-								class="px-3 py-2 bg-(--flexoki-cyan) text-white text-sm font-medium rounded-md hover:brightness-110 active:scale-95 transition-all shrink-0"
+								class="px-3 py-2 bg-(--flexoki-cyan) text-(--button-primary-fg) text-sm font-medium rounded-md hover:brightness-110 active:scale-95 transition-colors shrink-0"
 							>
 								Import
 							</button>
@@ -160,7 +160,7 @@ const DictManager: Component<DictManagerProps> = (props) => {
 						<Show when={canAdd()}>
 							<button
 								onClick={handleAdd}
-								class="px-3 py-2 bg-(--flexoki-cyan) text-white text-sm font-medium rounded-md hover:brightness-110 active:scale-95 transition-all shrink-0"
+								class="px-3 py-2 bg-(--flexoki-cyan) text-(--button-primary-fg) text-sm font-medium rounded-md hover:brightness-110 active:scale-95 transition-colors shrink-0"
 							>
 								Add
 							</button>

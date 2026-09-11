@@ -9,6 +9,7 @@ import type { HarperIssue, Suggestion, RuleInfo } from './types';
 import { clearTooltip } from './utils/editor-extensions';
 import { sidebarStore, setSidebarStore, toggleRightPanel } from './stores/sidebar';
 import { isOnCellular } from './utils/cellular-check';
+import { applyTheme, getThemePreference, saveThemePreference, type ThemePreference } from './utils/theme';
 
 const App: Component = () => {
 	const [content, setContent] = createSignal('');
@@ -24,6 +25,7 @@ const App: Component = () => {
 	const [words, setWords] = createSignal<string[]>([]);
 	const [currentDialect, setCurrentDialect] = createSignal<Dialect>(Dialect.American);
 	const [isReloading, setIsReloading] = createSignal(false);
+	const [theme, setTheme] = createSignal<ThemePreference>(getThemePreference());
 
 	let debounceTimeout: number | undefined;
 	let analysisGeneration = 0;
@@ -33,6 +35,14 @@ const App: Component = () => {
 	let lastClickedIssueFromSidebar: string | null = null;
 
 	onMount(async () => {
+		applyTheme(theme());
+		const colorScheme = window.matchMedia('(prefers-color-scheme: dark)');
+		const handleSystemThemeChange = () => {
+			if (theme() === 'system') applyTheme('system');
+		};
+		colorScheme.addEventListener('change', handleSystemThemeChange);
+		onCleanup(() => colorScheme.removeEventListener('change', handleSystemThemeChange));
+
 		// Check if on constrained network - show indicator but still load from cache
 		if (isOnCellular()) {
 			setIsCellular(true);
@@ -298,11 +308,17 @@ const App: Component = () => {
 		toggleRightPanel(panel);
 	};
 
+	const handleThemeChange = (preference: ThemePreference) => {
+		setTheme(preference);
+		saveThemePreference(preference);
+	};
+
 	return (
 		<div
 			class="h-screen flex flex-col bg-(--flexoki-bg)"
 			data-testid="app"
 			data-harper-ready={isInitialized()}
+			data-theme-preference={theme()}
 		>
 			<TopBar
 				onCopy={handleCopy}
@@ -378,7 +394,7 @@ const App: Component = () => {
 					}}
 					style={{
 						"pointer-events": sidebarStore.rightPanel !== null ? "auto" : "none",
-						"box-shadow": sidebarStore.rightPanel !== null ? "-4px 0 15px rgba(0, 0, 0, 0.1)" : "none"
+						"box-shadow": sidebarStore.rightPanel !== null ? "-4px 0 15px var(--panel-shadow)" : "none"
 					}}
 				>
 					<Show when={sidebarStore.rightPanel === 'rules'}>
@@ -388,6 +404,8 @@ const App: Component = () => {
 							onDialectChange={handleDialectChange}
 							rules={rules()}
 							currentDialect={currentDialect()}
+							theme={theme()}
+							onThemeChange={handleThemeChange}
 						/>
 					</Show>
 					<Show when={sidebarStore.rightPanel === 'dictionary'}>
