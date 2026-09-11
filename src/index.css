@@ -308,6 +308,11 @@ body {
 	box-shadow: 0 10px 28px var(--editor-shadow);
 }
 
+.editor-divider {
+	width: calc(100% + 2rem);
+	margin-inline: -1rem;
+}
+
 .shared-card {
 	padding: 10px;
 	border-radius: var(--br-lg);
