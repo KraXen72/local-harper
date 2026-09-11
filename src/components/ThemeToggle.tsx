@@ -28,7 +28,7 @@ const ThemeToggle: Component<ThemeToggleProps> = (props) => (
 					aria-label={option.label}
 					title={option.label}
 					onClick={() => props.onChange(option.value)}
-					class="flex h-6 w-7 cursor-pointer items-center justify-center rounded-[3px] text-(--flexoki-tx-2) transition-[color,background-color,box-shadow,transform] duration-150 hover:text-(--flexoki-tx) focus:outline-none focus:ring-2 focus:ring-(--flexoki-cyan) focus:ring-offset-1 focus:ring-offset-(--flexoki-ui)"
+					class="flex h-6 w-7 cursor-pointer items-center justify-center rounded-[3px] text-(--flexoki-tx-2) transition-colors duration-150 hover:text-(--flexoki-tx) focus:outline-none focus:ring-2 focus:ring-(--flexoki-cyan) focus:ring-offset-1 focus:ring-offset-(--flexoki-ui)"
 					classList={{
 						'bg-(--toggle-thumb) text-(--toggle-thumb-icon) shadow-[0_1px_2px_var(--overlay-shadow),inset_0_0_0_1px_rgba(16,15,15,0.08)]': props.value === option.value,
 					}}

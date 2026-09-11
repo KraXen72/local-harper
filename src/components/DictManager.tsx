@@ -152,7 +152,7 @@ const DictManager: Component<DictManagerProps> = (props) => {
 						<Show when={importData()}>
 							<button
 								onClick={handleImport}
-								class="px-3 py-2 bg-(--flexoki-cyan) text-white text-sm font-medium rounded-md hover:brightness-110 active:scale-95 transition-all shrink-0"
+								class="px-3 py-2 bg-(--flexoki-cyan) text-(--accent-button-tx) text-sm font-medium rounded-md hover:brightness-110 active:scale-95 transition-all shrink-0"
 							>
 								Import
 							</button>
@@ -160,7 +160,7 @@ const DictManager: Component<DictManagerProps> = (props) => {
 						<Show when={canAdd()}>
 							<button
 								onClick={handleAdd}
-								class="px-3 py-2 bg-(--flexoki-cyan) text-white text-sm font-medium rounded-md hover:brightness-110 active:scale-95 transition-all shrink-0"
+								class="px-3 py-2 bg-(--flexoki-cyan) text-(--accent-button-tx) text-sm font-medium rounded-md hover:brightness-110 active:scale-95 transition-all shrink-0"
 							>
 								Add
 							</button>
