@@ -15,7 +15,7 @@ const OPTIONS: { value: ThemePreference; label: string; icon: string }[] = [
 /** Three-state theme picker for system, Flexoki Light, and Flexoki Dark. */
 const ThemeToggle: Component<ThemeToggleProps> = (props) => (
 	<div
-		class="flex items-center rounded-md bg-(--flexoki-bg) p-0.5"
+		class="flex items-center gap-0.5 rounded-md border border-(--flexoki-ui-3) bg-(--flexoki-ui) p-1 shadow-[inset_0_1px_3px_var(--overlay-shadow)]"
 		role="radiogroup"
 		aria-label="Theme"
 	>
@@ -28,9 +28,9 @@ const ThemeToggle: Component<ThemeToggleProps> = (props) => (
 					aria-label={option.label}
 					title={option.label}
 					onClick={() => props.onChange(option.value)}
-					class="flex h-6 w-7 cursor-pointer items-center justify-center rounded-sm text-(--flexoki-tx-2) transition-colors hover:bg-(--flexoki-ui-2) focus:outline-none focus:ring-2 focus:ring-(--flexoki-cyan)"
+					class="flex h-6 w-7 cursor-pointer items-center justify-center rounded-[3px] text-(--flexoki-tx-2) transition-[color,background-color,box-shadow,transform] duration-150 hover:text-(--flexoki-tx) focus:outline-none focus:ring-2 focus:ring-(--flexoki-cyan) focus:ring-offset-1 focus:ring-offset-(--flexoki-ui)"
 					classList={{
-						'bg-(--flexoki-ui-3) text-(--flexoki-tx) shadow-sm': props.value === option.value,
+						'bg-(--toggle-thumb) text-(--toggle-thumb-icon) shadow-[0_1px_2px_var(--overlay-shadow),inset_0_0_0_1px_rgba(16,15,15,0.08)]': props.value === option.value,
 					}}
 				>
 					<span class={`iconify ${option.icon} h-3.5 w-3.5`} />
