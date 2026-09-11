@@ -71,7 +71,6 @@
 	--accent-button-tx: #FFFCF0;
 	--secondary-button-bg: #403E3C;
 	--secondary-button-tx: #FFFCF0;
-	--secondary-button-border: transparent;
 	--editor-shadow: rgba(0, 0, 0, 0.3);
 	--br-mini: 3px;
 	--br-small: 5px;
@@ -150,9 +149,8 @@
 	--toggle-thumb: #FFFCF0;
 	--toggle-thumb-icon: #100F0F;
 	--accent-button-tx: #FFFCF0;
-	--secondary-button-bg: #DAD8CE;
+	--secondary-button-bg: #B7B5AC;
 	--secondary-button-tx: #100F0F;
-	--secondary-button-border: #878580;
 	--editor-shadow: rgba(16, 15, 15, 0.04);
 }
 
@@ -371,11 +369,7 @@ body {
 	}
 	/* icon-only style for lt-sm: */
 
-	border: 1px solid var(--secondary-button-border);
 	@apply px-4 py-1.5 cursor-pointer text-sm font-medium rounded-md transition-all duration-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-(--flexoki-bg-2);
-}
-.top-icon-button-active {
-	border-color: transparent;
 }
 .top-icon-button-ltsm-square {
 	@media (width < 40rem) {
