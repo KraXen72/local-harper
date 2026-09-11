@@ -5,7 +5,7 @@ import IssueItem from './IssueItem';
 
 
 const Kbd: ParentComponent = (props) => (
-	<kbd class="px-2 py-1 bg-(--flexoki-ui) border border-(--flexoki-ui-2) rounded text-[10px] font-mono text-(--flexoki-tx-2)">
+	<kbd class="px-2 py-1 bg-(--flexoki-ui) border border-(--flexoki-ui-2) rounded text-[10px] font-mono text-(--flexoki-tx)">
 		{props.children}
 	</kbd>
 );

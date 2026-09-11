@@ -5,7 +5,7 @@ import type { HeaderControls, HeaderButton, HeaderSelect } from '../types';
 const HeaderButtonItem: Component<HeaderButton> = (props) => (
 	<button
 		onClick={props.action}
-		class="p-1 hover:bg-(--flexoki-ui-3) aspect-square rounded-md transition-colors duration-150 flex"
+		class="p-1 hover:bg-(--flexoki-ui-3) aspect-square rounded-md transition-colors duration-150 flex items-center justify-center"
 		aria-label={props.label}
 		title={props.label}
 	>
@@ -72,7 +72,7 @@ const SidebarPanel: Component<SidebarPanelProps> = (props) => {
 					<HeaderControlList controls={props.headerControl} />
 					<button
 						onClick={props.onClose}
-						class="p-1 hover:bg-(--flexoki-ui-3) aspect-square rounded-md transition-colors duration-150 flex"
+						class="p-1 hover:bg-(--flexoki-ui-3) aspect-square rounded-md transition-colors duration-150 flex items-center justify-center"
 						aria-label={`Close ${props.title}`}
 					>
 						<span class="iconify lucide--x w-5 h-5 text-(--flexoki-tx-2)" />
@@ -82,7 +82,7 @@ const SidebarPanel: Component<SidebarPanelProps> = (props) => {
 
 			<Show when={props.toolbarControlPlacement === 'row'}>
 				<div class="sidebar-panel-control-row px-3 py-2 border-b border-(--flexoki-ui-2) flex items-center gap-2">
-					<span class="sidebar-panel-control-label text-sm text-(--flexoki-tx-2) shrink-0">{props.toolbarControlLabel}</span>
+					<span class="sidebar-panel-control-label text-sm text-(--flexoki-tx) shrink-0">{props.toolbarControlLabel}</span>
 					<div class="flex-1 min-w-0 flex justify-end">
 						<HeaderControlList controls={props.toolbarControl} />
 					</div>
