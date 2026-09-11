@@ -8,7 +8,7 @@ test('uses the system theme and persists an explicit preference', async ({ page 
 
 	await page.getByRole('button', { name: 'Toggle rule manager' }).click();
 	await expect(page.getByRole('radio', { name: 'System theme' })).toHaveAttribute('aria-checked', 'true');
-	await expect(page.getByRole('button', { name: 'Toggle rule manager' })).toHaveCSS('color', 'rgb(16, 15, 15)');
+	await expect(page.getByRole('button', { name: 'Toggle rule manager' })).toHaveCSS('color', 'rgb(255, 252, 240)');
 	await expect(page.getByRole('button', { name: 'Toggle dictionary manager' })).toHaveCSS('background-color', 'rgb(230, 228, 217)');
 	await expect(page.getByRole('button', { name: 'Toggle dictionary manager' })).toHaveCSS('color', 'rgb(16, 15, 15)');
 	await page.getByRole('button', { name: 'Toggle rule manager' }).evaluate(button => button.blur());
