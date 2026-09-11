@@ -41,7 +41,7 @@ const TopBar: Component<TopBarProps> = (props) => {
 						onClick={props.onToggleSidebar}
 						class="md:hidden top-icon-button flex"
 						classList={{
-							'bg-[var(--flexoki-cyan)] text-(--accent-button-tx) focus:ring-[var(--flexoki-cyan)]': props.isSidebarOpen,
+							'top-icon-button-active bg-[var(--flexoki-cyan)] text-(--accent-button-tx) focus:ring-[var(--flexoki-cyan)]': props.isSidebarOpen,
 							'bg-(--secondary-button-bg) text-(--secondary-button-tx) focus:ring-(--secondary-button-bg)': !props.isSidebarOpen
 						}}
 						aria-label="Toggle sidebar"
@@ -55,7 +55,7 @@ const TopBar: Component<TopBarProps> = (props) => {
 					onClick={props.onToggleDictManager}
 					class="top-icon-button top-icon-button-ltsm-square flex"
 					classList={{
-						'bg-[var(--flexoki-cyan)] text-(--accent-button-tx) focus:ring-[var(--flexoki-cyan)]': props.isDictManagerOpen,
+						'top-icon-button-active bg-[var(--flexoki-cyan)] text-(--accent-button-tx) focus:ring-[var(--flexoki-cyan)]': props.isDictManagerOpen,
 						'bg-(--secondary-button-bg) text-(--secondary-button-tx) focus:ring-(--secondary-button-bg)': !props.isDictManagerOpen
 					}}
 					aria-label="Toggle dictionary manager"
@@ -68,7 +68,7 @@ const TopBar: Component<TopBarProps> = (props) => {
 					onClick={props.onToggleRuleManager}
 					class="top-icon-button top-icon-button-ltsm-square flex"
 					classList={{
-						'bg-[var(--flexoki-cyan)] text-(--accent-button-tx) focus:ring-[var(--flexoki-cyan)]': props.isRuleManagerOpen,
+						'top-icon-button-active bg-[var(--flexoki-cyan)] text-(--accent-button-tx) focus:ring-[var(--flexoki-cyan)]': props.isRuleManagerOpen,
 						'bg-(--secondary-button-bg) text-(--secondary-button-tx) focus:ring-(--secondary-button-bg)': !props.isRuleManagerOpen
 					}}
 					aria-label="Toggle rule manager"

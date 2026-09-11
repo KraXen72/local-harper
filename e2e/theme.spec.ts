@@ -13,8 +13,9 @@ test('uses the system theme and persists an explicit preference', async ({ page 
 	await dialect.hover();
 	await expect(dialect).toHaveCSS('background-color', 'rgb(255, 252, 240)');
 	await expect(page.getByRole('button', { name: 'Toggle rule manager' })).toHaveCSS('color', 'rgb(255, 252, 240)');
-	await expect(page.getByRole('button', { name: 'Toggle dictionary manager' })).toHaveCSS('background-color', 'rgb(135, 133, 128)');
+	await expect(page.getByRole('button', { name: 'Toggle dictionary manager' })).toHaveCSS('background-color', 'rgb(218, 216, 206)');
 	await expect(page.getByRole('button', { name: 'Toggle dictionary manager' })).toHaveCSS('color', 'rgb(16, 15, 15)');
+	await expect(page.getByRole('button', { name: 'Toggle dictionary manager' })).toHaveCSS('border-color', 'rgb(135, 133, 128)');
 	await page.getByRole('button', { name: 'Toggle rule manager' }).evaluate(button => button.blur());
 	await expect(page.getByRole('button', { name: 'Toggle rule manager' })).toHaveCSS('box-shadow', 'none');
 
