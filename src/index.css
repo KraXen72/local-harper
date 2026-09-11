@@ -260,6 +260,16 @@ body {
 .cm-tooltip {
 	border-radius: var(--br-small);
 }
+
+/* Let the themed issue surface own the rounded edge instead of leaking the
+   default CodeMirror tooltip background through its corners. */
+.cm-tooltip:has(> .cm-issue-tooltip) {
+	background-color: transparent;
+	border: 0;
+	border-radius: 0;
+	box-shadow: none;
+}
+
 .cm-tooltip-autocomplete {
 	font-size: 1rem;
 	background-color: var(--flexoki-bg-2) !important;
