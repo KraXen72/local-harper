@@ -309,8 +309,12 @@ body {
 }
 
 .editor-divider {
+	/* Keep the cutoff centered on the editor while extending into its shadow. */
+	position: relative;
+	left: 50%;
 	width: calc(100% + 2rem);
-	margin-inline: -1rem;
+	margin-inline: 0;
+	transform: translateX(-50%);
 }
 
 .shared-card {
@@ -383,6 +387,7 @@ body {
 	grid-area: issues
 }
 .sidebar-footer {
+	min-width: 0;
 	border-top: 1px solid var(--flexoki-ui-2);
 
 	@media (width >= 40rem /* 640px */) {
@@ -393,6 +398,20 @@ body {
 			transparent
 		) 1;
 	}
+}
+.sidebar-shortcuts {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+.sidebar-shortcut-row {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 3px;
+	min-height: 24px;
+	min-width: 0;
+	white-space: nowrap;
 }
 .editor-wrapper {
 	grid-area: editor;

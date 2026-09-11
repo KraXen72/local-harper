@@ -5,7 +5,7 @@ import IssueItem from './IssueItem';
 
 
 const Kbd: ParentComponent = (props) => (
-	<kbd class="px-2 py-1 bg-(--flexoki-ui) border border-(--flexoki-ui-2) rounded text-[10px] font-mono text-(--flexoki-tx)">
+	<kbd class="inline-flex items-center whitespace-nowrap px-2 py-1 bg-(--flexoki-ui) border border-(--flexoki-ui-2) rounded text-[10px] font-mono leading-none text-(--flexoki-tx)">
 		{props.children}
 	</kbd>
 );
@@ -86,19 +86,22 @@ const Sidebar: Component<SidebarExtendedProps> = (props) => {
 			</div>
 			<Show when={props.issues.length > 0}>
 				<div class="sidebar-footer py-3 sticky bottom-0 bg-(--flexoki-bg) z-10 hidden sm:block">
-					<p class="text-xs text-(--flexoki-tx-3) text-center leading-6">
-						<Kbd>Ctrl+J</Kbd>
-						&nbsp;&nbsp;/&nbsp;&nbsp;
-						<Kbd>Ctrl+K</Kbd>
-						&nbsp;to navigate
-						<br />
-						<Kbd>Ctrl+Space</Kbd>
-						&nbsp;&nbsp;/&nbsp;&nbsp;
-						<Kbd>Tab</Kbd>
-						&nbsp;&nbsp;/&nbsp;&nbsp;
-						<Kbd>Click</Kbd>
-						&nbsp;on issue to fix
-					</p>
+					<div class="sidebar-shortcuts text-xs text-(--flexoki-tx-3) text-center leading-6">
+						<div class="sidebar-shortcut-row">
+							<Kbd>Ctrl+J</Kbd>
+							<span>/</span>
+							<Kbd>Ctrl+K</Kbd>
+							<span>to navigate</span>
+						</div>
+						<div class="sidebar-shortcut-row">
+							<Kbd>Ctrl+Space</Kbd>
+							<span>/</span>
+							<Kbd>Tab</Kbd>
+							<span>/</span>
+							<Kbd>Click</Kbd>
+							<span>on issue to fix</span>
+						</div>
+					</div>
 				</div>
 			</Show>
 		</div>
