@@ -308,12 +308,27 @@ body {
 	box-shadow: 0 10px 28px var(--editor-shadow);
 }
 
+.editor-scroll-region {
+	/* Keep centered editor content from shifting when a native scrollbar appears. */
+	scrollbar-gutter: stable both-edges;
+}
+
 .editor-divider {
 	/* Keep the cutoff centered on the editor while extending into its shadow. */
 	position: relative;
 	left: 50%;
 	width: calc(100% + 2rem);
 	margin-inline: 0;
+	border: 0;
+	height: 1px;
+	/* Fade the short overreach faster than the sidebar footer's longer fade. */
+	background: linear-gradient(
+		to right,
+		transparent 0,
+		var(--flexoki-ui-2) 1rem,
+		var(--flexoki-ui-2) calc(100% - 1rem),
+		transparent 100%
+	);
 	transform: translateX(-50%);
 }
 
