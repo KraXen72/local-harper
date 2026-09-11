@@ -191,8 +191,9 @@ const Editor: Component<EditorProps> = (props) => {
 
 	return (
 		<div class="h-full flex flex-col bg-(--flexoki-bg) w-full" onClick={handleContainerClick}>
-			<div class="editor-scroll-region flex-1 min-h-0 overflow-auto">
-				<div class="pt-5 sm:pt-13 w-full px-4 flex justify-center">
+			{/* Shrink to the available height, but never grow beyond the document. */}
+			<div class="editor-scroll-region min-h-0 overflow-auto shrink">
+				<div class="pt-5 sm:pt-13 pb-14 w-full px-4 flex justify-center">
 					<div
 						class="editor-surface bg-(--flexoki-bg) rounded-xl overflow-hidden border border-(--flexoki-ui-2) w-full max-w-216.75"
 						ref={editorRef}>

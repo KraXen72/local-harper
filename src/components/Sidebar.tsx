@@ -99,7 +99,7 @@ const Sidebar: Component<SidebarExtendedProps> = (props) => {
 							<Kbd>Tab</Kbd>
 							<span>/</span>
 							<Kbd>Click</Kbd>
-							<span>on issue to fix</span>
+							<span>to fix</span>
 						</div>
 					</div>
 				</div>

@@ -313,6 +313,16 @@ body {
 	scrollbar-gutter: stable both-edges;
 }
 
+/* The editor can be narrow on desktop too, when side panels share the window. */
+.word-counter {
+	container-type: inline-size;
+}
+.counter-full { display: none; }
+@container (min-width: 38rem) {
+	.counter-full { display: block; }
+	.counter-compact { display: none; }
+}
+
 .editor-divider {
 	/* Keep the cutoff centered on the editor while extending into its shadow. */
 	position: relative;
