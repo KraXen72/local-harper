@@ -42,15 +42,16 @@ interface SidebarPanelProps {
 	filterAddon?: JSX.Element;
 	onFilterKeyDown?: JSX.EventHandler<HTMLInputElement, KeyboardEvent>;
 	headerControl?: HeaderControls;
+	headerAddon?: JSX.Element;
 	children: JSX.Element;
 }
 
 const SidebarPanel: Component<SidebarPanelProps> = (props) => {
 	return (
 		<div class="h-full bg-(--flexoki-bg) grid" style={{ "grid-template-rows": "min-content min-content 1fr" }}>
-			<div class="flex items-center justify-between px-4 py-3 border-b border-(--flexoki-ui-2)">
+			<div class="sidebar-panel-header flex items-center justify-between gap-2 px-4 py-3 border-b border-(--flexoki-ui-2)">
 				<h2 class="text-lg font-semibold text-(--flexoki-tx)">{props.title}</h2>
-				<div class="flex items-center gap-1">
+				<div class="sidebar-panel-controls flex items-center justify-end gap-1">
 					<For each={props.headerControl}>
 						{(control) => (
 							<Show
@@ -61,6 +62,7 @@ const SidebarPanel: Component<SidebarPanelProps> = (props) => {
 							</Show>
 						)}
 					</For>
+					{props.headerAddon}
 					<button
 						onClick={props.onClose}
 						class="p-1 hover:bg-(--flexoki-ui-3) aspect-square rounded-md transition-colors duration-150 flex"

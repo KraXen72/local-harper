@@ -65,6 +65,7 @@
 
 	--flexoki-cyan-a: rgba(58, 169, 160, 0.12);
 	--text-selection-background-color: #3aa99f4c;
+	--overlay-shadow: rgba(0, 0, 0, 0.4);
 	--br-mini: 3px;
 	--br-small: 5px;
 	--br-lg: 8px;
@@ -114,6 +115,31 @@
 	/* Dodger blue */
 	--lint-kind-word-choice: 34 139 34;
 	/* Forest green */
+}
+
+/* Flexoki Light uses warm paper and the 600-series inks for readable accents. */
+:root[data-theme='light'] {
+	--flexoki-bg: #FFFCF0;
+	--flexoki-bg-2: #F2F0E5;
+	--flexoki-ui: #E6E4D9;
+	--flexoki-ui-2: #DAD8CE;
+	--flexoki-ui-3: #CECDC3;
+	--flexoki-tx-3: #878580;
+	--flexoki-tx-2: #6F6E69;
+	--flexoki-tx: #100F0F;
+
+	--flexoki-red: #AF3029;
+	--flexoki-orange: #BC5215;
+	--flexoki-yellow: #AD8301;
+	--flexoki-green: #66800B;
+	--flexoki-cyan: #24837B;
+	--flexoki-blue: #205EA6;
+	--flexoki-purple: #5E409D;
+	--flexoki-magenta: #A02F6F;
+
+	--flexoki-cyan-a: rgba(36, 131, 123, 0.12);
+	--text-selection-background-color: rgba(36, 131, 123, 0.22);
+	--overlay-shadow: rgba(16, 15, 15, 0.16);
 }
 
 /* credit: https://github.com/finnhvman/matter */
@@ -251,7 +277,7 @@ body {
 	color: var(--flexoki-tx);
 	font-size: 13px;
 	max-width: 320px;
-	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+	box-shadow: 0 2px 8px var(--overlay-shadow);
 }
 
 .cm-issue-tooltip-severity {
@@ -329,6 +355,29 @@ body {
 }
 .sidebar-panel-scroller::-webkit-scrollbar {
 	width: 8px;
+}
+
+@media (max-width: 480px) {
+	.sidebar-panel-header {
+		align-items: stretch;
+		flex-wrap: wrap;
+	}
+
+	.sidebar-panel-header > h2 {
+		flex: 1 0 calc(100% - 2rem);
+	}
+
+	.sidebar-panel-controls {
+		width: 100%;
+	}
+
+	.sidebar-panel-controls > :first-child {
+		flex: 1;
+	}
+
+	.sidebar-panel-controls select {
+		width: 100%;
+	}
 }
 
 @media (max-width: 1200px) {

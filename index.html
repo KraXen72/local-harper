@@ -4,6 +4,17 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#100f0f" />
+    <script>
+      (function () {
+        var saved = localStorage.getItem('harper-theme');
+        var preference = saved === 'light' || saved === 'dark' ? saved : 'system';
+        var theme = preference === 'system'
+          ? (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+          : preference;
+        document.documentElement.dataset.theme = theme;
+        document.documentElement.style.colorScheme = theme;
+      })();
+    </script>
 
     <!-- PWA -->
     <link rel="manifest" href="/local-harper/manifest.webmanifest" />
