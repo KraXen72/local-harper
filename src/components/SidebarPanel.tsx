@@ -56,9 +56,8 @@ interface SidebarPanelProps {
 	onFilterKeyDown?: JSX.EventHandler<HTMLInputElement, KeyboardEvent>;
 	headerControl?: HeaderControls;
 	headerAddon?: JSX.Element;
-	toolbarControl?: HeaderControls;
-	toolbarControlPlacement?: 'filter' | 'footer';
-	toolbarControlLabel?: string;
+	footerControl?: HeaderControls;
+	footerControlLabel?: string;
 	children: JSX.Element;
 }
 
@@ -101,22 +100,17 @@ const SidebarPanel: Component<SidebarPanelProps> = (props) => {
 						</button>
 					</Show>
 				</div>
-				<Show when={props.toolbarControlPlacement !== 'footer'}>
-					<div class="sidebar-panel-toolbar-controls flex items-center gap-1 shrink-0">
-						<HeaderControlList controls={props.toolbarControl} />
-					</div>
-				</Show>
 				{props.filterAddon}
 			</div>
 
 			<div class="overflow-y-auto py-3 ps-3 pe-1 min-h-0 flex-1 sidebar-panel-scroller">
 				{props.children}
 			</div>
-			<Show when={props.toolbarControlPlacement === 'footer'}>
+			<Show when={props.footerControl?.length}>
 				<div class="sidebar-panel-control-row shrink-0 px-3 py-2 border-t border-(--flexoki-ui-2) flex items-center gap-2">
-					<span class="sidebar-panel-control-label text-sm text-(--flexoki-tx) shrink-0">{props.toolbarControlLabel}</span>
+					<span class="sidebar-panel-control-label text-sm text-(--flexoki-tx) shrink-0">{props.footerControlLabel}</span>
 					<div class="flex-1 min-w-0 flex justify-end">
-						<HeaderControlList controls={props.toolbarControl} />
+						<HeaderControlList controls={props.footerControl} />
 					</div>
 				</div>
 			</Show>

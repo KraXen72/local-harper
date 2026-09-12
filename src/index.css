@@ -71,6 +71,7 @@
 	--toggle-track: #282726;
 	--toggle-track-border: #403E3C;
 	--toggle-thumb: #403E3C;
+	--switch-thumb: var(--flexoki-tx);
 	--toggle-thumb-fg: #CECDC3;
 	--toggle-shadow: rgba(0, 0, 0, 0.38);
 	--overlay-shadow: rgba(0, 0, 0, 0.42);
@@ -157,6 +158,7 @@
 	--toggle-track: var(--flexoki-bg);
 	--toggle-track-border: #B7B5AC;
 	--toggle-thumb: var(--flexoki-ui);
+	--switch-thumb: var(--flexoki-bg);
 	--toggle-thumb-fg: #100F0F;
 	--toggle-shadow: rgba(16, 15, 15, 0.18);
 	--overlay-shadow: rgba(16, 15, 15, 0.16);

@@ -36,7 +36,7 @@ const RuleManager: Component<RuleManagerProps> = (props) => {
 		);
 	});
 
-	const headerControl: HeaderControls = [
+	const dialectControl: HeaderControls = [
 		{
 			type: 'select',
 			options: DIALECT_OPTIONS,
@@ -53,9 +53,8 @@ const RuleManager: Component<RuleManagerProps> = (props) => {
 			filterText={filterText()}
 			onFilterChange={setFilterText}
 			filterPlaceholder="Filter rules..."
-			toolbarControl={headerControl}
-			toolbarControlPlacement="footer"
-			toolbarControlLabel="Writing dialect"
+			footerControl={dialectControl}
+			footerControlLabel="Writing dialect"
 			headerAddon={<ThemeToggle value={props.theme} onChange={props.onThemeChange} />}
 		>
 			<Show
