@@ -14,7 +14,7 @@ export interface DictCardProps {
 const DictCard: Component<DictCardProps> = (props) => {
 	return (
 		<div
-			class="flex items-center gap-x-0.5 rounded-lg bg-(--flexoki-ui)/20 border border-(--flexoki-ui-2) group"
+			class="dict-card flex items-center gap-x-0.5 rounded-(--br-lg) bg-(--flexoki-ui)/20 border border-(--flexoki-ui-2) group"
 			data-testid="dictionary-word"
 			data-word={props.word}
 			classList={{

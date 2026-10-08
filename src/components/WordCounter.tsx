@@ -30,7 +30,7 @@ const WordCounter: Component<WordCounterProps> = (props) => {
                     <div class="text-xs" aria-label={`Characters: ${counts().graphemes}, Sentences: ${counts().sentences}, Lines: ${counts().lines}, Paragraphs: ${counts().paragraphs}`}>Ch: {counts().graphemes} &middot; Sn: {counts().sentences} &middot; Ln: {counts().lines} &middot; Pr: {counts().paragraphs}</div>
                 </Show>
             </div>
-            <div class="mt-1 text-xs opacity-35 text-right">
+            <div class="build-info mt-1 text-xs opacity-35 text-right">
                 build {__BUILD_INFO__.hash} &middot; Harper {__BUILD_INFO__.harperVersion} &middot; {__BUILD_INFO__.date}
             </div>
         </div>

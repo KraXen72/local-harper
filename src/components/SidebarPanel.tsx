@@ -5,7 +5,7 @@ import type { HeaderControls, HeaderButton, HeaderSelect } from '../types';
 const HeaderButtonItem: Component<HeaderButton> = (props) => (
 	<button
 		onClick={props.action}
-		class="p-1 hover:bg-(--flexoki-ui-3) aspect-square rounded-md transition-colors duration-150 flex items-center justify-center"
+		class="sidebar-icon-button p-1 hover:bg-(--flexoki-ui-3) aspect-square rounded-md transition-colors duration-150 flex items-center justify-center"
 		aria-label={props.label}
 		title={props.label}
 	>
@@ -71,7 +71,7 @@ const SidebarPanel: Component<SidebarPanelProps> = (props) => {
 					<HeaderControlList controls={props.headerControl} />
 					<button
 						onClick={props.onClose}
-						class="p-1 hover:bg-(--flexoki-ui-3) aspect-square rounded-md transition-colors duration-150 flex items-center justify-center"
+						class="sidebar-icon-button sidebar-close-button p-1 aspect-square rounded-md transition-colors duration-150 flex items-center justify-center"
 						aria-label={`Close ${props.title}`}
 					>
 						<span class="iconify lucide--x w-5 h-5 text-(--flexoki-tx-2)" />
@@ -88,7 +88,7 @@ const SidebarPanel: Component<SidebarPanelProps> = (props) => {
 						onKeyDown={props.onFilterKeyDown}
 						placeholder={props.filterPlaceholder ?? 'Filter...'}
 						aria-label={props.filterPlaceholder ?? 'Filter...'}
-						class="w-full px-3 py-2 bg-(--flexoki-bg) border border-(--flexoki-ui-2) rounded-md text-sm text-(--flexoki-tx) placeholder-(--flexoki-tx-3) focus:outline-none focus:ring-2 focus:ring-(--flexoki-cyan) focus:border-transparent"
+						class="w-full px-3 py-2 bg-(--flexoki-bg) border border-(--flexoki-ui-2) rounded-lg text-sm text-(--flexoki-tx) placeholder-(--flexoki-tx-3) focus:outline-none focus:ring-2 focus:ring-(--flexoki-cyan) focus:border-transparent"
 					/>
 					<Show when={props.filterText}>
 						<button

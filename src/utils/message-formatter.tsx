@@ -44,7 +44,7 @@ export function FormattedMessage(props: { message: string }): JSX.Element {
 					>
 						{/* we intentionally use break-all here, since if the user types some long string, and it shows up in the issue,
 						 we want to break it nicely instead of clipping/wrapping/scrolling */}
-						<code class="px-1 py-0.5 bg-(--flexoki-ui-2) rounded text-xs font-mono break-all">
+						<code class="px-1 py-0.5 bg-(--flexoki-ui) rounded text-xs font-mono break-all">
 							{part.content}
 						</code>
 					</Show>

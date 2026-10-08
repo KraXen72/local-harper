@@ -388,13 +388,12 @@ const App: Component = () => {
 				</div>
 
 				<div
-					class="overflow-hidden sidebar-right"
+					class="overflow-hidden sidebar-right bg-(--flexoki-bg)"
 					classList={{
-						'show-rule-manager border-l border-l-(--flexoki-ui-2)/20': sidebarStore.rightPanel !== null
+						'show-rule-manager border-l border-l-(--flexoki-ui-2)': sidebarStore.rightPanel !== null
 					}}
 					style={{
-						"pointer-events": sidebarStore.rightPanel !== null ? "auto" : "none",
-						"box-shadow": sidebarStore.rightPanel !== null ? "-4px 0 15px var(--panel-shadow)" : "none"
+						"pointer-events": sidebarStore.rightPanel !== null ? "auto" : "none"
 					}}
 				>
 					<Show when={sidebarStore.rightPanel === 'rules'}>

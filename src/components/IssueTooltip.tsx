@@ -11,7 +11,6 @@ interface IssueTooltipProps {
 
 const IssueTooltip: Component<IssueTooltipProps> = (props) => {
 	const lintKind = props.issue.lint.lint_kind();
-	const color = () => lintKindColor(lintKind);
 	const bgColor = () => lintKindColorWithAlpha(lintKind, 0.2);
 
 	return (
@@ -23,7 +22,8 @@ const IssueTooltip: Component<IssueTooltipProps> = (props) => {
 				class="cm-issue-tooltip-severity whitespace-nowrap"
 				style={{
 					"background-color": bgColor(),
-					"color": color()
+					"color": lintKindColor(lintKind),
+					"border-color": lintKindColor(lintKind)
 				}}
 			>
 				{props.issue.lint.lint_kind_pretty()}
@@ -38,7 +38,7 @@ const IssueTooltip: Component<IssueTooltipProps> = (props) => {
 			</div>
 			<Show when={props.showIgnoreButton && props.onIgnore}>
 				<button
-					class="px-3 py-1 bg-(--flexoki-ui) text-(--flexoki-tx) border border-(--flexoki-ui-3) rounded text-xs font-medium cursor-pointer transition-colors duration-120 w-full hover:bg-(--flexoki-ui-2) hover:border-(--flexoki-tx-3) active:scale-[0.98] col-span-full"
+					class="px-3 py-1 bg-(--flexoki-ui-2) text-(--flexoki-tx) border border-(--flexoki-ui-3) rounded text-xs font-medium cursor-pointer transition-colors duration-120 w-full hover:bg-(--flexoki-ui-2) hover:border-(--flexoki-tx-3) active:scale-[0.98] col-span-full"
 					onClick={props.onIgnore}
 					type="button"
 				>

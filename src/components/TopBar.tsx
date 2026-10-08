@@ -3,7 +3,7 @@ import type { TopBarProps } from '../types';
 
 const TopBar: Component<TopBarProps> = (props) => {
 	return (
-		<div class="relative flex items-center justify-between px-4 py-2.5 border-b border-(--flexoki-ui-2) bg-(--flexoki-bg-2) backdrop-blur-sm h-14">
+		<div class="relative flex items-center justify-between px-4 py-2.5 border-b border-(--flexoki-ui-2) bg-(--topbar-bg) backdrop-blur-sm h-14">
 			<div class="flex items-center gap-3">
 				<div
 					class="w-2 h-2 rounded-full transition-colors duration-300"
@@ -27,7 +27,7 @@ const TopBar: Component<TopBarProps> = (props) => {
 			<div class="flex items-center gap-2">
 				<button
 					onClick={props.onCopy}
-					class="aspect-square w-8 flex justify-center items-center cursor-pointer hover:brightness-110 active:scale-95 text-(--button-primary-fg) text-sm font-medium rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-(--flexoki-bg-2)"
+					class="copy-button aspect-square w-8 flex justify-center items-center cursor-pointer hover:brightness-110 active:scale-95 text-(--button-primary-fg) text-sm font-medium rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-(--topbar-bg)"
 					classList={{
 						'bg-(--flexoki-cyan) focus:ring-(--flexoki-cyan)': true,
 					}}
@@ -45,6 +45,7 @@ const TopBar: Component<TopBarProps> = (props) => {
 							'bg-(--button-secondary-bg) text-(--button-secondary-fg) focus:ring-(--button-secondary-bg)': !props.isSidebarOpen
 						}}
 						aria-label="Toggle sidebar"
+						aria-pressed={props.isSidebarOpen}
 					>
 						<span class="iconify lucide--list w-4 h-4" />
 						<span class="text-sm">Issues</span>
@@ -59,6 +60,7 @@ const TopBar: Component<TopBarProps> = (props) => {
 						'bg-(--button-secondary-bg) text-(--button-secondary-fg) focus:ring-(--button-secondary-bg)': !props.isDictManagerOpen
 					}}
 					aria-label="Toggle dictionary manager"
+					aria-pressed={props.isDictManagerOpen}
 				>
 					<span class="iconify lucide--book w-4 h-4" />
 					<span class="text-sm top-icon-button-title">Dict</span>
@@ -72,6 +74,7 @@ const TopBar: Component<TopBarProps> = (props) => {
 						'bg-(--button-secondary-bg) text-(--button-secondary-fg) focus:ring-(--button-secondary-bg)': !props.isRuleManagerOpen
 					}}
 					aria-label="Toggle rule manager"
+					aria-pressed={props.isRuleManagerOpen}
 				>
 					<span class="iconify lucide--settings w-4 h-4" />
 					<span class="text-sm top-icon-button-title">Rules</span>

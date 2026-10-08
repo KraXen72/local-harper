@@ -64,69 +64,71 @@
 	--flexoki-magenta: #CE5D97;
 
 	--flexoki-cyan-a: rgba(58, 169, 160, 0.12);
+	--flexoki-cyan-a2: rgba(58, 169, 160, 0.5);
 	--text-selection-background-color: #3aa99f4c;
 	--button-primary-fg: #100F0F;
 	--button-secondary-bg: #403E3C;
 	--button-secondary-fg: #CECDC3;
-	--toggle-track: #282726;
-	--toggle-track-border: #403E3C;
-	--toggle-thumb: #403E3C;
+	--topbar-bg: var(--flexoki-bg-2);
+	--card-bg: color-mix(in oklab, var(--flexoki-ui) 20%, transparent);
+	--card-hover-bg: var(--flexoki-ui);
+	--toggle-thumb: var(--flexoki-tx-3);
 	--switch-thumb: var(--flexoki-tx);
 	--toggle-thumb-fg: #CECDC3;
 	--toggle-shadow: rgba(0, 0, 0, 0.38);
-	--overlay-shadow: rgba(0, 0, 0, 0.42);
-	--panel-shadow: rgba(0, 0, 0, 0.28);
-	--editor-shadow: rgba(0, 0, 0, 0.28);
+	--overlay-shadow: 0 4px 16px rgba(0, 0, 0, 0.42);
+	--editor-shadow: 0 10px 28px rgba(0, 0, 0, 0.28);
 	--focus-ring: #3AA99F;
 	--br-mini: 3px;
 	--br-small: 5px;
-	--br-lg: 8px;
+	--br-lg: var(--radius-md);
 
 	/* credit to the harper website repository */
 	/* some colors changed/swapped */
 	/* https://github.com/Automattic/harper/blob/8131d60e0a49bc8094a89456bbfc8fba9c253831/packages/web/src/lib/lintKindColor.ts */
 
 	/* Harper lint kind colors (RGB triplets for flexible usage) */
+
+	/* Forest green */
 	--lint-kind-agreement: 34 139 34;
-	/* Forest green */
-	--lint-kind-boundary-error: 139 69 19;
 	/* Saddle brown */
-	--lint-kind-capitalization: 150 56 156;
+	--lint-kind-boundary-error: 139 69 19;
 	/* purple, modified */
+	--lint-kind-capitalization: 150 56 156;
+	/* Dark orange */
 	--lint-kind-eggcorn: 255 140 0;
-	/* Dark orange */
-	--lint-kind-enhancement: 14 173 105;
 	/* Green */
-	--lint-kind-formatting: 125 60 152;
+	--lint-kind-enhancement: 14 173 105;
 	/* Amethyst purple */
-	--lint-kind-grammar: 155 89 182;
+	--lint-kind-formatting: 125 60 152;
 	/* Medium purple */
-	--lint-kind-malapropism: 199 21 133;
+	--lint-kind-grammar: 155 89 182;
 	/* Medium violet red */
-	--lint-kind-miscellaneous: 59 206 172;
+	--lint-kind-malapropism: 199 21 133;
 	/* Turquoise */
-	--lint-kind-nonstandard: 0 139 139;
+	--lint-kind-miscellaneous: 59 206 172;
 	/* Dark cyan */
-	--lint-kind-punctuation: 212 132 15;
+	--lint-kind-nonstandard: 0 139 139;
 	/* Dark orange */
-	--lint-kind-readability: 70 130 180;
+	--lint-kind-punctuation: 212 132 15;
 	/* Steel blue */
-	--lint-kind-redundancy: 46 139 87;
+	--lint-kind-readability: 70 130 180;
 	/* Sea green */
-	--lint-kind-regionalism: 192 97 203;
+	--lint-kind-redundancy: 46 139 87;
 	/* Vibrant purple */
-	--lint-kind-repetition: 0 166 124;
+	--lint-kind-regionalism: 192 97 203;
 	/* Green-cyan */
-	--lint-kind-spelling: 238 66 102;
+	--lint-kind-repetition: 0 166 124;
 	/* Pink-red */
-	--lint-kind-style: 255 210 63;
+	--lint-kind-spelling: 238 66 102;
 	/* Yellow */
-	--lint-kind-typo: 255 107 53;
+	--lint-kind-style: 255 185 63;
 	/* Vibrant orange-red */
-	--lint-kind-usage: 30 144 255;
+	--lint-kind-typo: 255 107 53;
 	/* Dodger blue */
-	--lint-kind-word-choice: 34 139 34;
+	--lint-kind-usage: 30 144 255;
 	/* Forest green */
+	--lint-kind-word-choice: 34 139 34;
 }
 
 /* Flexoki Light uses the official warm paper and 600-series accents. The faint
@@ -153,17 +155,19 @@
 	--flexoki-cyan-a: rgba(36, 131, 123, 0.14);
 	--text-selection-background-color: rgba(36, 131, 123, 0.22);
 	--button-primary-fg: #FFFCF0;
-	--button-secondary-bg: #6F6E69;
-	--button-secondary-fg: #FFFCF0;
-	--toggle-track: var(--flexoki-bg);
-	--toggle-track-border: #B7B5AC;
-	--toggle-thumb: var(--flexoki-ui);
+	--button-secondary-bg: var(--flexoki-ui);
+	--button-secondary-hover-bg: var(--flexoki-ui-2);
+	--button-secondary-fg: var(--flexoki-tx);
+	--topbar-bg: var(--flexoki-bg);
+	--card-bg: var(--flexoki-bg);
+	--card-hover-bg: var(--flexoki-bg);
+	--toggle-thumb: var(--flexoki-cyan);
 	--switch-thumb: var(--flexoki-bg);
-	--toggle-thumb-fg: #100F0F;
+	--toggle-thumb-fg: var(--button-primary-fg);
 	--toggle-shadow: rgba(16, 15, 15, 0.18);
-	--overlay-shadow: rgba(16, 15, 15, 0.16);
-	--panel-shadow: rgba(16, 15, 15, 0.14);
-	--editor-shadow: rgba(16, 15, 15, 0.075);
+	/* Light surfaces are separated by fills and borders rather than elevation. */
+	--overlay-shadow: none;
+	--editor-shadow: none;
 	--focus-ring: #24837B;
 }
 
@@ -277,15 +281,16 @@ body {
 	background-color: var(--flexoki-bg-2) !important;
 	border: 1px solid var(--flexoki-ui-2) !important;
 	color: var(--flexoki-tx) !important;
-	box-shadow: 0 4px 16px var(--overlay-shadow);
+	box-shadow: var(--overlay-shadow);
 }
 .cm-tooltip-autocomplete > ul > li {
 	color: var(--flexoki-tx) !important;
 }
 .cm-tooltip-autocomplete > ul > li[aria-selected] {
-	background-color: var(--flexoki-cyan) !important;
-	color: var(--button-primary-fg) !important;
+	background-color: var(--flexoki-cyan-a2) !important;
+	color: var(--flexoki-tx) !important;
 }
+
 .cm-tooltip-arrow {
 	display: none;
 }
@@ -307,7 +312,7 @@ body {
 }
 
 .editor-surface {
-	box-shadow: 0 10px 28px var(--editor-shadow);
+	box-shadow: var(--editor-shadow);
 }
 
 .editor-scroll-region {
@@ -316,7 +321,7 @@ body {
 }
 
 .editor-divider {
-	/* Keep the cutoff centered on the editor while extending into its shadow. */
+	/* Keep the divider centered while its ends fade beyond the editor. */
 	position: relative;
 	left: 50%;
 	width: calc(100% + 2rem);
@@ -336,33 +341,22 @@ body {
 
 .shared-card {
 	padding: 10px;
-	border-radius: var(--br-lg);
+	border-radius: var(--radius-lg);
 	border-style: solid;
 	border-width: 1px;
 
-	background-color: color-mix(in oklab, var(--flexoki-ui) 20%, transparent);
+	background-color: var(--card-bg);
 	border-color: var(--flexoki-ui-2);
 }
-.shared-card.shared-card-hover:not(.shared-card-selected):hover {
-	background-color: var(--flexoki-ui);
-	border-color: var(--flexoki-ui-3);
 
-	@apply shadow-sm;
+.shared-card.shared-card-hover:not(.shared-card-selected):hover {
+	background-color: var(--card-hover-bg);
+	border-color: var(--flexoki-ui-3);
 }
 
 .shared-card-selected {
 	background-color: color-mix(in oklab, var(--flexoki-cyan) 20%, transparent);
 	border-color: color-mix(in oklab, var(--flexoki-cyan) 60%, transparent);
-
-	@apply shadow-md shadow-[var(--flexoki-cyan)]/10;
-}
-
-:root[data-theme='light'] .shared-card.shared-card-hover:not(.shared-card-selected):hover {
-	box-shadow: 0 1px 3px rgba(16, 15, 15, 0.04);
-}
-
-:root[data-theme='light'] .shared-card-selected {
-	box-shadow: 0 2px 6px rgba(36, 131, 123, 0.07);
 }
 
 /* Harper Issue Tooltip Styles */
@@ -375,12 +369,13 @@ body {
 	color: var(--flexoki-tx);
 	font-size: 13px;
 	max-width: 320px;
-	box-shadow: 0 4px 16px var(--overlay-shadow);
+	box-shadow: var(--overlay-shadow);
 }
 
 .cm-issue-tooltip-severity {
 	padding: 2px 6px;
 	border-radius: var(--br-small);
+	border: 1px solid;
 	font-size: 11px;
 	font-weight: bold;
 	text-transform: uppercase;
@@ -455,7 +450,7 @@ body {
 	}
 	/* icon-only style for lt-sm: */
 
-	@apply px-4 py-1.5 cursor-pointer text-sm font-medium rounded-md transition-colors duration-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-(--flexoki-bg-2);
+	@apply px-4 py-1.5 cursor-pointer text-sm font-medium rounded-md transition-colors duration-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-(--topbar-bg);
 }
 .top-icon-button-ltsm-square {
 	@media (width < 40rem) {
@@ -471,6 +466,10 @@ body {
 
 .sidebar-panel-header {
 	min-width: 0;
+}
+
+.sidebar-close-button:hover {
+	background-color: var(--button-secondary-bg);
 }
 
 .sidebar-panel-filter > .relative {
@@ -489,10 +488,8 @@ body {
 	width: 5.75rem;
 	height: 1.75rem;
 	padding: 3px;
-	border: 1px solid var(--toggle-track-border);
-	border-radius: 6px;
-	background: var(--toggle-track);
-	box-shadow: inset 0 1px 1px color-mix(in srgb, var(--toggle-shadow) 45%, transparent);
+	border-radius: var(--radius-md);
+	background: var(--button-secondary-bg);
 }
 
 .theme-toggle-thumb {
@@ -542,6 +539,91 @@ body {
 .theme-toggle-option .iconify {
 	width: 0.875rem;
 	height: 0.875rem;
+}
+
+/* Flexoki Light: paper surfaces and shared card styling. */
+:root[data-theme='light'] {
+	.build-info {
+		opacity: 0.5;
+	}
+
+	.editor-surface {
+		border-color: var(--flexoki-ui);
+	}
+
+	.dict-card {
+		background-color: var(--flexoki-bg);
+		border-color: var(--flexoki-ui);
+	}
+
+	.sidebar-footer {
+		border-top-color: var(--flexoki-ui);
+		border-image: none;
+	}
+
+	.theme-toggle-thumb {
+		box-shadow: none;
+	}
+
+	:is(.top-icon-button, .copy-button, .sidebar-icon-button) {
+		border-radius: var(--radius-md);
+		box-shadow: none;
+		outline: none;
+	}
+
+	:is(.top-icon-button, .copy-button, .sidebar-icon-button):focus-visible {
+		outline: 2px solid var(--focus-ring);
+		outline-offset: 2px;
+	}
+
+	.sidebar-icon-button {
+		color: var(--button-secondary-fg);
+		cursor: pointer;
+	}
+
+	.sidebar-icon-button:not(.sidebar-close-button) {
+		background-color: var(--button-secondary-bg);
+	}
+
+	.sidebar-icon-button .iconify {
+		color: inherit;
+	}
+
+	:is(.top-icon-button[aria-pressed='false'], .sidebar-icon-button:not(.sidebar-close-button)):hover {
+		background-color: var(--button-secondary-hover-bg);
+		color: var(--flexoki-tx);
+	}
+
+	.copy-button:hover {
+		filter: none;
+	}
+
+	.theme-toggle-option:not(.theme-toggle-option-active):hover {
+		background-color: var(--button-secondary-hover-bg);
+	}
+
+	.theme-toggle-option:focus-visible {
+		outline-offset: 2px;
+	}
+
+	.theme-toggle-option-active:hover,
+	.theme-toggle-option-active:focus-visible {
+		color: var(--toggle-thumb-fg);
+	}
+
+	.toggle-switch {
+		/* Remove the inset shadow while preserving Tailwind's focus rings. */
+		--tw-shadow: 0 0 #0000;
+	}
+
+	.toggle-switch::after {
+		box-shadow: none;
+	}
+
+	.cm-issue-tooltip {
+		background-color: var(--flexoki-bg);
+		border-color: var(--flexoki-ui-2);
+	}
 }
 
 @media (max-width: 360px) {
