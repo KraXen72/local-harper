@@ -160,7 +160,7 @@
 	--button-secondary-fg: var(--flexoki-tx);
 	--topbar-bg: var(--flexoki-bg);
 	--card-bg: var(--flexoki-bg);
-	--card-hover-bg: var(--flexoki-bg);
+	--card-hover-bg: var(--flexoki-bg-2);
 	--toggle-thumb: var(--flexoki-cyan);
 	--switch-thumb: var(--flexoki-bg);
 	--toggle-thumb-fg: var(--button-primary-fg);
