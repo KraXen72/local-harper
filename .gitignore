@@ -31,3 +31,4 @@ repomix-output.xml
 repomix-output.txt
 .qwen
 /coverage
+/test-results/
